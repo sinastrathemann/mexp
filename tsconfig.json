@@ -1,0 +1,14 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/shared" },
+    { "path": "./packages/domain" },
+    { "path": "./packages/application" },
+    { "path": "./packages/infrastructure" },
+    { "path": "./packages/auth" },
+    { "path": "./packages/llm" },
+    { "path": "./packages/mcp" },
+    { "path": "./apps/api" },
+    { "path": "./apps/web" }
+  ]
+}

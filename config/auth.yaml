@@ -1,0 +1,76 @@
+# ============================================================
+# Auth-Konfiguration — Entra ID OIDC + Rollenmodell
+# ============================================================
+
+auth:
+  strategy: "oidc"                   # "oidc" | "jwt" | "none" (nur lokal)
+  oidc:
+    provider: "entra-id"
+    tenant_id: ${ENTRA_TENANT_ID}
+    client_id: ${ENTRA_CLIENT_ID}
+    client_secret: ${ENTRA_CLIENT_SECRET}
+    redirect_uri: ${ENTRA_REDIRECT_URI}
+    scopes: ["openid", "profile", "email", "User.Read", "GroupMember.Read.All"]
+  jwt:
+    issuer: "https://login.microsoftonline.com/${ENTRA_TENANT_ID}/v2.0"
+    audience: ${ENTRA_CLIENT_ID}
+    jwks_uri: "https://login.microsoftonline.com/${ENTRA_TENANT_ID}/discovery/v2.0/keys"
+    algorithms: ["RS256"]
+  session:
+    cookie_name: "memp_session"
+    secure: true
+    same_site: "lax"
+    max_age_seconds: 28800           # 8 Stunden
+
+# --- Rollen ---
+# Rollen werden aus Entra ID Gruppen abgeleitet. Mapping: Entra-Gruppen-ID -> Rolle.
+roles:
+  mapping:
+    # Beispiel (nach Deployment mit echten Group-IDs ersetzen):
+    # "abc-def-123": "event_office"
+    # "xyz-456-789": "budget_owner"
+  definitions:
+    read_only:
+      description: "Portfolio lesen, eigene Teilnahmen sehen"
+      permissions:
+        - "event.read"
+        - "participant.read_own"
+    participant:
+      description: "Normale Mitarbeitende: an Events teilnehmen"
+      permissions:
+        - "event.read"
+        - "participant.read_own"
+        - "participant.register_self"
+        - "feedback.submit"
+    event_office:
+      description: "Event-Organisation, CRUD auf Events und Teilnehmer"
+      permissions:
+        - "event.*"
+        - "participant.*"
+        - "communication.*"
+        - "document.*"
+        - "attendance.*"
+    budget_owner:
+      description: "Budgetfreigaben und Tax-Sicht"
+      permissions:
+        - "event.read"
+        - "budget.*"
+        - "approval.create"
+        - "approval.decide"
+    manager:
+      description: "Führungskraft: Freigaben, Portfolio-Sicht, Reports"
+      permissions:
+        - "event.read"
+        - "event.approve"
+        - "budget.read"
+        - "approval.*"
+        - "analytics.read"
+    admin:
+      description: "Vollzugriff inkl. Konfiguration und Blueprints"
+      permissions: ["*"]
+
+# --- Policies ---
+policies:
+  event_ownership_required: true     # nur Owner/Admin darf Event editieren
+  budget_requires_approval: true
+  audit_log_immutable: true

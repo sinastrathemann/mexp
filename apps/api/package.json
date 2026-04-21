@@ -1,0 +1,29 @@
+{
+  "name": "@memp/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -b",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "@hono/zod-validator": "^0.4.1",
+    "@memp/application": "workspace:*",
+    "@memp/auth": "workspace:*",
+    "@memp/domain": "workspace:*",
+    "@memp/infrastructure": "workspace:*",
+    "@memp/shared": "workspace:*",
+    "hono": "^4.6.12",
+    "yaml": "^2.6.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2"
+  }
+}

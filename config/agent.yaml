@@ -1,0 +1,75 @@
+# ============================================================
+# mEMP Agent/Plattform-Konfiguration
+# Domaenenspezifische Parameter. Überschreibbar via agent.<env>.yaml + ENV.
+# ============================================================
+
+app:
+  name: "memp"
+  display_name: "mindsquare Event Management Platform"
+  default_locale: "de"
+  supported_locales: ["de", "en"]
+  timezone: "Europe/Berlin"
+
+http:
+  enabled: true
+  port: 3000
+  cors:
+    origins: ["http://localhost:8080"]
+  request_timeout_ms: 30000
+
+# --- Event Lifecycle Defaults (pro Blueprint überschreibbar) ---
+event:
+  default_registration_deadline_hours: 48
+  default_reminder_offsets_hours: [168, 24, 2]   # 1 Woche, 1 Tag, 2 Stunden vor Event
+  default_waitlist_enabled: true
+  checkin_window_minutes_before: 30
+  checkin_window_minutes_after: 60
+
+# --- Budget & Tax ---
+budget:
+  default_currency: "EUR"
+  approval_thresholds_eur:
+    team_lead: 500
+    manager: 2500
+    board: 10000
+  tax:
+    company_event_per_participant_limit_eur: 110.00   # §19 Abs. 1 EStG
+    warn_threshold_percent: 90
+
+# --- SLA ---
+sla:
+  max_response_time_ms: 3000
+  min_confidence: 0.7
+  escalation:
+    type: "human"
+    channel: "teams"
+    target: "#memp-escalations"
+
+# --- Queue / Worker ---
+queue:
+  concurrency:
+    reminders: 5
+    documents: 2
+    exports: 2
+    m365_sync: 3
+  retries:
+    max_attempts: 3
+    backoff_ms: 5000
+
+# --- Storage ---
+storage:
+  provider: "sharepoint"            # "sharepoint" | "s3"
+  sharepoint:
+    site_id: ${SHAREPOINT_SITE_ID}
+    root_folder: "mEMP"
+  s3:
+    endpoint: ${S3_ENDPOINT}
+    bucket: ${S3_BUCKET}
+    region: ${S3_REGION}
+
+# --- Feature Flags ---
+features:
+  ai_insights: false                 # Phase 4
+  tax_simulation: false              # Phase 2+
+  powerbi_embed: false               # Phase 3+
+  offline_checkin: false             # späterer Ausbau

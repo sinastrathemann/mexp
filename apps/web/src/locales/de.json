@@ -1,0 +1,19 @@
+{
+  "app": {
+    "title": "mEMP — Event Management Platform",
+    "welcome": "Willkommen bei der mindsquare Event Management Platform."
+  },
+  "nav": {
+    "portfolio": "Portfolio",
+    "events": "Events",
+    "participants": "Teilnehmer",
+    "attendance": "Check-in",
+    "budget": "Budget",
+    "documents": "Dokumente",
+    "admin": "Administration"
+  },
+  "status": {
+    "healthy": "Verfügbar",
+    "error": "Fehler"
+  }
+}

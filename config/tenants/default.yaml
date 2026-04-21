@@ -1,0 +1,8 @@
+tenant_id: "default"
+display_name: "mindsquare AG"
+
+locale: "de"
+timezone: "Europe/Berlin"
+
+budget:
+  max_cost_per_day_usd: 50.00        # nur relevant wenn AI aktiv

@@ -1,0 +1,32 @@
+{
+  "name": "@memp/infrastructure",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@memp/shared": "workspace:*",
+    "@memp/domain": "workspace:*",
+    "@memp/application": "workspace:*",
+    "bullmq": "^5.28.0",
+    "drizzle-orm": "^0.36.4",
+    "ioredis": "^5.4.1",
+    "postgres": "^3.4.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.28.0"
+  }
+}

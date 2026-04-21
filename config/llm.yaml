@@ -1,0 +1,58 @@
+# ============================================================
+# LLM Provider Konfiguration — Gerüst für Phase 4
+# Im MVP nicht aktiv. Wird mit dem AI Insights Service aktiviert.
+# ============================================================
+
+defaults:
+  reasoning: "claude-sonnet-4-6"
+  fast: "claude-haiku-4-5"
+  coding: "claude-sonnet-4-6"
+  embedding: "text-embedding-3-small"
+
+providers:
+  anthropic:
+    api_key: ${ANTHROPIC_API_KEY}
+    base_url: "https://api.anthropic.com"
+    models:
+      - id: "claude-sonnet-4-6"
+        max_tokens: 8192
+        temperature: 0.3
+      - id: "claude-haiku-4-5"
+        max_tokens: 4096
+        temperature: 0.1
+
+  openai:
+    api_key: ${OPENAI_API_KEY}
+    base_url: "https://api.openai.com/v1"
+    models:
+      - id: "gpt-4o"
+        max_tokens: 4096
+        temperature: 0.3
+      - id: "text-embedding-3-small"
+
+fallbacks:
+  reasoning:
+    - "claude-sonnet-4-6"
+    - "gpt-4o"
+  fast:
+    - "claude-haiku-4-5"
+    - "gpt-4o-mini"
+
+resilience:
+  max_retries: 3
+  retry_delay_ms: 1000
+  timeout_ms: 30000
+  rate_limit_rpm: 60
+
+budget:
+  max_cost_per_request_usd: 0.50
+  max_cost_per_hour_usd: 10.00
+  max_cost_per_day_usd: 100.00
+  alert_threshold_percent: 80
+
+observability:
+  provider: "langfuse"
+  endpoint: ${LANGFUSE_HOST}
+  public_key: ${LANGFUSE_PUBLIC_KEY}
+  secret_key: ${LANGFUSE_SECRET_KEY}
+  trace_sample_rate: 1.0

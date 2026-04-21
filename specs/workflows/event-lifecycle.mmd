@@ -1,0 +1,18 @@
+%% Workflow: Event Lifecycle (Anlage bis Abschluss)
+%% Erstellt: 2026-04-21
+%% Beschreibung: Hauptablauf eines Events von Blueprint-Auswahl bis Abschluss inkl. Freigabe.
+
+flowchart TD
+    A[Blueprint wählen] --> B[Event anlegen]
+    B --> C{Freigabe nötig?}
+    C -->|Ja| D[Freigabe-Workflow]
+    C -->|Nein| E[Zielgruppe festlegen]
+    D -->|Abgelehnt| B
+    D -->|Freigegeben| E
+    E --> F[Einladungen versenden]
+    F --> G[Anmeldungen + Warteliste]
+    G --> H[Reminder-Strecke]
+    H --> I[Check-in am Eventtag]
+    I --> J[Durchführung]
+    J --> K[Feedback einholen]
+    K --> L[Abschluss + Dokumente + Audit]

@@ -1,0 +1,16 @@
+%% Zustandsdiagramm: Event
+%% Erstellt: 2026-04-21
+%% Beschreibung: Zustandsmodell eines Events inkl. Freigabezyklus.
+
+stateDiagram-v2
+    [*] --> Entwurf
+    Entwurf --> Freigabe_ausstehend: zur Freigabe einreichen
+    Freigabe_ausstehend --> Entwurf: zurückweisen
+    Freigabe_ausstehend --> Freigegeben: freigeben
+    Freigegeben --> Einladung_offen: Einladungen versenden
+    Einladung_offen --> Durchfuehrung: Eventtag erreicht
+    Durchfuehrung --> Abgeschlossen: Check-in beendet
+    Abgeschlossen --> [*]
+    Freigegeben --> Abgesagt: absagen
+    Einladung_offen --> Abgesagt: absagen
+    Abgesagt --> [*]

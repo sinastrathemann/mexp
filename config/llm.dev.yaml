@@ -1,0 +1,13 @@
+# Dev-Overrides: wird über llm.yaml gemerged.
+defaults:
+  reasoning: "claude-haiku-4-5"       # Dev: günstigeres Modell
+  fast: "claude-haiku-4-5"
+
+resilience:
+  timeout_ms: 60000
+
+budget:
+  max_cost_per_day_usd: 20.00
+
+observability:
+  trace_sample_rate: 1.0
