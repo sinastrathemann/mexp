@@ -1,0 +1,36 @@
+export const AUDIT_ENTITY_TYPES = ["event", "user", "participation", "budget"] as const;
+export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];
+
+export const AUDIT_ACTIONS = [
+  "event.created",
+  "event.updated",
+  "event.status_changed",
+  "user.created",
+  "user.role_assigned",
+  "user.role_removed",
+  "user.active_changed",
+  "user.password_reset",
+] as const;
+export type AuditAction = (typeof AUDIT_ACTIONS)[number];
+
+export interface AuditRecord {
+  id: string;
+  entityType: AuditEntityType;
+  entityId: string;
+  action: AuditAction;
+  actorId: string | null;
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+  context: Record<string, unknown> | null;
+  createdAt: Date;
+}
+
+export interface AuditCreateInput {
+  entityType: AuditEntityType;
+  entityId: string;
+  action: AuditAction;
+  actorId: string | null;
+  before?: Record<string, unknown> | null;
+  after?: Record<string, unknown> | null;
+  context?: Record<string, unknown> | null;
+}

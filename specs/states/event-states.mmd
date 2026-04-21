@@ -1,16 +1,17 @@
 %% Zustandsdiagramm: Event
-%% Erstellt: 2026-04-21
-%% Beschreibung: Zustandsmodell eines Events inkl. Freigabezyklus.
+%% Aktualisiert: 2026-04-21
+%% Beschreibung: Zustandsmodell eines Events (Phase 1 MVP).
+%% Hinweis: Der explizite Freigabe-Zwischenstatus wird in Phase 2 (Governance) ergänzt,
+%% sobald das Freigabekonzept für Budget + Event zusammengeführt ist.
 
 stateDiagram-v2
-    [*] --> Entwurf
-    Entwurf --> Freigabe_ausstehend: zur Freigabe einreichen
-    Freigabe_ausstehend --> Entwurf: zurückweisen
-    Freigabe_ausstehend --> Freigegeben: freigeben
-    Freigegeben --> Einladung_offen: Einladungen versenden
-    Einladung_offen --> Durchfuehrung: Eventtag erreicht
-    Durchfuehrung --> Abgeschlossen: Check-in beendet
-    Abgeschlossen --> [*]
-    Freigegeben --> Abgesagt: absagen
-    Einladung_offen --> Abgesagt: absagen
-    Abgesagt --> [*]
+    [*] --> draft
+    draft --> planned: plan
+    draft --> cancelled: cancel
+    planned --> open: openRegistration
+    planned --> cancelled: cancel
+    open --> running: start
+    open --> cancelled: cancel
+    running --> closed: close
+    closed --> [*]
+    cancelled --> [*]

@@ -1,0 +1,28 @@
+%% Sequenzdiagramm: Event anlegen
+%% Erstellt: 2026-04-21
+%% Beschreibung: Fluss beim Anlegen eines neuen Events über das UI.
+
+sequenceDiagram
+    actor User as Event Office
+    participant UI as Web UI
+    participant API as Hono API
+    participant App as Application
+    participant Repo as EventRepository
+    participant Audit as AuditRepository
+    participant DB as PostgreSQL
+
+    User->>UI: Formular ausfüllen + submit
+    UI->>API: POST /events (JSON, Cookie)
+    API->>API: requireAuth + requireRole(event_office/manager/admin)
+    API->>API: zod validate (createEventSchema)
+    API->>App: createEvent(input, actorId)
+    App->>App: validate endAt > startAt
+    App->>Repo: insert events
+    Repo->>DB: INSERT events …
+    DB-->>Repo: row
+    App->>Audit: record(event.created, before=null, after=event)
+    Audit->>DB: INSERT audit_records …
+    App-->>API: Event
+    API-->>UI: 201 { event }
+    UI->>UI: invalidate ["events"]
+    UI->>User: navigate /events/:id

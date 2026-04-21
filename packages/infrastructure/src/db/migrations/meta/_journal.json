@@ -8,6 +8,13 @@
       "when": 1776771249178,
       "tag": "0000_glorious_black_bolt",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776772707539,
+      "tag": "0001_add_events_and_audit",
+      "breakpoints": true
     }
   ]
 }

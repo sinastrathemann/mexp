@@ -16,6 +16,10 @@
     "healthy": "Healthy",
     "error": "Error"
   },
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save"
+  },
   "auth": {
     "loginTitle": "Sign in",
     "emailLabel": "Email",
@@ -48,5 +52,46 @@
     "activate": "Activate",
     "resetPassword": "Reset password",
     "newPasswordPrompt": "New password (min. 8 characters)"
+  },
+  "events": {
+    "navLink": "Events",
+    "listTitle": "Event portfolio",
+    "createTitle": "Create new event",
+    "empty": "No events yet.",
+    "create": "Create event",
+    "creating": "Creating …",
+    "backToList": "Back to list",
+    "statusActions": "Change status",
+    "colTitle": "Title",
+    "colType": "Type",
+    "colStart": "Start",
+    "colStatus": "Status",
+    "colLocation": "Location",
+    "fieldTitle": "Title",
+    "fieldDescription": "Description",
+    "fieldType": "Event type",
+    "fieldVisibility": "Visibility",
+    "fieldStart": "Start",
+    "fieldEnd": "End",
+    "fieldLocation": "Location",
+    "fieldCapacity": "Capacity",
+    "type": {
+      "training": "Training",
+      "workshop": "Workshop",
+      "company_event": "Company event",
+      "other": "Other"
+    },
+    "visibility": {
+      "internal": "Internal",
+      "public": "Public"
+    },
+    "status": {
+      "draft": "Draft",
+      "planned": "Planned",
+      "open": "Open for registration",
+      "running": "Running",
+      "closed": "Closed",
+      "cancelled": "Cancelled"
+    }
   }
 }

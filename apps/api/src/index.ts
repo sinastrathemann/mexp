@@ -8,6 +8,7 @@ import { env } from "./deps.js";
 import { errorHandler } from "./error-handler.js";
 import { adminUserRoutes } from "./routes/admin-users.js";
 import { authRoutes } from "./routes/auth.js";
+import { eventRoutes } from "./routes/events.js";
 
 const log = rootLogger.child({ module: "api" });
 
@@ -34,6 +35,7 @@ app.get("/health", (c) =>
 
 app.route("/auth", authRoutes);
 app.route("/admin/users", adminUserRoutes);
+app.route("/events", eventRoutes);
 
 serve({ fetch: app.fetch, port: env.API_PORT, hostname: env.API_HOST }, (info) => {
   log.info({ port: info.port, host: env.API_HOST }, "mEMP API gestartet");

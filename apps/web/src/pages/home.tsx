@@ -16,6 +16,9 @@ export default function HomePage() {
           <strong>{user.roles.join(", ")}</strong>
         </p>
       )}
+      <p>
+        <Link to="/events">{t("events.navLink")}</Link>
+      </p>
       {hasRole("admin") && (
         <p>
           <Link to="/admin/users">{t("admin.usersLink")}</Link>

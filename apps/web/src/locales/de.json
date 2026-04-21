@@ -16,6 +16,10 @@
     "healthy": "Verfügbar",
     "error": "Fehler"
   },
+  "common": {
+    "cancel": "Abbrechen",
+    "save": "Speichern"
+  },
   "auth": {
     "loginTitle": "Anmelden",
     "emailLabel": "E-Mail",
@@ -48,5 +52,46 @@
     "activate": "Aktivieren",
     "resetPassword": "Passwort zurücksetzen",
     "newPasswordPrompt": "Neues Passwort (min. 8 Zeichen)"
+  },
+  "events": {
+    "navLink": "Events",
+    "listTitle": "Event-Portfolio",
+    "createTitle": "Neues Event anlegen",
+    "empty": "Noch keine Events angelegt.",
+    "create": "Event anlegen",
+    "creating": "Wird angelegt …",
+    "backToList": "Zurück zur Liste",
+    "statusActions": "Status ändern",
+    "colTitle": "Titel",
+    "colType": "Typ",
+    "colStart": "Start",
+    "colStatus": "Status",
+    "colLocation": "Ort",
+    "fieldTitle": "Titel",
+    "fieldDescription": "Beschreibung",
+    "fieldType": "Eventtyp",
+    "fieldVisibility": "Sichtbarkeit",
+    "fieldStart": "Beginn",
+    "fieldEnd": "Ende",
+    "fieldLocation": "Ort",
+    "fieldCapacity": "Teilnehmerlimit",
+    "type": {
+      "training": "Schulung",
+      "workshop": "Workshop",
+      "company_event": "Betriebsveranstaltung",
+      "other": "Sonstiges"
+    },
+    "visibility": {
+      "internal": "Intern",
+      "public": "Öffentlich"
+    },
+    "status": {
+      "draft": "Entwurf",
+      "planned": "Geplant",
+      "open": "Anmeldung offen",
+      "running": "Läuft",
+      "closed": "Abgeschlossen",
+      "cancelled": "Abgesagt"
+    }
   }
 }

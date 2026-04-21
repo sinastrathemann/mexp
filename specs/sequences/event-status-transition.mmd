@@ -1,0 +1,32 @@
+%% Sequenzdiagramm: Event-Statuswechsel
+%% Erstellt: 2026-04-21
+%% Beschreibung: Fluss beim Wechsel des Event-Status inkl. Audit.
+
+sequenceDiagram
+    actor User as Event Owner
+    participant UI as Web UI
+    participant API as Hono API
+    participant App as Application
+    participant Repo as EventRepository
+    participant Audit as AuditRepository
+    participant DB as PostgreSQL
+
+    User->>UI: Button "→ <nextStatus>" klicken
+    UI->>API: PATCH /events/:id/status { status }
+    API->>API: requireAuth + requireRole(event_office/manager/admin)
+    API->>App: transitionEventStatus(id, status, actorId)
+    App->>Repo: findById(id)
+    Repo->>DB: SELECT event
+    App->>App: canTransition(current.status, nextStatus)?
+    alt nicht erlaubt
+        App-->>API: InvalidEventStatusTransitionError (409)
+        API-->>UI: 409 { error }
+    else erlaubt
+        App->>Repo: setStatus(id, nextStatus)
+        Repo->>DB: UPDATE events SET status …
+        App->>Audit: record(event.status_changed, before, after)
+        Audit->>DB: INSERT audit_records …
+        App-->>API: Event
+        API-->>UI: 200 { event }
+        UI->>UI: invalidate ["events"]
+    end

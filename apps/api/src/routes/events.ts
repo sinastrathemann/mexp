@@ -1,0 +1,132 @@
+import { zValidator } from "@hono/zod-validator";
+import {
+  createEvent,
+  getEvent,
+  listEvents,
+  transitionEventStatus,
+  updateEvent,
+} from "@memp/application";
+import { type AuthVariables, requireAuth, requireRole } from "@memp/auth";
+import { EVENT_STATUSES, EVENT_TYPES, EVENT_VISIBILITIES } from "@memp/domain";
+import { Hono } from "hono";
+import { z } from "zod";
+import { events, audit } from "../deps.js";
+
+const eventTypeSchema = z.enum(EVENT_TYPES);
+const eventVisibilitySchema = z.enum(EVENT_VISIBILITIES);
+const eventStatusSchema = z.enum(EVENT_STATUSES);
+const isoDateSchema = z.string().datetime({ offset: true });
+
+const createEventSchema = z.object({
+  title: z.string().min(1).max(200),
+  description: z.string().max(5000).default(""),
+  eventType: eventTypeSchema,
+  visibility: eventVisibilitySchema.default("internal"),
+  startAt: isoDateSchema,
+  endAt: isoDateSchema,
+  location: z.string().max(500).nullable().default(null),
+  capacity: z.number().int().positive().nullable().default(null),
+});
+
+const updateEventSchema = z
+  .object({
+    title: z.string().min(1).max(200).optional(),
+    description: z.string().max(5000).optional(),
+    eventType: eventTypeSchema.optional(),
+    visibility: eventVisibilitySchema.optional(),
+    startAt: isoDateSchema.optional(),
+    endAt: isoDateSchema.optional(),
+    location: z.string().max(500).nullable().optional(),
+    capacity: z.number().int().positive().nullable().optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: "Mindestens ein Feld muss gesetzt sein" });
+
+const transitionSchema = z.object({ status: eventStatusSchema });
+
+const listQuerySchema = z.object({
+  status: eventStatusSchema.optional(),
+  mine: z.enum(["true", "false"]).optional(),
+});
+
+const WRITE_ROLES = ["admin", "manager", "event_office"] as const;
+
+export const eventRoutes = new Hono<{ Variables: AuthVariables }>();
+
+eventRoutes.use("*", requireAuth());
+
+eventRoutes.get("/", zValidator("query", listQuerySchema), async (c) => {
+  const q = c.req.valid("query");
+  const session = c.get("auth");
+  const filter: { status?: (typeof EVENT_STATUSES)[number]; ownerId?: string } = {};
+  if (q.status) filter.status = q.status;
+  if (q.mine === "true") filter.ownerId = session.sub;
+  const list = await listEvents(filter, { events });
+  return c.json({ events: list });
+});
+
+eventRoutes.post(
+  "/",
+  requireRole(...WRITE_ROLES),
+  zValidator("json", createEventSchema),
+  async (c) => {
+    const input = c.req.valid("json");
+    const actorId = c.get("auth").sub;
+    const event = await createEvent(
+      {
+        title: input.title,
+        description: input.description,
+        eventType: input.eventType,
+        visibility: input.visibility,
+        startAt: new Date(input.startAt),
+        endAt: new Date(input.endAt),
+        location: input.location,
+        capacity: input.capacity,
+        ownerId: actorId,
+      },
+      actorId,
+      { events, audit },
+    );
+    return c.json({ event }, 201);
+  },
+);
+
+eventRoutes.get("/:id", async (c) => {
+  const id = c.req.param("id");
+  const event = await getEvent(id, { events });
+  return c.json({ event });
+});
+
+eventRoutes.patch(
+  "/:id",
+  requireRole(...WRITE_ROLES),
+  zValidator("json", updateEventSchema),
+  async (c) => {
+    const id = c.req.param("id");
+    const input = c.req.valid("json");
+    const actorId = c.get("auth").sub;
+    const patch: Parameters<typeof updateEvent>[1] = {};
+    if (input.title !== undefined) patch.title = input.title;
+    if (input.description !== undefined) patch.description = input.description;
+    if (input.eventType !== undefined) patch.eventType = input.eventType;
+    if (input.visibility !== undefined) patch.visibility = input.visibility;
+    if (input.startAt !== undefined) patch.startAt = new Date(input.startAt);
+    if (input.endAt !== undefined) patch.endAt = new Date(input.endAt);
+    if (input.location !== undefined) patch.location = input.location;
+    if (input.capacity !== undefined) patch.capacity = input.capacity;
+    const event = await updateEvent(id, patch, actorId, { events, audit });
+    return c.json({ event });
+  },
+);
+
+eventRoutes.patch(
+  "/:id/status",
+  requireRole(...WRITE_ROLES),
+  zValidator("json", transitionSchema),
+  async (c) => {
+    const id = c.req.param("id");
+    const { status } = c.req.valid("json");
+    const actorId = c.get("auth").sub;
+    const event = await transitionEventStatus(id, status, actorId, { events, audit });
+    return c.json({ event });
+  },
+);
