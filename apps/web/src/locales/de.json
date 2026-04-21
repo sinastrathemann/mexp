@@ -12,6 +12,16 @@
     "documents": "Dokumente",
     "admin": "Administration"
   },
+  "dashboard": {
+    "navLink": "Dashboard",
+    "title": "Portfolio-Dashboard",
+    "totalEvents": "Events gesamt",
+    "upcomingEvents": "Anstehende Events",
+    "attendanceRate": "Teilnahmequote",
+    "noShowRate": "No-Show-Quote",
+    "eventsByStatus": "Events nach Status",
+    "participationByStatus": "Teilnahmen nach Status"
+  },
   "status": {
     "healthy": "Verfügbar",
     "error": "Fehler"

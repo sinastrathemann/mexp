@@ -4,6 +4,7 @@ export * from "./admin/list-users.js";
 export * from "./admin/reset-user-password.js";
 export * from "./admin/set-user-active.js";
 export * from "./auth/login-user.js";
+export * from "./dashboard/portfolio-stats.js";
 export * from "./events/create-event.js";
 export * from "./events/get-event.js";
 export * from "./events/list-events.js";

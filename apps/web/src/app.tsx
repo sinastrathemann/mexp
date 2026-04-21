@@ -4,6 +4,7 @@ import { BrowserRouter, Link, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth/auth-context";
 import { ProtectedRoute } from "./auth/protected-route";
 import AdminUsersPage from "./pages/admin-users";
+import DashboardPage from "./pages/dashboard";
 import EventCreatePage from "./pages/event-create";
 import EventDetailPage from "./pages/event-detail";
 import EventsListPage from "./pages/events-list";
@@ -30,6 +31,7 @@ function TopBar() {
     >
       <nav style={{ display: "flex", gap: "1rem" }}>
         <Link to="/">{t("app.title")}</Link>
+        {user && <Link to="/dashboard">{t("dashboard.navLink")}</Link>}
         {user && <Link to="/events">{t("events.navLink")}</Link>}
         {hasRole("admin") && <Link to="/admin/users">{t("admin.usersLink")}</Link>}
       </nav>
@@ -62,6 +64,14 @@ function Shell() {
           element={
             <ProtectedRoute>
               <HomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
             </ProtectedRoute>
           }
         />

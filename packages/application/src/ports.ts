@@ -15,6 +15,15 @@ import type {
   UserWithPasswordHash,
 } from "@memp/domain";
 
+export interface PortfolioStats {
+  eventsByStatus: Record<EventStatus, number>;
+  participationByStatus: Record<ParticipationStatus, number>;
+  upcomingEventsCount: number;
+  attendanceRate: number | null;
+  noShowRate: number | null;
+  totalEvents: number;
+}
+
 export interface UserPort {
   findByEmail(email: string): Promise<UserWithPasswordHash | null>;
   findById(id: string): Promise<User | null>;
@@ -77,4 +86,8 @@ export interface ParticipationPort {
     },
   ): Promise<Participation>;
   shiftWaitlistPositions(eventId: string, fromPosition: number): Promise<void>;
+}
+
+export interface DashboardPort {
+  portfolioStats(): Promise<PortfolioStats>;
 }

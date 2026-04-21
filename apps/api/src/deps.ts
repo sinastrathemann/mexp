@@ -2,6 +2,7 @@ import type { PasswordHasherPort } from "@memp/application";
 import { hashPassword, verifyPassword } from "@memp/auth";
 import {
   AuditRepository,
+  DashboardRepository,
   EventRepository,
   ParticipationRepository,
   RoleRepository,
@@ -18,6 +19,7 @@ export const roles = new RoleRepository(db);
 export const events = new EventRepository(db);
 export const participations = new ParticipationRepository(db);
 export const audit = new AuditRepository(db);
+export const dashboard = new DashboardRepository(db);
 
 export const hasher: PasswordHasherPort = {
   hash: hashPassword,
