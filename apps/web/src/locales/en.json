@@ -135,5 +135,39 @@
       "attended": "Attended",
       "no_show": "No show"
     }
+  },
+  "budget": {
+    "title": "Budget",
+    "empty": "No budget items yet.",
+    "addItem": "Add budget item",
+    "kpiPlanned": "Planned (total)",
+    "kpiApproved": "Approved",
+    "fieldCategory": "Category",
+    "fieldDescription": "Description",
+    "fieldAmount": "Amount",
+    "fieldStatus": "Status",
+    "fieldTaxNote": "Tax note",
+    "fieldNotes": "Notes",
+    "fieldActions": "Actions",
+    "submit": "Submit",
+    "approve": "Approve",
+    "reject": "Reject",
+    "reopen": "Reopen",
+    "rejectReasonPlaceholder": "Reason for rejection",
+    "rejectedReason": "Reason",
+    "category": {
+      "venue": "Venue",
+      "catering": "Catering",
+      "material": "Material",
+      "travel": "Travel",
+      "speaker_fee": "Speaker fee",
+      "other": "Other"
+    },
+    "status": {
+      "draft": "Draft",
+      "submitted": "Submitted",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    }
   }
 }

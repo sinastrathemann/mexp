@@ -2,6 +2,10 @@ import type {
   AuditCreateInput,
   AuditEntityType,
   AuditRecord,
+  BudgetItem,
+  BudgetItemCreateInput,
+  BudgetItemStatus,
+  BudgetItemUpdateInput,
   Event,
   EventCreateInput,
   EventStatus,
@@ -90,4 +94,20 @@ export interface ParticipationPort {
 
 export interface DashboardPort {
   portfolioStats(): Promise<PortfolioStats>;
+}
+
+export interface BudgetPort {
+  create(input: BudgetItemCreateInput): Promise<BudgetItem>;
+  findById(id: string): Promise<BudgetItem | null>;
+  listForEvent(eventId: string): Promise<BudgetItem[]>;
+  update(id: string, patch: BudgetItemUpdateInput): Promise<BudgetItem>;
+  setStatus(
+    id: string,
+    status: BudgetItemStatus,
+    extras?: {
+      approverId?: string | null;
+      approvedAt?: Date | null;
+      rejectedReason?: string | null;
+    },
+  ): Promise<BudgetItem>;
 }

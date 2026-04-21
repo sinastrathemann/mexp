@@ -135,5 +135,39 @@
       "attended": "Anwesend",
       "no_show": "Nicht erschienen"
     }
+  },
+  "budget": {
+    "title": "Budget",
+    "empty": "Noch keine Budget-Positionen erfasst.",
+    "addItem": "Budget-Position hinzufügen",
+    "kpiPlanned": "Geplant (gesamt)",
+    "kpiApproved": "Genehmigt",
+    "fieldCategory": "Kategorie",
+    "fieldDescription": "Beschreibung",
+    "fieldAmount": "Betrag",
+    "fieldStatus": "Status",
+    "fieldTaxNote": "Steuerhinweis",
+    "fieldNotes": "Notizen",
+    "fieldActions": "Aktionen",
+    "submit": "Einreichen",
+    "approve": "Genehmigen",
+    "reject": "Ablehnen",
+    "reopen": "Erneut bearbeiten",
+    "rejectReasonPlaceholder": "Ablehnungsgrund",
+    "rejectedReason": "Grund",
+    "category": {
+      "venue": "Location",
+      "catering": "Verpflegung",
+      "material": "Material",
+      "travel": "Reise",
+      "speaker_fee": "Referentenhonorar",
+      "other": "Sonstiges"
+    },
+    "status": {
+      "draft": "Entwurf",
+      "submitted": "Eingereicht",
+      "approved": "Genehmigt",
+      "rejected": "Abgelehnt"
+    }
   }
 }

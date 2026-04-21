@@ -84,6 +84,44 @@ export const eventParticipations = pgTable(
   }),
 );
 
+export const budgetItems = pgTable("budget_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  eventId: uuid("event_id")
+    .notNull()
+    .references(() => events.id, { onDelete: "cascade" }),
+  category: text("category").notNull(),
+  description: text("description").notNull(),
+  plannedAmountCents: integer("planned_amount_cents").notNull(),
+  currency: text("currency").notNull().default("EUR"),
+  status: text("status").notNull().default("draft"),
+  taxNote: text("tax_note"),
+  notes: text("notes"),
+  createdBy: uuid("created_by")
+    .notNull()
+    .references(() => users.id, { onDelete: "restrict" }),
+  approverId: uuid("approver_id").references(() => users.id, { onDelete: "set null" }),
+  approvedAt: timestamp("approved_at", { withTimezone: true }),
+  rejectedReason: text("rejected_reason"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const documents = pgTable("documents", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  eventId: uuid("event_id")
+    .notNull()
+    .references(() => events.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  mimeType: text("mime_type").notNull(),
+  fileSize: integer("file_size").notNull(),
+  storageKey: text("storage_key").notNull(),
+  visibility: text("visibility").notNull().default("event_staff"),
+  uploadedBy: uuid("uploaded_by")
+    .notNull()
+    .references(() => users.id, { onDelete: "restrict" }),
+  uploadedAt: timestamp("uploaded_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const auditRecords = pgTable("audit_records", {
   id: uuid("id").defaultRandom().primaryKey(),
   entityType: text("entity_type").notNull(),
@@ -106,5 +144,9 @@ export type EventRow = typeof events.$inferSelect;
 export type EventInsert = typeof events.$inferInsert;
 export type EventParticipationRow = typeof eventParticipations.$inferSelect;
 export type EventParticipationInsert = typeof eventParticipations.$inferInsert;
+export type BudgetItemRow = typeof budgetItems.$inferSelect;
+export type BudgetItemInsert = typeof budgetItems.$inferInsert;
+export type DocumentRow = typeof documents.$inferSelect;
+export type DocumentInsert = typeof documents.$inferInsert;
 export type AuditRow = typeof auditRecords.$inferSelect;
 export type AuditInsert = typeof auditRecords.$inferInsert;

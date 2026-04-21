@@ -4,3 +4,4 @@ export * from "./event-repository.js";
 export * from "./audit-repository.js";
 export * from "./participation-repository.js";
 export * from "./dashboard-repository.js";
+export * from "./budget-repository.js";

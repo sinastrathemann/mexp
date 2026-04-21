@@ -22,6 +22,13 @@
       "when": 1776773559716,
       "tag": "0002_add_event_participations",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1776774793302,
+      "tag": "0003_add_budget_and_documents",
+      "breakpoints": true
     }
   ]
 }

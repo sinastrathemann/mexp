@@ -24,6 +24,14 @@ export const AUDIT_ACTIONS = [
   "participation.checked_in",
   "participation.marked_no_show",
   "participation.marked_attended_without_checkin",
+  "budget.created",
+  "budget.updated",
+  "budget.submitted",
+  "budget.approved",
+  "budget.rejected",
+  "budget.reopened",
+  "document.created",
+  "document.deleted",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

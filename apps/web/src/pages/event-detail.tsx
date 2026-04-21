@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
+import { BudgetPanel } from "../events/budget-panel";
 import { ParticipantsPanel } from "../events/participants-panel";
 import { type EventDto, type EventStatus, allowedTransitions } from "../events/types";
 
@@ -98,6 +99,7 @@ export default function EventDetailPage() {
       )}
 
       <ParticipantsPanel event={event} />
+      <BudgetPanel event={event} />
     </div>
   );
 }
