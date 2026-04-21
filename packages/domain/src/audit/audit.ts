@@ -1,4 +1,11 @@
-export const AUDIT_ENTITY_TYPES = ["event", "user", "participation", "budget"] as const;
+export const AUDIT_ENTITY_TYPES = [
+  "event",
+  "user",
+  "participation",
+  "budget",
+  "approval",
+  "document",
+] as const;
 export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];
 
 export const AUDIT_ACTIONS = [
@@ -10,6 +17,11 @@ export const AUDIT_ACTIONS = [
   "user.role_removed",
   "user.active_changed",
   "user.password_reset",
+  "participation.registered",
+  "participation.waitlisted",
+  "participation.cancelled",
+  "participation.promoted_from_waitlist",
+  "participation.checked_in",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

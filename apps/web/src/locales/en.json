@@ -93,5 +93,33 @@
       "closed": "Closed",
       "cancelled": "Cancelled"
     }
+  },
+  "participants": {
+    "sectionTitle": "Participants",
+    "count": "{{count}} registered",
+    "waitlistCount": "{{count}} on waitlist",
+    "empty": "No registrations yet.",
+    "colName": "Name",
+    "colEmail": "Email",
+    "colStatus": "Status",
+    "colPosition": "Position",
+    "colRegisteredAt": "Registered at",
+    "colActions": "Actions",
+    "register": "Register for event",
+    "registering": "Registering …",
+    "withdraw": "Withdraw",
+    "withdrawing": "Withdrawing …",
+    "promoteWaitlist": "Promote first waitlisted person",
+    "promoting": "Promoting …",
+    "yourStatusRegistered": "You are registered for this event.",
+    "yourStatusWaitlisted": "You are on the waitlist (position {{position}}).",
+    "registrationClosed": "Registration is not available right now (status: {{status}}).",
+    "status": {
+      "registered": "Registered",
+      "waitlisted": "Waitlisted",
+      "cancelled": "Cancelled",
+      "attended": "Attended",
+      "no_show": "No show"
+    }
   }
 }

@@ -93,5 +93,33 @@
       "closed": "Abgeschlossen",
       "cancelled": "Abgesagt"
     }
+  },
+  "participants": {
+    "sectionTitle": "Teilnehmer",
+    "count": "{{count}} angemeldet",
+    "waitlistCount": "{{count}} auf Warteliste",
+    "empty": "Noch keine Anmeldungen.",
+    "colName": "Name",
+    "colEmail": "E-Mail",
+    "colStatus": "Status",
+    "colPosition": "Position",
+    "colRegisteredAt": "Angemeldet am",
+    "colActions": "Aktionen",
+    "register": "Für Event anmelden",
+    "registering": "Wird angemeldet …",
+    "withdraw": "Abmelden",
+    "withdrawing": "Wird abgemeldet …",
+    "promoteWaitlist": "Erste Person von Warteliste nachrücken",
+    "promoting": "Wird nachgerückt …",
+    "yourStatusRegistered": "Du bist für dieses Event angemeldet.",
+    "yourStatusWaitlisted": "Du stehst auf der Warteliste (Position {{position}}).",
+    "registrationClosed": "Anmeldung derzeit nicht möglich (Status: {{status}}).",
+    "status": {
+      "registered": "Angemeldet",
+      "waitlisted": "Warteliste",
+      "cancelled": "Abgemeldet",
+      "attended": "Anwesend",
+      "no_show": "Nicht erschienen"
+    }
   }
 }

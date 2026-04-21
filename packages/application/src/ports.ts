@@ -6,6 +6,9 @@ import type {
   EventCreateInput,
   EventStatus,
   EventUpdateInput,
+  Participation,
+  ParticipationStatus,
+  ParticipationWithUser,
   Role,
   RoleName,
   User,
@@ -49,4 +52,29 @@ export interface EventPort {
 export interface AuditPort {
   record(input: AuditCreateInput): Promise<AuditRecord>;
   listForEntity(entityType: AuditEntityType, entityId: string): Promise<AuditRecord[]>;
+}
+
+export interface ParticipationPort {
+  create(input: {
+    eventId: string;
+    userId: string;
+    status: ParticipationStatus;
+    waitlistPosition: number | null;
+  }): Promise<Participation>;
+  findByEventAndUser(eventId: string, userId: string): Promise<Participation | null>;
+  findById(id: string): Promise<Participation | null>;
+  countActiveForEvent(eventId: string): Promise<number>;
+  countWaitlistForEvent(eventId: string): Promise<number>;
+  findFirstWaitlisted(eventId: string): Promise<Participation | null>;
+  listForEvent(eventId: string): Promise<ParticipationWithUser[]>;
+  updateStatus(
+    id: string,
+    status: ParticipationStatus,
+    changes?: {
+      waitlistPosition?: number | null;
+      cancelledAt?: Date | null;
+      checkedInAt?: Date | null;
+    },
+  ): Promise<Participation>;
+  shiftWaitlistPositions(eventId: string, fromPosition: number): Promise<void>;
 }

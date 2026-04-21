@@ -2,15 +2,20 @@ import { zValidator } from "@hono/zod-validator";
 import {
   createEvent,
   getEvent,
+  getOwnParticipation,
   listEvents,
+  listParticipants,
+  promoteFromWaitlist,
+  registerForEvent,
   transitionEventStatus,
   updateEvent,
+  withdrawFromEvent,
 } from "@memp/application";
 import { type AuthVariables, requireAuth, requireRole } from "@memp/auth";
 import { EVENT_STATUSES, EVENT_TYPES, EVENT_VISIBILITIES } from "@memp/domain";
 import { Hono } from "hono";
 import { z } from "zod";
-import { events, audit } from "../deps.js";
+import { events, audit, participations } from "../deps.js";
 
 const eventTypeSchema = z.enum(EVENT_TYPES);
 const eventVisibilitySchema = z.enum(EVENT_VISIBILITIES);
@@ -130,3 +135,49 @@ eventRoutes.patch(
     return c.json({ event });
   },
 );
+
+eventRoutes.get("/:id/my-participation", async (c) => {
+  const id = c.req.param("id");
+  const actorId = c.get("auth").sub;
+  const participation = await getOwnParticipation(id, actorId, { events, participations });
+  return c.json({ participation });
+});
+
+eventRoutes.get("/:id/participants", requireRole(...WRITE_ROLES), async (c) => {
+  const id = c.req.param("id");
+  const list = await listParticipants(id, { events, participations });
+  return c.json({ participants: list });
+});
+
+eventRoutes.post("/:id/register", async (c) => {
+  const id = c.req.param("id");
+  const actorId = c.get("auth").sub;
+  const participation = await registerForEvent({ eventId: id, userId: actorId }, actorId, {
+    events,
+    participations,
+    audit,
+  });
+  return c.json({ participation }, 201);
+});
+
+eventRoutes.post("/:id/withdraw", async (c) => {
+  const id = c.req.param("id");
+  const actorId = c.get("auth").sub;
+  const participation = await withdrawFromEvent({ eventId: id, userId: actorId }, actorId, {
+    events,
+    participations,
+    audit,
+  });
+  return c.json({ participation });
+});
+
+eventRoutes.post("/:id/participants/promote-waitlist", requireRole(...WRITE_ROLES), async (c) => {
+  const id = c.req.param("id");
+  const actorId = c.get("auth").sub;
+  const participation = await promoteFromWaitlist(id, actorId, {
+    events,
+    participations,
+    audit,
+  });
+  return c.json({ participation });
+});

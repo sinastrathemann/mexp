@@ -6,6 +6,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -62,6 +63,27 @@ export const events = pgTable("events", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const eventParticipations = pgTable(
+  "event_participations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    status: text("status").notNull(),
+    waitlistPosition: integer("waitlist_position"),
+    registeredAt: timestamp("registered_at", { withTimezone: true }).notNull().defaultNow(),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    checkedInAt: timestamp("checked_in_at", { withTimezone: true }),
+  },
+  (t) => ({
+    uniqEventUser: uniqueIndex("event_participations_event_user_uniq").on(t.eventId, t.userId),
+  }),
+);
+
 export const auditRecords = pgTable("audit_records", {
   id: uuid("id").defaultRandom().primaryKey(),
   entityType: text("entity_type").notNull(),
@@ -82,5 +104,7 @@ export type UserRoleRow = typeof userRoles.$inferSelect;
 export type UserRoleInsert = typeof userRoles.$inferInsert;
 export type EventRow = typeof events.$inferSelect;
 export type EventInsert = typeof events.$inferInsert;
+export type EventParticipationRow = typeof eventParticipations.$inferSelect;
+export type EventParticipationInsert = typeof eventParticipations.$inferInsert;
 export type AuditRow = typeof auditRecords.$inferSelect;
 export type AuditInsert = typeof auditRecords.$inferInsert;

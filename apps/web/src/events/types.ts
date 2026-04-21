@@ -42,3 +42,28 @@ const TRANSITIONS: Record<EventStatus, readonly EventStatus[]> = {
 export function allowedTransitions(status: EventStatus): readonly EventStatus[] {
   return TRANSITIONS[status];
 }
+
+export const PARTICIPATION_STATUSES = [
+  "registered",
+  "waitlisted",
+  "cancelled",
+  "attended",
+  "no_show",
+] as const;
+export type ParticipationStatus = (typeof PARTICIPATION_STATUSES)[number];
+
+export interface ParticipationDto {
+  id: string;
+  eventId: string;
+  userId: string;
+  status: ParticipationStatus;
+  waitlistPosition: number | null;
+  registeredAt: string;
+  cancelledAt: string | null;
+  checkedInAt: string | null;
+}
+
+export interface ParticipantDto extends ParticipationDto {
+  userEmail: string;
+  userDisplayName: string;
+}

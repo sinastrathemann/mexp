@@ -3,6 +3,7 @@ import { hashPassword, verifyPassword } from "@memp/auth";
 import {
   AuditRepository,
   EventRepository,
+  ParticipationRepository,
   RoleRepository,
   UserRepository,
   createDbClient,
@@ -15,6 +16,7 @@ const db = createDbClient(env.DATABASE_URL);
 export const users = new UserRepository(db);
 export const roles = new RoleRepository(db);
 export const events = new EventRepository(db);
+export const participations = new ParticipationRepository(db);
 export const audit = new AuditRepository(db);
 
 export const hasher: PasswordHasherPort = {

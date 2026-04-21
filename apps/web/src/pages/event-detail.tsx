@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
+import { ParticipantsPanel } from "../events/participants-panel";
 import { type EventDto, type EventStatus, allowedTransitions } from "../events/types";
 
 export default function EventDetailPage() {
@@ -13,7 +14,7 @@ export default function EventDetailPage() {
   const canManage = hasRole("admin", "manager", "event_office");
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["events", "detail", id],
+    queryKey: ["events", id, "detail"],
     queryFn: () => apiFetch<{ event: EventDto }>(`/events/${id}`),
     enabled: Boolean(id),
   });
@@ -95,6 +96,8 @@ export default function EventDetailPage() {
           )}
         </div>
       )}
+
+      <ParticipantsPanel event={event} />
     </div>
   );
 }
