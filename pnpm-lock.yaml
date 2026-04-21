@@ -41,6 +41,9 @@ importers:
       '@memp/infrastructure':
         specifier: workspace:*
         version: link:../../packages/infrastructure
+      '@memp/llm':
+        specifier: workspace:*
+        version: link:../../packages/llm
       '@memp/shared':
         specifier: workspace:*
         version: link:../../packages/shared

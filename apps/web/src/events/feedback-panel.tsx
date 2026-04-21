@@ -59,6 +59,14 @@ export function FeedbackPanel({ event }: FeedbackPanelProps) {
     },
   });
 
+  const summaryMut = useMutation({
+    mutationFn: () =>
+      apiFetch<{ summary: string; provider: string; model: string; count: number }>(
+        `/events/${event.id}/feedback/summary`,
+        { method: "POST" },
+      ),
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     submitMut.mutate({
@@ -179,6 +187,37 @@ export function FeedbackPanel({ event }: FeedbackPanelProps) {
               value={fmtAvg(allQ.data.stats.averageOrganization)}
             />
           </div>
+          {allQ.data.feedback.length > 0 && (
+            <div style={{ marginBottom: "1rem" }}>
+              <button
+                type="button"
+                onClick={() => summaryMut.mutate()}
+                disabled={summaryMut.isPending}
+              >
+                {summaryMut.isPending ? t("feedback.summarizing") : t("feedback.summarize")}
+              </button>
+              {summaryMut.data && (
+                <div
+                  style={{
+                    marginTop: "0.75rem",
+                    padding: "0.75rem",
+                    background: "#f7f7f7",
+                    borderLeft: "3px solid #4a90e2",
+                    whiteSpace: "pre-wrap",
+                  }}
+                >
+                  <div style={{ fontSize: "0.8rem", color: "#666", marginBottom: "0.25rem" }}>
+                    {summaryMut.data.provider} · {summaryMut.data.model} · {t("feedback.kpiCount")}:{" "}
+                    {summaryMut.data.count}
+                  </div>
+                  {summaryMut.data.summary}
+                </div>
+              )}
+              {summaryMut.error instanceof Error && (
+                <p style={{ color: "#b00020" }}>{summaryMut.error.message}</p>
+              )}
+            </div>
+          )}
           {allQ.data.feedback.length === 0 ? (
             <p style={{ color: "#888" }}>{t("feedback.empty")}</p>
           ) : (

@@ -1,9 +1,14 @@
 import { zValidator } from "@hono/zod-validator";
-import { getOwnFeedback, listFeedback, submitFeedback } from "@memp/application";
+import {
+  getOwnFeedback,
+  listFeedback,
+  submitFeedback,
+  summarizeEventFeedback,
+} from "@memp/application";
 import { type AuthVariables, requireAuth, requireRole } from "@memp/auth";
 import { Hono } from "hono";
 import { z } from "zod";
-import { events, audit, feedback } from "../deps.js";
+import { events, audit, feedback, llm } from "../deps.js";
 
 const ratingSchema = z.number().int().min(1).max(5);
 
@@ -32,6 +37,16 @@ feedbackRoutes.get("/events/:eventId/feedback/mine", async (c) => {
   const fb = await getOwnFeedback(eventId, userId, { events, feedback });
   return c.json({ feedback: fb });
 });
+
+feedbackRoutes.post(
+  "/events/:eventId/feedback/summary",
+  requireRole(...MANAGE_ROLES),
+  async (c) => {
+    const eventId = c.req.param("eventId");
+    const result = await summarizeEventFeedback(eventId, { events, feedback, llm });
+    return c.json(result);
+  },
+);
 
 feedbackRoutes.post("/events/:eventId/feedback", zValidator("json", submitSchema), async (c) => {
   const eventId = c.req.param("eventId");

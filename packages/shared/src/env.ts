@@ -10,6 +10,8 @@ const envSchema = z.object({
   AUTH_JWT_SECRET: z.string().min(32, "AUTH_JWT_SECRET muss mindestens 32 Zeichen haben"),
   AUTH_SESSION_COOKIE_NAME: z.string().default("memp_session"),
   AUTH_SESSION_MAX_AGE_SECONDS: z.coerce.number().int().positive().default(28800),
+  LLM_CONFIG_PATH: z.string().default("../../config/llm.yaml"),
+  LLM_PROVIDER: z.string().default("mock"),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

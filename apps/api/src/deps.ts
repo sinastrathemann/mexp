@@ -1,4 +1,4 @@
-import type { PasswordHasherPort } from "@memp/application";
+import type { LlmPort, LlmSummaryInput, PasswordHasherPort } from "@memp/application";
 import { hashPassword, verifyPassword } from "@memp/auth";
 import {
   AuditRepository,
@@ -13,6 +13,7 @@ import {
   UserRepository,
   createDbClient,
 } from "@memp/infrastructure";
+import { createLlmProvider, loadLlmConfig } from "@memp/llm";
 import { loadEnv } from "@memp/shared";
 
 const env = loadEnv();
@@ -32,6 +33,22 @@ export const feedback = new FeedbackRepository(db);
 export const hasher: PasswordHasherPort = {
   hash: hashPassword,
   verify: verifyPassword,
+};
+
+const llmConfig = loadLlmConfig(env.LLM_CONFIG_PATH);
+const llmProvider = createLlmProvider({ config: llmConfig });
+
+export const llm: LlmPort = {
+  async summarize(input: LlmSummaryInput) {
+    const res = await llmProvider.complete({
+      purpose: "reasoning",
+      messages: [
+        { role: "system", content: input.prompt },
+        { role: "user", content: input.context },
+      ],
+    });
+    return { summary: res.content, provider: res.provider, model: res.model };
+  },
 };
 
 export { env };

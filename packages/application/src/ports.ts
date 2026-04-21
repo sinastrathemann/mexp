@@ -126,6 +126,22 @@ export interface FeedbackPort {
   statsForEvent(eventId: string): Promise<EventFeedbackStats>;
 }
 
+export interface LlmSummaryInput {
+  purpose: "feedback_summary";
+  prompt: string;
+  context: string;
+}
+
+export interface LlmSummaryOutput {
+  summary: string;
+  provider: string;
+  model: string;
+}
+
+export interface LlmPort {
+  summarize(input: LlmSummaryInput): Promise<LlmSummaryOutput>;
+}
+
 export interface BudgetPort {
   create(input: BudgetItemCreateInput): Promise<BudgetItem>;
   findById(id: string): Promise<BudgetItem | null>;

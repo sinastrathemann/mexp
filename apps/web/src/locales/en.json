@@ -202,7 +202,9 @@
     "kpiCount": "Responses",
     "kpiAvgOverall": "Avg overall",
     "kpiAvgContent": "Avg content",
-    "kpiAvgOrganization": "Avg organization"
+    "kpiAvgOrganization": "Avg organization",
+    "summarize": "Generate AI summary",
+    "summarizing": "Generating …"
   },
   "documents": {
     "title": "Documents",

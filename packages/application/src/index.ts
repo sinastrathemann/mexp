@@ -1,3 +1,4 @@
+export * from "./ai/summarize-feedback.js";
 export * from "./admin/assign-role.js";
 export * from "./admin/create-user.js";
 export * from "./admin/list-users.js";

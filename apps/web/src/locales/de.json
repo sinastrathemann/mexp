@@ -202,7 +202,9 @@
     "kpiCount": "Antworten",
     "kpiAvgOverall": "Ø Gesamt",
     "kpiAvgContent": "Ø Inhalt",
-    "kpiAvgOrganization": "Ø Organisation"
+    "kpiAvgOrganization": "Ø Organisation",
+    "summarize": "KI-Zusammenfassung erstellen",
+    "summarizing": "Wird erstellt …"
   },
   "documents": {
     "title": "Dokumente",
