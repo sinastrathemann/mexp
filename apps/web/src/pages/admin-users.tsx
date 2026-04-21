@@ -63,8 +63,13 @@ export default function AdminUsersPage() {
   });
 
   return (
-    <div style={{ padding: "2rem", fontFamily: "system-ui", maxWidth: 1000 }}>
-      <h1>{t("admin.usersTitle")}</h1>
+    <div className="page">
+      <div className="page-header">
+        <div>
+          <div className="eyebrow">Administration</div>
+          <h1 className="page-title">{t("admin.usersTitle")}</h1>
+        </div>
+      </div>
 
       <CreateUserForm
         onSubmit={(v) => createMut.mutateAsync(v).catch(() => undefined)}
@@ -72,58 +77,65 @@ export default function AdminUsersPage() {
         error={createMut.error}
       />
 
-      <h2 style={{ marginTop: "2rem" }}>{t("admin.usersListTitle")}</h2>
-      {isLoading && <p>{t("auth.loading")}</p>}
+      <h2 style={{ marginTop: "var(--space-8)" }}>{t("admin.usersListTitle")}</h2>
+      {isLoading && <div className="card muted">{t("auth.loading")}</div>}
       {data && (
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ textAlign: "left", borderBottom: "2px solid #333" }}>
-              <th style={{ padding: "0.5rem" }}>{t("admin.colEmail")}</th>
-              <th style={{ padding: "0.5rem" }}>{t("admin.colDisplayName")}</th>
-              <th style={{ padding: "0.5rem" }}>{t("admin.colRoles")}</th>
-              <th style={{ padding: "0.5rem" }}>{t("admin.colStatus")}</th>
-              <th style={{ padding: "0.5rem" }}>{t("admin.colActions")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.users.map((u) => (
-              <tr key={u.id} style={{ borderBottom: "1px solid #ddd" }}>
-                <td style={{ padding: "0.5rem" }}>{u.email}</td>
-                <td style={{ padding: "0.5rem" }}>{u.displayName}</td>
-                <td style={{ padding: "0.5rem" }}>
-                  <RoleEditor
-                    currentRoles={u.roles}
-                    onAdd={(role) => addRoleMut.mutate({ id: u.id, role })}
-                    onRemove={(role) => removeRoleMut.mutate({ id: u.id, role })}
-                  />
-                </td>
-                <td style={{ padding: "0.5rem" }}>
-                  {u.isActive ? t("admin.active") : t("admin.inactive")}
-                </td>
-                <td style={{ padding: "0.5rem" }}>
-                  <button
-                    type="button"
-                    onClick={() => toggleActiveMut.mutate({ id: u.id, isActive: !u.isActive })}
-                    style={{ marginRight: "0.5rem" }}
-                  >
-                    {u.isActive ? t("admin.deactivate") : t("admin.activate")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const pw = window.prompt(t("admin.newPasswordPrompt") ?? "New password");
-                      if (pw && pw.length >= 8) {
-                        resetPwMut.mutate({ id: u.id, newPassword: pw });
-                      }
-                    }}
-                  >
-                    {t("admin.resetPassword")}
-                  </button>
-                </td>
+        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>{t("admin.colEmail")}</th>
+                <th>{t("admin.colDisplayName")}</th>
+                <th>{t("admin.colRoles")}</th>
+                <th>{t("admin.colStatus")}</th>
+                <th>{t("admin.colActions")}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {data.users.map((u) => (
+                <tr key={u.id}>
+                  <td className="text-bold">{u.email}</td>
+                  <td>{u.displayName}</td>
+                  <td>
+                    <RoleEditor
+                      currentRoles={u.roles}
+                      onAdd={(role) => addRoleMut.mutate({ id: u.id, role })}
+                      onRemove={(role) => removeRoleMut.mutate({ id: u.id, role })}
+                    />
+                  </td>
+                  <td>
+                    <span className={u.isActive ? "badge badge-success" : "badge badge-muted"}>
+                      {u.isActive ? t("admin.active") : t("admin.inactive")}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="row" style={{ gap: "var(--space-2)" }}>
+                      <button
+                        type="button"
+                        onClick={() => toggleActiveMut.mutate({ id: u.id, isActive: !u.isActive })}
+                        className="btn btn-outline btn-sm"
+                      >
+                        {u.isActive ? t("admin.deactivate") : t("admin.activate")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const pw = window.prompt(t("admin.newPasswordPrompt") ?? "New password");
+                          if (pw && pw.length >= 8) {
+                            resetPwMut.mutate({ id: u.id, newPassword: pw });
+                          }
+                        }}
+                        className="btn btn-ghost btn-sm"
+                      >
+                        {t("admin.resetPassword")}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
@@ -154,68 +166,78 @@ function CreateUserForm(props: {
   }
 
   return (
-    <form
-      onSubmit={submit}
-      style={{
-        border: "1px solid #ddd",
-        padding: "1rem",
-        borderRadius: 8,
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr auto",
-        gap: "0.75rem",
-        alignItems: "end",
-      }}
-    >
-      <label>
-        {t("admin.colEmail")}
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={{ display: "block", width: "100%", padding: "0.5rem" }}
-        />
-      </label>
-      <label>
-        {t("admin.colDisplayName")}
-        <input
-          type="text"
-          required
-          value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
-          style={{ display: "block", width: "100%", padding: "0.5rem" }}
-        />
-      </label>
-      <label>
-        {t("admin.colRoles")}
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value as RoleName)}
-          style={{ display: "block", padding: "0.5rem" }}
-        >
-          {ROLE_NAMES.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label style={{ gridColumn: "1 / span 2" }}>
-        {t("auth.passwordLabel")}
-        <input
-          type="password"
-          required
-          minLength={8}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{ display: "block", width: "100%", padding: "0.5rem" }}
-        />
-      </label>
-      <button type="submit" disabled={props.pending} style={{ padding: "0.5rem 1rem" }}>
-        {props.pending ? t("admin.creating") : t("admin.create")}
-      </button>
+    <form onSubmit={submit} className="card">
+      <h2 className="card-title" style={{ marginTop: 0 }}>
+        {t("admin.create")}
+      </h2>
+      <div className="field-row">
+        <div className="field">
+          <label className="label" htmlFor="adm-email">
+            {t("admin.colEmail")}
+          </label>
+          <input
+            id="adm-email"
+            className="input"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div className="field">
+          <label className="label" htmlFor="adm-name">
+            {t("admin.colDisplayName")}
+          </label>
+          <input
+            id="adm-name"
+            className="input"
+            type="text"
+            required
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+          />
+        </div>
+      </div>
+      <div className="field-row">
+        <div className="field">
+          <label className="label" htmlFor="adm-pw">
+            {t("auth.passwordLabel")}
+          </label>
+          <input
+            id="adm-pw"
+            className="input"
+            type="password"
+            required
+            minLength={8}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        <div className="field">
+          <label className="label" htmlFor="adm-role">
+            {t("admin.colRoles")}
+          </label>
+          <select
+            id="adm-role"
+            className="select"
+            value={role}
+            onChange={(e) => setRole(e.target.value as RoleName)}
+          >
+            {ROLE_NAMES.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div className="form-actions">
+        <button type="submit" disabled={props.pending} className="btn btn-primary">
+          {props.pending ? t("admin.creating") : t("admin.create")}
+        </button>
+      </div>
       {props.error instanceof Error && (
-        <p style={{ gridColumn: "1 / -1", color: "#b00020", margin: 0 }}>{props.error.message}</p>
+        <div className="alert alert-error">{props.error.message}</div>
       )}
     </form>
   );
@@ -228,25 +250,21 @@ function RoleEditor(props: {
 }) {
   const available = ROLE_NAMES.filter((r) => !props.currentRoles.includes(r));
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem", alignItems: "center" }}>
+    <div className="row" style={{ gap: "var(--space-2)" }}>
       {props.currentRoles.map((r) => (
-        <span
-          key={r}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "0.25rem",
-            padding: "0.15rem 0.5rem",
-            border: "1px solid #888",
-            borderRadius: 4,
-            fontSize: "0.85rem",
-          }}
-        >
+        <span key={r} className="badge badge-orange" style={{ gap: 4 }}>
           {r}
           <button
             type="button"
             onClick={() => props.onRemove(r)}
-            style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+              color: "inherit",
+              marginLeft: 4,
+            }}
             aria-label={`remove ${r}`}
           >
             ×
@@ -255,7 +273,9 @@ function RoleEditor(props: {
       ))}
       {available.length > 0 && (
         <select
+          className="select"
           defaultValue=""
+          style={{ width: "auto", fontSize: "var(--text-xs)", padding: "2px 8px" }}
           onChange={(e) => {
             const value = e.target.value;
             if (value) {
@@ -263,7 +283,6 @@ function RoleEditor(props: {
               e.target.value = "";
             }
           }}
-          style={{ fontSize: "0.85rem" }}
         >
           <option value="">+</option>
           {available.map((r) => (

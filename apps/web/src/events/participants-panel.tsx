@@ -96,18 +96,11 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const ownForSelfActions = own;
 
   return (
-    <section
-      style={{
-        marginTop: "2rem",
-        border: "1px solid #ddd",
-        borderRadius: 8,
-        padding: "1.5rem",
-      }}
-    >
-      <h2 style={{ fontSize: "1.1rem", marginTop: 0 }}>{t("participants.sectionTitle")}</h2>
+    <section className="card">
+      <h2 className="card-title">{t("participants.sectionTitle")}</h2>
 
       {canManage && (
-        <p style={{ color: "#555", marginTop: 0 }}>
+        <p className="muted" style={{ marginTop: 0 }}>
           {t("participants.count", { count: activeCount })}
           {event.capacity !== null && ` / ${event.capacity}`}
           {waitlistCount > 0 && ` · ${t("participants.waitlistCount", { count: waitlistCount })}`}
@@ -130,18 +123,12 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
 
       {canManage && (
         <>
-          <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+          <div className="row" style={{ marginTop: "var(--space-4)" }}>
             <a
               href={`/api/events/${event.id}/participants.csv`}
               target="_blank"
               rel="noreferrer"
-              style={{
-                padding: "0.5rem 1rem",
-                border: "1px solid #ccc",
-                borderRadius: 4,
-                textDecoration: "none",
-                color: "#333",
-              }}
+              className="btn btn-outline btn-sm"
             >
               {t("participants.exportCsv")}
             </a>
@@ -149,79 +136,79 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
               href={`/api/events/${event.id}/emergency-list`}
               target="_blank"
               rel="noreferrer"
-              style={{
-                padding: "0.5rem 1rem",
-                border: "1px solid #ccc",
-                borderRadius: 4,
-                textDecoration: "none",
-                color: "#333",
-              }}
+              className="btn btn-outline btn-sm"
             >
               {t("participants.emergencyList")}
             </a>
-          </div>
-          {waitlistCount > 0 && event.capacity !== null && activeCount < event.capacity && (
-            <div style={{ marginTop: "1rem" }}>
+            {waitlistCount > 0 && event.capacity !== null && activeCount < event.capacity && (
               <button
                 type="button"
                 disabled={promoteMut.isPending}
                 onClick={() => promoteMut.mutate()}
-                style={{ padding: "0.5rem 1rem" }}
+                className="btn btn-yellow btn-sm"
               >
                 {promoteMut.isPending
                   ? t("participants.promoting")
                   : t("participants.promoteWaitlist")}
               </button>
-              {promoteMut.error instanceof Error && (
-                <p style={{ color: "#b00020" }}>{promoteMut.error.message}</p>
-              )}
+            )}
+          </div>
+          {promoteMut.error instanceof Error && (
+            <div className="alert alert-error" style={{ marginTop: "var(--space-2)" }}>
+              {promoteMut.error.message}
             </div>
           )}
 
-          <div style={{ marginTop: "1rem", overflowX: "auto" }}>
+          <div style={{ marginTop: "var(--space-4)", overflowX: "auto" }}>
             {participants.length === 0 ? (
-              <p style={{ color: "#777" }}>{t("participants.empty")}</p>
+              <p className="muted">{t("participants.empty")}</p>
             ) : (
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <table className="table">
                 <thead>
-                  <tr style={{ borderBottom: "1px solid #ddd", textAlign: "left" }}>
-                    <th style={{ padding: "0.5rem" }}>{t("participants.colName")}</th>
-                    <th style={{ padding: "0.5rem" }}>{t("participants.colEmail")}</th>
-                    <th style={{ padding: "0.5rem" }}>{t("participants.colStatus")}</th>
-                    <th style={{ padding: "0.5rem" }}>{t("participants.colPosition")}</th>
-                    <th style={{ padding: "0.5rem" }}>{t("participants.colRegisteredAt")}</th>
-                    <th style={{ padding: "0.5rem" }}>{t("participants.colActions")}</th>
+                  <tr>
+                    <th>{t("participants.colName")}</th>
+                    <th>{t("participants.colEmail")}</th>
+                    <th>{t("participants.colStatus")}</th>
+                    <th>{t("participants.colPosition")}</th>
+                    <th>{t("participants.colRegisteredAt")}</th>
+                    <th>{t("participants.colActions")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {participants.map((p) => (
-                    <tr key={p.id} style={{ borderBottom: "1px solid #eee" }}>
-                      <td style={{ padding: "0.5rem" }}>{p.userDisplayName}</td>
-                      <td style={{ padding: "0.5rem" }}>{p.userEmail}</td>
-                      <td style={{ padding: "0.5rem" }}>{t(`participants.status.${p.status}`)}</td>
-                      <td style={{ padding: "0.5rem" }}>{p.waitlistPosition ?? "—"}</td>
-                      <td style={{ padding: "0.5rem" }}>{fmtDate(p.registeredAt)}</td>
-                      <td style={{ padding: "0.5rem", display: "flex", gap: "0.25rem" }}>
-                        {p.status === "registered" && checkInPhase && (
-                          <button
-                            type="button"
-                            disabled={checkInMut.isPending}
-                            onClick={() => checkInMut.mutate(p.id)}
-                            style={{ padding: "0.25rem 0.5rem", fontSize: "0.85rem" }}
-                          >
-                            {t("participants.checkIn")}
-                          </button>
-                        )}
-                        {p.status === "registered" && noShowPhase && (
-                          <button
-                            type="button"
-                            disabled={noShowMut.isPending}
-                            onClick={() => noShowMut.mutate(p.id)}
-                            style={{ padding: "0.25rem 0.5rem", fontSize: "0.85rem" }}
-                          >
-                            {t("participants.markNoShow")}
-                          </button>
-                        )}
+                    <tr key={p.id}>
+                      <td className="text-bold">{p.userDisplayName}</td>
+                      <td className="muted">{p.userEmail}</td>
+                      <td>
+                        <span className="badge badge-muted">
+                          {t(`participants.status.${p.status}`)}
+                        </span>
+                      </td>
+                      <td>{p.waitlistPosition ?? "—"}</td>
+                      <td className="text-sm muted">{fmtDate(p.registeredAt)}</td>
+                      <td>
+                        <div className="row" style={{ gap: "var(--space-2)" }}>
+                          {p.status === "registered" && checkInPhase && (
+                            <button
+                              type="button"
+                              disabled={checkInMut.isPending}
+                              onClick={() => checkInMut.mutate(p.id)}
+                              className="btn btn-outline-orange btn-sm"
+                            >
+                              {t("participants.checkIn")}
+                            </button>
+                          )}
+                          {p.status === "registered" && noShowPhase && (
+                            <button
+                              type="button"
+                              disabled={noShowMut.isPending}
+                              onClick={() => noShowMut.mutate(p.id)}
+                              className="btn btn-ghost btn-sm"
+                            >
+                              {t("participants.markNoShow")}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -265,22 +252,31 @@ function SelfActions(props: SelfActionsProps) {
 
   if (ownActive) {
     return (
-      <div style={{ marginTop: "0.5rem" }}>
+      <div style={{ marginTop: "var(--space-3)" }}>
         {own.status === "registered" ? (
-          <p>{t("participants.yourStatusRegistered")}</p>
+          <div
+            className="alert alert-info"
+            style={{ borderColor: "var(--brand-yellow)", background: "var(--brand-yellow-light)" }}
+          >
+            {t("participants.yourStatusRegistered")}
+          </div>
         ) : (
-          <p>{t("participants.yourStatusWaitlisted", { position: own.waitlistPosition ?? "?" })}</p>
+          <div className="alert alert-info">
+            {t("participants.yourStatusWaitlisted", { position: own.waitlistPosition ?? "?" })}
+          </div>
         )}
         <button
           type="button"
           disabled={withdrawPending}
           onClick={onWithdraw}
-          style={{ padding: "0.5rem 1rem" }}
+          className="btn btn-outline"
         >
           {withdrawPending ? t("participants.withdrawing") : t("participants.withdraw")}
         </button>
         {withdrawError instanceof ApiRequestError && (
-          <p style={{ color: "#b00020" }}>{withdrawError.message}</p>
+          <div className="alert alert-error" style={{ marginTop: "var(--space-2)" }}>
+            {withdrawError.message}
+          </div>
         )}
       </div>
     );
@@ -288,24 +284,26 @@ function SelfActions(props: SelfActionsProps) {
 
   if (!registrationOpen) {
     return (
-      <p style={{ color: "#777", marginTop: "0.5rem" }}>
+      <p className="muted" style={{ marginTop: "var(--space-3)" }}>
         {t("participants.registrationClosed", { status: t(`events.status.${eventStatus}`) })}
       </p>
     );
   }
 
   return (
-    <div style={{ marginTop: "0.5rem" }}>
+    <div style={{ marginTop: "var(--space-3)" }}>
       <button
         type="button"
         disabled={registerPending}
         onClick={onRegister}
-        style={{ padding: "0.5rem 1rem" }}
+        className="btn btn-primary"
       >
         {registerPending ? t("participants.registering") : t("participants.register")}
       </button>
       {registerError instanceof ApiRequestError && (
-        <p style={{ color: "#b00020" }}>{registerError.message}</p>
+        <div className="alert alert-error" style={{ marginTop: "var(--space-2)" }}>
+          {registerError.message}
+        </div>
       )}
     </div>
   );

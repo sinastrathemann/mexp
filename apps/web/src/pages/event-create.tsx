@@ -60,46 +60,51 @@ export default function EventCreatePage() {
         : null;
 
   return (
-    <div style={{ padding: "2rem", fontFamily: "system-ui", maxWidth: 700 }}>
-      <h1>{t("events.createTitle")}</h1>
-      <form
-        onSubmit={submit}
-        style={{
-          display: "grid",
-          gap: "1rem",
-          border: "1px solid #ddd",
-          borderRadius: 8,
-          padding: "1.5rem",
-        }}
-      >
-        <label>
-          {t("events.fieldTitle")}
+    <div className="page page-narrow">
+      <div className="page-header">
+        <div>
+          <div className="eyebrow">Events</div>
+          <h1 className="page-title">{t("events.createTitle")}</h1>
+        </div>
+      </div>
+      <form onSubmit={submit} className="card">
+        <div className="field">
+          <label className="label" htmlFor="ev-title">
+            {t("events.fieldTitle")}
+          </label>
           <input
+            id="ev-title"
+            className="input"
             type="text"
             required
             maxLength={200}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            style={{ display: "block", width: "100%", padding: "0.5rem" }}
           />
-        </label>
-        <label>
-          {t("events.fieldDescription")}
+        </div>
+        <div className="field">
+          <label className="label" htmlFor="ev-desc">
+            {t("events.fieldDescription")}
+          </label>
           <textarea
+            id="ev-desc"
+            className="textarea"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
             maxLength={5000}
-            style={{ display: "block", width: "100%", padding: "0.5rem" }}
           />
-        </label>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-          <label>
-            {t("events.fieldType")}
+        </div>
+        <div className="field-row">
+          <div className="field">
+            <label className="label" htmlFor="ev-type">
+              {t("events.fieldType")}
+            </label>
             <select
+              id="ev-type"
+              className="select"
               value={eventType}
               onChange={(e) => setEventType(e.target.value as EventType)}
-              style={{ display: "block", width: "100%", padding: "0.5rem" }}
             >
               {EVENT_TYPES.map((typeKey) => (
                 <option key={typeKey} value={typeKey}>
@@ -107,13 +112,16 @@ export default function EventCreatePage() {
                 </option>
               ))}
             </select>
-          </label>
-          <label>
-            {t("events.fieldVisibility")}
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="ev-visibility">
+              {t("events.fieldVisibility")}
+            </label>
             <select
+              id="ev-visibility"
+              className="select"
               value={visibility}
               onChange={(e) => setVisibility(e.target.value as EventVisibility)}
-              style={{ display: "block", width: "100%", padding: "0.5rem" }}
             >
               {EVENT_VISIBILITIES.map((v) => (
                 <option key={v} value={v}>
@@ -121,74 +129,72 @@ export default function EventCreatePage() {
                 </option>
               ))}
             </select>
-          </label>
+          </div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-          <label>
-            {t("events.fieldStart")}
+        <div className="field-row">
+          <div className="field">
+            <label className="label" htmlFor="ev-start">
+              {t("events.fieldStart")}
+            </label>
             <input
+              id="ev-start"
+              className="input"
               type="datetime-local"
               required
               value={startAt}
               onChange={(e) => setStartAt(e.target.value)}
-              style={{ display: "block", width: "100%", padding: "0.5rem" }}
             />
-          </label>
-          <label>
-            {t("events.fieldEnd")}
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="ev-end">
+              {t("events.fieldEnd")}
+            </label>
             <input
+              id="ev-end"
+              className="input"
               type="datetime-local"
               required
               value={endAt}
               onChange={(e) => setEndAt(e.target.value)}
-              style={{ display: "block", width: "100%", padding: "0.5rem" }}
             />
-          </label>
+          </div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "1rem" }}>
-          <label>
-            {t("events.fieldLocation")}
+        <div className="field-row">
+          <div className="field">
+            <label className="label" htmlFor="ev-location">
+              {t("events.fieldLocation")}
+            </label>
             <input
+              id="ev-location"
+              className="input"
               type="text"
               maxLength={500}
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              style={{ display: "block", width: "100%", padding: "0.5rem" }}
             />
-          </label>
-          <label>
-            {t("events.fieldCapacity")}
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="ev-capacity">
+              {t("events.fieldCapacity")}
+            </label>
             <input
+              id="ev-capacity"
+              className="input"
               type="number"
               min={1}
               value={capacity}
               onChange={(e) => setCapacity(e.target.value)}
-              style={{ display: "block", width: "100%", padding: "0.5rem" }}
             />
-          </label>
+          </div>
         </div>
 
-        {errMsg && <p style={{ color: "#b00020", margin: 0 }}>{errMsg}</p>}
+        {errMsg && <div className="alert alert-error">{errMsg}</div>}
 
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          <button
-            type="submit"
-            disabled={createMut.isPending}
-            style={{
-              padding: "0.5rem 1rem",
-              background: "#1d4ed8",
-              color: "white",
-              border: 0,
-              borderRadius: 6,
-            }}
-          >
+        <div className="form-actions">
+          <button type="submit" disabled={createMut.isPending} className="btn btn-primary">
             {createMut.isPending ? t("events.creating") : t("events.create")}
           </button>
-          <button
-            type="button"
-            onClick={() => navigate("/events")}
-            style={{ padding: "0.5rem 1rem" }}
-          >
+          <button type="button" onClick={() => navigate("/events")} className="btn btn-outline">
             {t("common.cancel")}
           </button>
         </div>

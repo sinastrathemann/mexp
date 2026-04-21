@@ -87,71 +87,75 @@ export function DocumentsPanel({ event }: DocumentsPanelProps) {
   };
 
   return (
-    <section style={{ marginTop: "2rem" }}>
-      <h2 style={{ fontSize: "1.1rem" }}>{t("documents.title")}</h2>
-
-      {canWrite && (
-        <div style={{ marginBottom: "1rem" }}>
-          <button type="button" onClick={() => setShowForm((s) => !s)}>
-            {showForm ? t("common.cancel") : t("documents.addItem")}
+    <section className="card">
+      <div className="card-header">
+        <h2 className="card-title">{t("documents.title")}</h2>
+        {canWrite && (
+          <button
+            type="button"
+            onClick={() => setShowForm((s) => !s)}
+            className={showForm ? "btn btn-outline btn-sm" : "btn btn-primary btn-sm"}
+          >
+            {showForm ? t("common.cancel") : `+ ${t("documents.addItem")}`}
           </button>
-          <span style={{ marginLeft: "1rem", color: "#888", fontSize: "0.85rem" }}>
-            {t("documents.uploadHint")}
-          </span>
-        </div>
-      )}
+        )}
+      </div>
+      {canWrite && <p className="muted text-xs">{t("documents.uploadHint")}</p>}
 
       {showForm && canWrite && (
-        <form
-          onSubmit={handleCreate}
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "0.5rem",
-            border: "1px solid #ddd",
-            borderRadius: 8,
-            padding: "1rem",
-            marginBottom: "1rem",
-          }}
-        >
-          <label style={{ gridColumn: "1 / -1" }}>
-            {t("documents.fieldName")}
+        <form onSubmit={handleCreate} className="card-flat">
+          <div className="field">
+            <label className="label" htmlFor="doc-name">
+              {t("documents.fieldName")}
+            </label>
             <input
+              id="doc-name"
+              className="input"
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
-              style={{ width: "100%" }}
             />
-          </label>
-          <label>
-            {t("documents.fieldMimeType")}
-            <input
-              type="text"
-              value={form.mimeType}
-              onChange={(e) => setForm({ ...form, mimeType: e.target.value })}
-              required
-              style={{ width: "100%" }}
-            />
-          </label>
-          <label>
-            {t("documents.fieldFileSize")}
-            <input
-              type="number"
-              min={0}
-              value={form.fileSize}
-              onChange={(e) => setForm({ ...form, fileSize: e.target.value })}
-              style={{ width: "100%" }}
-            />
-          </label>
-          <label style={{ gridColumn: "1 / -1" }}>
-            {t("documents.fieldVisibility")}
+          </div>
+          <div className="field-row">
+            <div className="field">
+              <label className="label" htmlFor="doc-mime">
+                {t("documents.fieldMimeType")}
+              </label>
+              <input
+                id="doc-mime"
+                className="input"
+                type="text"
+                value={form.mimeType}
+                onChange={(e) => setForm({ ...form, mimeType: e.target.value })}
+                required
+              />
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="doc-size">
+                {t("documents.fieldFileSize")}
+              </label>
+              <input
+                id="doc-size"
+                className="input"
+                type="number"
+                min={0}
+                value={form.fileSize}
+                onChange={(e) => setForm({ ...form, fileSize: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="doc-vis">
+              {t("documents.fieldVisibility")}
+            </label>
             <select
+              id="doc-vis"
+              className="select"
               value={form.visibility}
               onChange={(e) =>
                 setForm({ ...form, visibility: e.target.value as DocumentVisibility })
               }
-              style={{ width: "100%" }}
             >
               {DOCUMENT_VISIBILITIES.map((v) => (
                 <option key={v} value={v}>
@@ -159,52 +163,53 @@ export function DocumentsPanel({ event }: DocumentsPanelProps) {
                 </option>
               ))}
             </select>
-          </label>
-          <div style={{ gridColumn: "1 / -1" }}>
-            <button type="submit" disabled={createMut.isPending}>
+          </div>
+          <div className="form-actions">
+            <button type="submit" disabled={createMut.isPending} className="btn btn-primary">
               {t("common.save")}
             </button>
             {createMut.error instanceof Error && (
-              <span style={{ color: "#b00020", marginLeft: "1rem" }}>
-                {createMut.error.message}
-              </span>
+              <span className="err-msg">{createMut.error.message}</span>
             )}
           </div>
         </form>
       )}
 
       {docsQ.isLoading ? (
-        <p>{t("auth.loading")}</p>
+        <p className="muted">{t("auth.loading")}</p>
       ) : docs.length === 0 ? (
-        <p style={{ color: "#888" }}>{t("documents.empty")}</p>
+        <p className="muted">{t("documents.empty")}</p>
       ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <table className="table">
           <thead>
-            <tr style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}>
-              <th style={{ padding: "0.5rem" }}>{t("documents.fieldName")}</th>
-              <th style={{ padding: "0.5rem" }}>{t("documents.fieldMimeType")}</th>
-              <th style={{ padding: "0.5rem", textAlign: "right" }}>
-                {t("documents.fieldFileSize")}
-              </th>
-              <th style={{ padding: "0.5rem" }}>{t("documents.fieldVisibility")}</th>
-              <th style={{ padding: "0.5rem" }}>{t("documents.fieldUploadedAt")}</th>
-              {canDelete && <th style={{ padding: "0.5rem" }}>{t("documents.fieldActions")}</th>}
+            <tr>
+              <th>{t("documents.fieldName")}</th>
+              <th>{t("documents.fieldMimeType")}</th>
+              <th style={{ textAlign: "right" }}>{t("documents.fieldFileSize")}</th>
+              <th>{t("documents.fieldVisibility")}</th>
+              <th>{t("documents.fieldUploadedAt")}</th>
+              {canDelete && <th>{t("documents.fieldActions")}</th>}
             </tr>
           </thead>
           <tbody>
             {docs.map((doc) => (
-              <tr key={doc.id} style={{ borderBottom: "1px solid #eee" }}>
-                <td style={{ padding: "0.5rem" }}>{doc.name}</td>
-                <td style={{ padding: "0.5rem" }}>{doc.mimeType}</td>
-                <td style={{ padding: "0.5rem", textAlign: "right" }}>{fmtSize(doc.fileSize)}</td>
-                <td style={{ padding: "0.5rem" }}>{t(`documents.visibility.${doc.visibility}`)}</td>
-                <td style={{ padding: "0.5rem" }}>{fmtDate(doc.uploadedAt)}</td>
+              <tr key={doc.id}>
+                <td className="text-bold">{doc.name}</td>
+                <td className="muted text-sm">{doc.mimeType}</td>
+                <td style={{ textAlign: "right" }}>{fmtSize(doc.fileSize)}</td>
+                <td>
+                  <span className="badge badge-muted">
+                    {t(`documents.visibility.${doc.visibility}`)}
+                  </span>
+                </td>
+                <td className="muted text-sm">{fmtDate(doc.uploadedAt)}</td>
                 {canDelete && (
-                  <td style={{ padding: "0.5rem" }}>
+                  <td>
                     <button
                       type="button"
                       onClick={() => deleteMut.mutate(doc.id)}
                       disabled={deleteMut.isPending}
+                      className="btn btn-ghost btn-sm"
                     >
                       {t("documents.delete")}
                     </button>

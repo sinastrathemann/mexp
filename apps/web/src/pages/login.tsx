@@ -48,53 +48,54 @@ export default function LoginPage() {
   }
 
   return (
-    <div
-      style={{
-        maxWidth: 420,
-        margin: "4rem auto",
-        padding: "2rem",
-        border: "1px solid #ddd",
-        borderRadius: 8,
-        fontFamily: "system-ui",
-      }}
-    >
-      <h1 style={{ marginTop: 0 }}>{t("auth.loginTitle")}</h1>
-      <form onSubmit={onSubmit}>
-        <label style={{ display: "block", marginBottom: "1rem" }}>
-          {t("auth.emailLabel")}
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-            style={{ display: "block", width: "100%", padding: "0.5rem", marginTop: "0.25rem" }}
-          />
-        </label>
-        <label style={{ display: "block", marginBottom: "1rem" }}>
-          {t("auth.passwordLabel")}
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-            style={{ display: "block", width: "100%", padding: "0.5rem", marginTop: "0.25rem" }}
-          />
-        </label>
-        {error && (
-          <p style={{ color: "#b00020", marginBottom: "1rem" }} role="alert">
-            {error}
-          </p>
-        )}
-        <button
-          type="submit"
-          disabled={pending}
-          style={{ width: "100%", padding: "0.75rem", fontSize: "1rem" }}
-        >
-          {pending ? t("auth.loginPending") : t("auth.loginSubmit")}
-        </button>
-      </form>
+    <div className="login-wrap">
+      <div className="card login-card">
+        <div className="eyebrow">mindsquare · mEMP</div>
+        <h1 style={{ marginTop: 0 }}>{t("auth.loginTitle")}</h1>
+        <form onSubmit={onSubmit}>
+          <div className="field">
+            <label className="label" htmlFor="login-email">
+              {t("auth.emailLabel")}
+            </label>
+            <input
+              id="login-email"
+              className="input"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+            />
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="login-password">
+              {t("auth.passwordLabel")}
+            </label>
+            <input
+              id="login-password"
+              className="input"
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+            />
+          </div>
+          {error && (
+            <div className="alert alert-error" role="alert">
+              {error}
+            </div>
+          )}
+          <button
+            type="submit"
+            disabled={pending}
+            className="btn btn-primary btn-lg"
+            style={{ width: "100%" }}
+          >
+            {pending ? t("auth.loginPending") : t("auth.loginSubmit")}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

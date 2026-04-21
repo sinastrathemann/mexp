@@ -82,48 +82,48 @@ export function FeedbackPanel({ event }: FeedbackPanelProps) {
   const fmtAvg = (v: number | null) => (v === null ? "—" : v.toFixed(2));
 
   return (
-    <section style={{ marginTop: "2rem" }}>
-      <h2 style={{ fontSize: "1.1rem" }}>{t("feedback.title")}</h2>
+    <section className="card">
+      <h2 className="card-title">{t("feedback.title")}</h2>
 
       {canSubmit &&
         (ownQ.data?.feedback ? (
-          <div
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: 8,
-              padding: "1rem",
-              marginBottom: "1rem",
-            }}
-          >
-            <p style={{ marginTop: 0 }}>{t("feedback.alreadySubmitted")}</p>
+          <div className="card-flat" style={{ marginTop: "var(--space-3)" }}>
+            <p className="muted" style={{ marginTop: 0 }}>
+              {t("feedback.alreadySubmitted")}
+            </p>
             <div>
-              {t("feedback.fieldOverall")}: {stars(ownQ.data.feedback.ratingOverall)}
+              <span className="label" style={{ display: "inline", marginRight: 8 }}>
+                {t("feedback.fieldOverall")}
+              </span>
+              {stars(ownQ.data.feedback.ratingOverall)}
             </div>
             {ownQ.data.feedback.ratingContent !== null && (
               <div>
-                {t("feedback.fieldContent")}: {stars(ownQ.data.feedback.ratingContent)}
+                <span className="label" style={{ display: "inline", marginRight: 8 }}>
+                  {t("feedback.fieldContent")}
+                </span>
+                {stars(ownQ.data.feedback.ratingContent)}
               </div>
             )}
             {ownQ.data.feedback.ratingOrganization !== null && (
               <div>
-                {t("feedback.fieldOrganization")}: {stars(ownQ.data.feedback.ratingOrganization)}
+                <span className="label" style={{ display: "inline", marginRight: 8 }}>
+                  {t("feedback.fieldOrganization")}
+                </span>
+                {stars(ownQ.data.feedback.ratingOrganization)}
               </div>
             )}
             {ownQ.data.feedback.comment && (
-              <p style={{ whiteSpace: "pre-wrap", color: "#444" }}>{ownQ.data.feedback.comment}</p>
+              <p style={{ whiteSpace: "pre-wrap", color: "var(--fg-strong)" }}>
+                {ownQ.data.feedback.comment}
+              </p>
             )}
           </div>
         ) : (
           <form
             onSubmit={handleSubmit}
-            style={{
-              display: "grid",
-              gap: "0.5rem",
-              border: "1px solid #ddd",
-              borderRadius: 8,
-              padding: "1rem",
-              marginBottom: "1rem",
-            }}
+            className="card-flat"
+            style={{ marginTop: "var(--space-3)" }}
           >
             <RatingField
               label={t("feedback.fieldOverall")}
@@ -141,38 +141,32 @@ export function FeedbackPanel({ event }: FeedbackPanelProps) {
               value={form.ratingOrganization}
               onChange={(v) => setForm({ ...form, ratingOrganization: v })}
             />
-            <label>
-              {t("feedback.fieldComment")}
+            <div className="field">
+              <label className="label" htmlFor="fb-comment">
+                {t("feedback.fieldComment")}
+              </label>
               <textarea
+                id="fb-comment"
+                className="textarea"
                 value={form.comment}
                 onChange={(e) => setForm({ ...form, comment: e.target.value })}
                 rows={3}
-                style={{ width: "100%" }}
               />
-            </label>
-            <div>
-              <button type="submit" disabled={submitMut.isPending}>
+            </div>
+            <div className="form-actions">
+              <button type="submit" disabled={submitMut.isPending} className="btn btn-primary">
                 {t("feedback.submit")}
               </button>
               {submitMut.error instanceof Error && (
-                <span style={{ color: "#b00020", marginLeft: "1rem" }}>
-                  {submitMut.error.message}
-                </span>
+                <span className="err-msg">{submitMut.error.message}</span>
               )}
             </div>
           </form>
         ))}
 
       {canManage && allQ.data && (
-        <div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: "0.75rem",
-              marginBottom: "1rem",
-            }}
-          >
+        <div style={{ marginTop: "var(--space-4)" }}>
+          <div className="stat-grid">
             <Kpi label={t("feedback.kpiCount")} value={String(allQ.data.stats.count)} />
             <Kpi
               label={t("feedback.kpiAvgOverall")}
@@ -188,25 +182,36 @@ export function FeedbackPanel({ event }: FeedbackPanelProps) {
             />
           </div>
           {allQ.data.feedback.length > 0 && (
-            <div style={{ marginBottom: "1rem" }}>
+            <div style={{ marginBottom: "var(--space-4)" }}>
               <button
                 type="button"
                 onClick={() => summaryMut.mutate()}
                 disabled={summaryMut.isPending}
+                className="btn btn-yellow btn-sm"
               >
                 {summaryMut.isPending ? t("feedback.summarizing") : t("feedback.summarize")}
               </button>
               {summaryMut.data && (
                 <div
                   style={{
-                    marginTop: "0.75rem",
-                    padding: "0.75rem",
-                    background: "#f7f7f7",
-                    borderLeft: "3px solid #4a90e2",
+                    marginTop: "var(--space-3)",
+                    padding: "var(--space-4)",
+                    background: "var(--brand-yellow-light)",
+                    borderLeft: "4px solid var(--brand-yellow)",
+                    borderRadius: "var(--radius-base)",
                     whiteSpace: "pre-wrap",
                   }}
                 >
-                  <div style={{ fontSize: "0.8rem", color: "#666", marginBottom: "0.25rem" }}>
+                  <div
+                    style={{
+                      fontSize: "var(--text-xs)",
+                      color: "var(--fg-muted)",
+                      marginBottom: "var(--space-2)",
+                      letterSpacing: "var(--tracking-wide)",
+                      textTransform: "uppercase",
+                      fontWeight: "var(--weight-bold)",
+                    }}
+                  >
                     {summaryMut.data.provider} · {summaryMut.data.model} · {t("feedback.kpiCount")}:{" "}
                     {summaryMut.data.count}
                   </div>
@@ -214,37 +219,57 @@ export function FeedbackPanel({ event }: FeedbackPanelProps) {
                 </div>
               )}
               {summaryMut.error instanceof Error && (
-                <p style={{ color: "#b00020" }}>{summaryMut.error.message}</p>
+                <div className="alert alert-error" style={{ marginTop: "var(--space-3)" }}>
+                  {summaryMut.error.message}
+                </div>
               )}
             </div>
           )}
           {allQ.data.feedback.length === 0 ? (
-            <p style={{ color: "#888" }}>{t("feedback.empty")}</p>
+            <p className="muted">{t("feedback.empty")}</p>
           ) : (
-            <ul style={{ listStyle: "none", padding: 0, display: "grid", gap: "0.5rem" }}>
+            <ul style={{ listStyle: "none", padding: 0, display: "grid", gap: "var(--space-2)" }}>
               {allQ.data.feedback.map((fb) => (
-                <li
-                  key={fb.id}
-                  style={{ border: "1px solid #eee", borderRadius: 6, padding: "0.75rem" }}
-                >
-                  <div style={{ fontSize: "0.85rem", color: "#666" }}>
+                <li key={fb.id} className="card-flat" style={{ margin: 0 }}>
+                  <div
+                    style={{
+                      fontSize: "var(--text-xs)",
+                      color: "var(--fg-muted)",
+                      marginBottom: "var(--space-1)",
+                    }}
+                  >
                     {new Date(fb.submittedAt).toLocaleString()}
                   </div>
                   <div>
-                    {t("feedback.fieldOverall")}: {stars(fb.ratingOverall)}
+                    <span className="label" style={{ display: "inline", marginRight: 8 }}>
+                      {t("feedback.fieldOverall")}
+                    </span>
+                    {stars(fb.ratingOverall)}
                   </div>
                   {fb.ratingContent !== null && (
                     <div>
-                      {t("feedback.fieldContent")}: {stars(fb.ratingContent)}
+                      <span className="label" style={{ display: "inline", marginRight: 8 }}>
+                        {t("feedback.fieldContent")}
+                      </span>
+                      {stars(fb.ratingContent)}
                     </div>
                   )}
                   {fb.ratingOrganization !== null && (
                     <div>
-                      {t("feedback.fieldOrganization")}: {stars(fb.ratingOrganization)}
+                      <span className="label" style={{ display: "inline", marginRight: 8 }}>
+                        {t("feedback.fieldOrganization")}
+                      </span>
+                      {stars(fb.ratingOrganization)}
                     </div>
                   )}
                   {fb.comment && (
-                    <p style={{ whiteSpace: "pre-wrap", margin: "0.25rem 0 0", color: "#444" }}>
+                    <p
+                      style={{
+                        whiteSpace: "pre-wrap",
+                        margin: "var(--space-2) 0 0",
+                        color: "var(--fg-strong)",
+                      }}
+                    >
                       {fb.comment}
                     </p>
                   )}
@@ -264,9 +289,11 @@ function stars(n: number): string {
 
 function Kpi({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: "0.5rem 0.75rem" }}>
-      <div style={{ color: "#666", fontSize: "0.8rem" }}>{label}</div>
-      <div style={{ fontSize: "1.1rem", fontWeight: 600 }}>{value}</div>
+    <div className="stat">
+      <div className="stat-value" style={{ fontSize: "var(--text-xl)" }}>
+        {value}
+      </div>
+      <div className="stat-label">{label}</div>
     </div>
   );
 }
@@ -284,13 +311,24 @@ function RatingField({ label, value, required, onChange }: RatingFieldProps) {
       style={{
         display: "flex",
         alignItems: "center",
-        gap: "0.5rem",
-        border: "none",
-        padding: 0,
-        margin: 0,
+        gap: "var(--space-2)",
+        marginBottom: "var(--space-3)",
       }}
     >
-      <legend style={{ minWidth: 140, padding: 0, float: "left" }}>{label}</legend>
+      <legend
+        style={{
+          minWidth: 160,
+          padding: 0,
+          float: "left",
+          fontSize: "var(--label-size)",
+          fontWeight: "var(--label-weight)",
+          color: "var(--fg-subtle)",
+          letterSpacing: "var(--tracking-wide)",
+          textTransform: "uppercase",
+        }}
+      >
+        {label}
+      </legend>
       {[1, 2, 3, 4, 5].map((n) => (
         <button
           key={n}
@@ -300,9 +338,9 @@ function RatingField({ label, value, required, onChange }: RatingFieldProps) {
             border: "none",
             background: "transparent",
             cursor: "pointer",
-            fontSize: "1.3rem",
-            color: value !== null && n <= value ? "#f5a623" : "#ccc",
-            padding: "0 0.1rem",
+            fontSize: "1.35rem",
+            color: value !== null && n <= value ? "var(--brand-yellow)" : "var(--border-strong)",
+            padding: "0 2px",
           }}
           aria-label={`${n}`}
         >
@@ -313,7 +351,8 @@ function RatingField({ label, value, required, onChange }: RatingFieldProps) {
         <button
           type="button"
           onClick={() => onChange(null)}
-          style={{ fontSize: "0.8rem", marginLeft: "0.5rem" }}
+          className="btn btn-ghost btn-sm"
+          style={{ marginLeft: "var(--space-2)" }}
         >
           ×
         </button>

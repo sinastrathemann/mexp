@@ -114,243 +114,276 @@ export default function BlueprintsPage() {
   };
 
   return (
-    <div style={{ padding: "2rem", fontFamily: "system-ui", maxWidth: 1000 }}>
-      <h1>{t("blueprints.title")}</h1>
-      <p style={{ color: "#555" }}>{t("blueprints.intro")}</p>
-
-      {canWrite && (
-        <div style={{ marginBottom: "1rem" }}>
-          <button type="button" onClick={() => setShowForm((s) => !s)}>
-            {showForm ? t("common.cancel") : t("blueprints.create")}
-          </button>
+    <div className="page">
+      <div className="page-header">
+        <div>
+          <div className="eyebrow">Standards</div>
+          <h1 className="page-title">{t("blueprints.title")}</h1>
+          <p className="muted page-subtitle">{t("blueprints.intro")}</p>
         </div>
-      )}
+        {canWrite && (
+          <button
+            type="button"
+            onClick={() => setShowForm((s) => !s)}
+            className={showForm ? "btn btn-outline btn-sm" : "btn btn-primary btn-sm"}
+          >
+            {showForm ? t("common.cancel") : `+ ${t("blueprints.create")}`}
+          </button>
+        )}
+      </div>
 
       {showForm && (
-        <form
-          onSubmit={handleCreate}
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "0.5rem",
-            border: "1px solid #ddd",
-            borderRadius: 8,
-            padding: "1rem",
-            marginBottom: "1.5rem",
-          }}
-        >
-          <label style={{ gridColumn: "1 / -1" }}>
-            {t("blueprints.fieldName")}
+        <form onSubmit={handleCreate} className="card">
+          <div className="field">
+            <label className="label" htmlFor="bp-name">
+              {t("blueprints.fieldName")}
+            </label>
             <input
+              id="bp-name"
+              className="input"
               type="text"
               required
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              style={{ width: "100%" }}
             />
-          </label>
-          <label style={{ gridColumn: "1 / -1" }}>
-            {t("blueprints.fieldDescription")}
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="bp-desc">
+              {t("blueprints.fieldDescription")}
+            </label>
             <input
+              id="bp-desc"
+              className="input"
               type="text"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              style={{ width: "100%" }}
             />
-          </label>
-          <label>
-            {t("events.fieldType")}
-            <select
-              value={form.eventType}
-              onChange={(e) => setForm({ ...form, eventType: e.target.value as EventType })}
-              style={{ width: "100%" }}
-            >
-              {EVENT_TYPES.map((x) => (
-                <option key={x} value={x}>
-                  {t(`events.type.${x}`)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            {t("events.fieldVisibility")}
-            <select
-              value={form.visibility}
-              onChange={(e) => setForm({ ...form, visibility: e.target.value as EventVisibility })}
-              style={{ width: "100%" }}
-            >
-              {EVENT_VISIBILITIES.map((x) => (
-                <option key={x} value={x}>
-                  {t(`events.visibility.${x}`)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            {t("blueprints.fieldDuration")}
+          </div>
+          <div className="field-row">
+            <div className="field">
+              <label className="label" htmlFor="bp-type">
+                {t("events.fieldType")}
+              </label>
+              <select
+                id="bp-type"
+                className="select"
+                value={form.eventType}
+                onChange={(e) => setForm({ ...form, eventType: e.target.value as EventType })}
+              >
+                {EVENT_TYPES.map((x) => (
+                  <option key={x} value={x}>
+                    {t(`events.type.${x}`)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="bp-vis">
+                {t("events.fieldVisibility")}
+              </label>
+              <select
+                id="bp-vis"
+                className="select"
+                value={form.visibility}
+                onChange={(e) =>
+                  setForm({ ...form, visibility: e.target.value as EventVisibility })
+                }
+              >
+                {EVENT_VISIBILITIES.map((x) => (
+                  <option key={x} value={x}>
+                    {t(`events.visibility.${x}`)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="field-row">
+            <div className="field">
+              <label className="label" htmlFor="bp-dur">
+                {t("blueprints.fieldDuration")}
+              </label>
+              <input
+                id="bp-dur"
+                className="input"
+                type="number"
+                min={1}
+                required
+                value={form.defaultDurationMinutes}
+                onChange={(e) => setForm({ ...form, defaultDurationMinutes: e.target.value })}
+              />
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="bp-cap">
+                {t("blueprints.fieldCapacity")}
+              </label>
+              <input
+                id="bp-cap"
+                className="input"
+                type="number"
+                min={1}
+                value={form.defaultCapacity}
+                onChange={(e) => setForm({ ...form, defaultCapacity: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="bp-loc">
+              {t("blueprints.fieldLocation")}
+            </label>
             <input
-              type="number"
-              min={1}
-              required
-              value={form.defaultDurationMinutes}
-              onChange={(e) => setForm({ ...form, defaultDurationMinutes: e.target.value })}
-              style={{ width: "100%" }}
-            />
-          </label>
-          <label>
-            {t("blueprints.fieldCapacity")}
-            <input
-              type="number"
-              min={1}
-              value={form.defaultCapacity}
-              onChange={(e) => setForm({ ...form, defaultCapacity: e.target.value })}
-              style={{ width: "100%" }}
-            />
-          </label>
-          <label style={{ gridColumn: "1 / -1" }}>
-            {t("blueprints.fieldLocation")}
-            <input
+              id="bp-loc"
+              className="input"
               type="text"
               value={form.defaultLocation}
               onChange={(e) => setForm({ ...form, defaultLocation: e.target.value })}
-              style={{ width: "100%" }}
             />
-          </label>
-          <label style={{ gridColumn: "1 / -1" }}>
-            {t("blueprints.fieldDefaultDescription")}
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="bp-defdesc">
+              {t("blueprints.fieldDefaultDescription")}
+            </label>
             <textarea
+              id="bp-defdesc"
+              className="textarea"
               rows={3}
               value={form.defaultDescription}
               onChange={(e) => setForm({ ...form, defaultDescription: e.target.value })}
-              style={{ width: "100%" }}
             />
-          </label>
-          <div style={{ gridColumn: "1 / -1" }}>
-            <button type="submit" disabled={createMut.isPending}>
+          </div>
+          <div className="form-actions">
+            <button type="submit" disabled={createMut.isPending} className="btn btn-primary">
               {t("common.save")}
             </button>
             {createMut.error instanceof Error && (
-              <span style={{ color: "#b00020", marginLeft: "1rem" }}>
-                {createMut.error.message}
-              </span>
+              <span className="err-msg">{createMut.error.message}</span>
             )}
           </div>
         </form>
       )}
 
       {listQ.isLoading ? (
-        <p>{t("auth.loading")}</p>
+        <div className="card muted">{t("auth.loading")}</div>
       ) : (listQ.data?.blueprints.length ?? 0) === 0 ? (
-        <p style={{ color: "#888" }}>{t("blueprints.empty")}</p>
+        <div className="card muted">{t("blueprints.empty")}</div>
       ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}>
-              <th style={{ padding: "0.5rem" }}>{t("blueprints.fieldName")}</th>
-              <th style={{ padding: "0.5rem" }}>{t("events.fieldType")}</th>
-              <th style={{ padding: "0.5rem" }}>{t("blueprints.fieldDuration")}</th>
-              <th style={{ padding: "0.5rem" }}>{t("blueprints.fieldCapacity")}</th>
-              <th style={{ padding: "0.5rem" }}>{t("blueprints.fieldLocation")}</th>
-              <th style={{ padding: "0.5rem" }}>{t("blueprints.fieldActions")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {listQ.data?.blueprints.map((bp) => (
-              <tr key={bp.id} style={{ borderBottom: "1px solid #eee" }}>
-                <td style={{ padding: "0.5rem" }}>
-                  <div>{bp.name}</div>
-                  {bp.description && (
-                    <div style={{ color: "#888", fontSize: "0.85rem" }}>{bp.description}</div>
-                  )}
-                </td>
-                <td style={{ padding: "0.5rem" }}>{t(`events.type.${bp.eventType}`)}</td>
-                <td style={{ padding: "0.5rem" }}>{bp.defaultDurationMinutes} min</td>
-                <td style={{ padding: "0.5rem" }}>{bp.defaultCapacity ?? "—"}</td>
-                <td style={{ padding: "0.5rem" }}>{bp.defaultLocation ?? "—"}</td>
-                <td style={{ padding: "0.5rem" }}>
-                  {canWrite && (
-                    <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap" }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setApplyFor(bp.id);
-                          setApplyTitle(bp.name);
-                          setApplyStart("");
-                        }}
-                      >
-                        {t("blueprints.apply")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (window.confirm(t("blueprints.confirmDelete") ?? "Delete?")) {
-                            deleteMut.mutate(bp.id);
-                          }
-                        }}
-                      >
-                        {t("blueprints.delete")}
-                      </button>
-                    </div>
-                  )}
-                </td>
+        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>{t("blueprints.fieldName")}</th>
+                <th>{t("events.fieldType")}</th>
+                <th>{t("blueprints.fieldDuration")}</th>
+                <th>{t("blueprints.fieldCapacity")}</th>
+                <th>{t("blueprints.fieldLocation")}</th>
+                <th>{t("blueprints.fieldActions")}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {listQ.data?.blueprints.map((bp) => (
+                <tr key={bp.id}>
+                  <td>
+                    <div className="text-bold">{bp.name}</div>
+                    {bp.description && (
+                      <div className="muted text-xs" style={{ marginTop: 2 }}>
+                        {bp.description}
+                      </div>
+                    )}
+                  </td>
+                  <td>
+                    <span className="badge badge-orange">{t(`events.type.${bp.eventType}`)}</span>
+                  </td>
+                  <td>{bp.defaultDurationMinutes} min</td>
+                  <td>{bp.defaultCapacity ?? "—"}</td>
+                  <td>{bp.defaultLocation ?? "—"}</td>
+                  <td>
+                    {canWrite && (
+                      <div className="row" style={{ gap: "var(--space-2)" }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setApplyFor(bp.id);
+                            setApplyTitle(bp.name);
+                            setApplyStart("");
+                          }}
+                          className="btn btn-primary btn-sm"
+                        >
+                          {t("blueprints.apply")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm(t("blueprints.confirmDelete") ?? "Delete?")) {
+                              deleteMut.mutate(bp.id);
+                            }
+                          }}
+                          className="btn btn-ghost btn-sm"
+                        >
+                          {t("blueprints.delete")}
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {applyFor && (
-        <form
-          onSubmit={handleApply}
-          style={{
-            position: "fixed",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            background: "white",
-            border: "1px solid #ccc",
-            borderRadius: 8,
-            padding: "1.5rem",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-            minWidth: 360,
-            display: "grid",
-            gap: "0.5rem",
-            zIndex: 10,
+        <div
+          className="modal-backdrop"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setApplyFor(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setApplyFor(null);
           }}
         >
-          <h2 style={{ margin: 0 }}>{t("blueprints.applyTitle")}</h2>
-          <label>
-            {t("events.fieldTitle")}
-            <input
-              type="text"
-              required
-              value={applyTitle}
-              onChange={(e) => setApplyTitle(e.target.value)}
-              style={{ width: "100%" }}
-            />
-          </label>
-          <label>
-            {t("events.fieldStart")}
-            <input
-              type="datetime-local"
-              required
-              value={applyStart}
-              onChange={(e) => setApplyStart(e.target.value)}
-              style={{ width: "100%" }}
-            />
-          </label>
-          <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-            <button type="button" onClick={() => setApplyFor(null)}>
-              {t("common.cancel")}
-            </button>
-            <button type="submit" disabled={applyMut.isPending}>
-              {t("blueprints.apply")}
-            </button>
-          </div>
-          {applyMut.error instanceof Error && (
-            <p style={{ color: "#b00020", margin: 0 }}>{applyMut.error.message}</p>
-          )}
-        </form>
+          <form onSubmit={handleApply} className="modal">
+            <div className="eyebrow">Blueprint</div>
+            <h2 style={{ marginTop: 0 }}>{t("blueprints.applyTitle")}</h2>
+            <div className="field">
+              <label className="label" htmlFor="ap-title">
+                {t("events.fieldTitle")}
+              </label>
+              <input
+                id="ap-title"
+                className="input"
+                type="text"
+                required
+                value={applyTitle}
+                onChange={(e) => setApplyTitle(e.target.value)}
+              />
+            </div>
+            <div className="field">
+              <label className="label" htmlFor="ap-start">
+                {t("events.fieldStart")}
+              </label>
+              <input
+                id="ap-start"
+                className="input"
+                type="datetime-local"
+                required
+                value={applyStart}
+                onChange={(e) => setApplyStart(e.target.value)}
+              />
+            </div>
+            <div className="form-actions" style={{ justifyContent: "flex-end" }}>
+              <button type="button" onClick={() => setApplyFor(null)} className="btn btn-outline">
+                {t("common.cancel")}
+              </button>
+              <button type="submit" disabled={applyMut.isPending} className="btn btn-primary">
+                {t("blueprints.apply")}
+              </button>
+            </div>
+            {applyMut.error instanceof Error && (
+              <div className="alert alert-error" style={{ marginTop: "var(--space-3)" }}>
+                {applyMut.error.message}
+              </div>
+            )}
+          </form>
+        </div>
       )}
     </div>
   );

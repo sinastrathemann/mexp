@@ -24,37 +24,72 @@ export default function DashboardPage() {
     queryFn: () => apiFetch<{ stats: PortfolioStatsDto }>("/dashboard/portfolio"),
   });
 
-  if (isLoading) return <p style={{ padding: "2rem" }}>{t("auth.loading")}</p>;
+  if (isLoading) return <div className="page">{t("auth.loading")}</div>;
   if (error instanceof Error)
-    return <p style={{ padding: "2rem", color: "#b00020" }}>{error.message}</p>;
+    return (
+      <div className="page">
+        <div className="alert alert-error">{error.message}</div>
+      </div>
+    );
   if (!data) return null;
 
   const s = data.stats;
   const fmtPct = (v: number | null) => (v === null ? "—" : `${Math.round(v * 100)} %`);
 
   return (
-    <div style={{ padding: "2rem", fontFamily: "system-ui", maxWidth: 1100 }}>
-      <h1>{t("dashboard.title")}</h1>
+    <div className="page">
+      <div className="page-header">
+        <div>
+          <div className="eyebrow">Portfolio</div>
+          <h1 className="page-title">{t("dashboard.title")}</h1>
+        </div>
+      </div>
 
-      <section style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem" }}>
-        <KpiCard label={t("dashboard.totalEvents")} value={String(s.totalEvents)} />
-        <KpiCard label={t("dashboard.upcomingEvents")} value={String(s.upcomingEventsCount)} />
-        <KpiCard label={t("dashboard.attendanceRate")} value={fmtPct(s.attendanceRate)} />
-        <KpiCard label={t("dashboard.noShowRate")} value={fmtPct(s.noShowRate)} />
+      <section className="stat-grid">
+        <div className="stat stat-orange">
+          <div className="stat-value">{s.totalEvents}</div>
+          <div className="stat-label">{t("dashboard.totalEvents")}</div>
+        </div>
+        <div className="stat stat-yellow">
+          <div className="stat-value">{s.upcomingEventsCount}</div>
+          <div className="stat-label">{t("dashboard.upcomingEvents")}</div>
+        </div>
+        <div className="stat">
+          <div className="stat-value">{fmtPct(s.attendanceRate)}</div>
+          <div className="stat-label">{t("dashboard.attendanceRate")}</div>
+        </div>
+        <div className="stat">
+          <div className="stat-value">{fmtPct(s.noShowRate)}</div>
+          <div className="stat-label">{t("dashboard.noShowRate")}</div>
+        </div>
       </section>
 
-      <section style={{ marginTop: "2rem" }}>
-        <h2 style={{ fontSize: "1.1rem" }}>{t("dashboard.eventsByStatus")}</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "0.5rem" }}>
+      <section className="card">
+        <h2 className="card-title">{t("dashboard.eventsByStatus")}</h2>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+            gap: "var(--space-3)",
+            marginTop: "var(--space-4)",
+          }}
+        >
           {EVENT_STATUSES.map((es) => (
             <MiniCard key={es} label={t(`events.status.${es}`)} value={s.eventsByStatus[es] ?? 0} />
           ))}
         </div>
       </section>
 
-      <section style={{ marginTop: "2rem" }}>
-        <h2 style={{ fontSize: "1.1rem" }}>{t("dashboard.participationByStatus")}</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "0.5rem" }}>
+      <section className="card">
+        <h2 className="card-title">{t("dashboard.participationByStatus")}</h2>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+            gap: "var(--space-3)",
+            marginTop: "var(--space-4)",
+          }}
+        >
           {PARTICIPATION_STATUSES.map((ps) => (
             <MiniCard
               key={ps}
@@ -68,20 +103,26 @@ export default function DashboardPage() {
   );
 }
 
-function KpiCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: "1rem" }}>
-      <div style={{ fontSize: "0.85rem", color: "#777" }}>{label}</div>
-      <div style={{ fontSize: "2rem", fontWeight: 600 }}>{value}</div>
-    </div>
-  );
-}
-
 function MiniCard({ label, value }: { label: string; value: number }) {
   return (
-    <div style={{ border: "1px solid #eee", borderRadius: 6, padding: "0.75rem" }}>
-      <div style={{ fontSize: "0.8rem", color: "#777" }}>{label}</div>
-      <div style={{ fontSize: "1.3rem", fontWeight: 600 }}>{value}</div>
+    <div
+      style={{
+        border: "1px solid var(--border-default)",
+        borderRadius: "var(--radius-base)",
+        padding: "var(--space-3) var(--space-4)",
+        background: "var(--bg-subtle)",
+      }}
+    >
+      <div className="stat-label">{label}</div>
+      <div
+        style={{
+          fontSize: "var(--text-xl)",
+          fontWeight: "var(--weight-black)",
+          color: "var(--fg-default)",
+        }}
+      >
+        {value}
+      </div>
     </div>
   );
 }

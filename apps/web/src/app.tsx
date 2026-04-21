@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { BrowserRouter, Link, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth/auth-context";
 import { ProtectedRoute } from "./auth/protected-route";
 import AdminUsersPage from "./pages/admin-users";
@@ -19,41 +19,72 @@ const queryClient = new QueryClient({
 function TopBar() {
   const { t, i18n } = useTranslation();
   const { user, logout, hasRole } = useAuth();
+  const location = useLocation();
+  const isLogin = location.pathname === "/login";
+
   return (
-    <header
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "0.75rem 2rem",
-        borderBottom: "1px solid #ddd",
-        fontFamily: "system-ui",
-      }}
-    >
-      <nav style={{ display: "flex", gap: "1rem" }}>
-        <Link to="/">{t("app.title")}</Link>
-        {user && <Link to="/dashboard">{t("dashboard.navLink")}</Link>}
-        {user && <Link to="/events">{t("events.navLink")}</Link>}
-        {hasRole("admin", "manager", "event_office") && (
-          <Link to="/blueprints">{t("blueprints.navLink")}</Link>
-        )}
-        {hasRole("admin") && <Link to="/admin/users">{t("admin.usersLink")}</Link>}
-      </nav>
-      <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-        {user && <span>{user.displayName}</span>}
-        <button
-          type="button"
-          onClick={() => i18n.changeLanguage(i18n.language === "de" ? "en" : "de")}
-        >
-          {i18n.language === "de" ? "EN" : "DE"}
-        </button>
-        {user && (
-          <button type="button" onClick={() => void logout()}>
-            {t("auth.logout")}
-          </button>
-        )}
+    <div className="ms-topbar-wrap">
+      <div className="ms-topbar-utility">
+        <span className="text-bold">mindsquare AG</span>
+        <span>mEMP · Event Management</span>
       </div>
-    </header>
+      <div className="ms-topbar">
+        <NavLink to={user ? "/dashboard" : "/"} className="ms-logo">
+          <img src="/logo-mindsquare.png" alt="mindsquare" />
+        </NavLink>
+        {!isLogin && (
+          <nav className="ms-nav-links">
+            {user && (
+              <NavLink
+                to="/dashboard"
+                className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
+              >
+                {t("dashboard.navLink")}
+              </NavLink>
+            )}
+            {user && (
+              <NavLink
+                to="/events"
+                className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
+              >
+                {t("events.navLink")}
+              </NavLink>
+            )}
+            {hasRole("admin", "manager", "event_office") && (
+              <NavLink
+                to="/blueprints"
+                className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
+              >
+                {t("blueprints.navLink")}
+              </NavLink>
+            )}
+            {hasRole("admin") && (
+              <NavLink
+                to="/admin/users"
+                className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
+              >
+                {t("admin.usersLink")}
+              </NavLink>
+            )}
+          </nav>
+        )}
+        <div className="ms-nav-actions">
+          {user && <span className="ms-nav-user">{user.displayName}</span>}
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={() => i18n.changeLanguage(i18n.language === "de" ? "en" : "de")}
+          >
+            {i18n.language === "de" ? "EN" : "DE"}
+          </button>
+          {user && (
+            <button type="button" className="btn btn-outline btn-sm" onClick={() => void logout()}>
+              {t("auth.logout")}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 

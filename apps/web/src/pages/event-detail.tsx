@@ -7,6 +7,7 @@ import { BudgetPanel } from "../events/budget-panel";
 import { DocumentsPanel } from "../events/documents-panel";
 import { FeedbackPanel } from "../events/feedback-panel";
 import { ParticipantsPanel } from "../events/participants-panel";
+import { EventStatusBadge } from "../events/status-badge";
 import { type EventDto, type EventStatus, allowedTransitions } from "../events/types";
 
 export default function EventDetailPage() {
@@ -33,9 +34,13 @@ export default function EventDetailPage() {
     },
   });
 
-  if (isLoading) return <p style={{ padding: "2rem" }}>{t("auth.loading")}</p>;
+  if (isLoading) return <div className="page">{t("auth.loading")}</div>;
   if (error instanceof Error)
-    return <p style={{ padding: "2rem", color: "#b00020" }}>{error.message}</p>;
+    return (
+      <div className="page">
+        <div className="alert alert-error">{error.message}</div>
+      </div>
+    );
   if (!data) return null;
 
   const event = data.event;
@@ -47,55 +52,72 @@ export default function EventDetailPage() {
   const next = allowedTransitions(event.status);
 
   return (
-    <div style={{ padding: "2rem", fontFamily: "system-ui", maxWidth: 900 }}>
-      <Link to="/events">← {t("events.backToList")}</Link>
-      <h1 style={{ marginTop: "0.5rem" }}>{event.title}</h1>
-      <p style={{ color: "#555" }}>
-        {t(`events.type.${event.eventType}`)} · {t(`events.status.${event.status}`)} ·{" "}
-        {t(`events.visibility.${event.visibility}`)}
-      </p>
+    <div className="page">
+      <Link to="/events" className="btn btn-ghost btn-sm" style={{ marginLeft: -12 }}>
+        ← {t("events.backToList")}
+      </Link>
+      <div className="page-header" style={{ marginTop: "var(--space-3)" }}>
+        <div>
+          <div className="eyebrow">{t(`events.type.${event.eventType}`)}</div>
+          <h1 className="page-title">{event.title}</h1>
+          <div className="row" style={{ marginTop: "var(--space-2)" }}>
+            <EventStatusBadge status={event.status} />
+            <span className="badge badge-muted">{t(`events.visibility.${event.visibility}`)}</span>
+          </div>
+        </div>
+      </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "150px 1fr",
-          gap: "0.5rem 1rem",
-          marginTop: "1.5rem",
-          border: "1px solid #ddd",
-          borderRadius: 8,
-          padding: "1.5rem",
-        }}
-      >
-        <strong>{t("events.fieldStart")}</strong>
-        <span>{fmtDate(event.startAt)}</span>
-        <strong>{t("events.fieldEnd")}</strong>
-        <span>{fmtDate(event.endAt)}</span>
-        <strong>{t("events.fieldLocation")}</strong>
-        <span>{event.location ?? "—"}</span>
-        <strong>{t("events.fieldCapacity")}</strong>
-        <span>{event.capacity ?? "—"}</span>
-        <strong>{t("events.fieldDescription")}</strong>
-        <span style={{ whiteSpace: "pre-wrap" }}>{event.description || "—"}</span>
+      <div className="card">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "180px 1fr",
+            gap: "var(--space-3) var(--space-4)",
+          }}
+        >
+          <div className="label" style={{ margin: 0 }}>
+            {t("events.fieldStart")}
+          </div>
+          <span>{fmtDate(event.startAt)}</span>
+          <div className="label" style={{ margin: 0 }}>
+            {t("events.fieldEnd")}
+          </div>
+          <span>{fmtDate(event.endAt)}</span>
+          <div className="label" style={{ margin: 0 }}>
+            {t("events.fieldLocation")}
+          </div>
+          <span>{event.location ?? "—"}</span>
+          <div className="label" style={{ margin: 0 }}>
+            {t("events.fieldCapacity")}
+          </div>
+          <span>{event.capacity ?? "—"}</span>
+          <div className="label" style={{ margin: 0 }}>
+            {t("events.fieldDescription")}
+          </div>
+          <span style={{ whiteSpace: "pre-wrap" }}>{event.description || "—"}</span>
+        </div>
       </div>
 
       {canManage && next.length > 0 && (
-        <div style={{ marginTop: "1.5rem" }}>
-          <h2 style={{ fontSize: "1.1rem" }}>{t("events.statusActions")}</h2>
-          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+        <div className="card">
+          <h2 className="card-title">{t("events.statusActions")}</h2>
+          <div className="row" style={{ marginTop: "var(--space-3)" }}>
             {next.map((status) => (
               <button
                 key={status}
                 type="button"
                 disabled={transitionMut.isPending}
                 onClick={() => transitionMut.mutate(status)}
-                style={{ padding: "0.5rem 1rem" }}
+                className="btn btn-outline-orange btn-sm"
               >
                 → {t(`events.status.${status}`)}
               </button>
             ))}
           </div>
           {transitionMut.error instanceof Error && (
-            <p style={{ color: "#b00020" }}>{transitionMut.error.message}</p>
+            <div className="alert alert-error" style={{ marginTop: "var(--space-3)" }}>
+              {transitionMut.error.message}
+            </div>
           )}
         </div>
       )}
