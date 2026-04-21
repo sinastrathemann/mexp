@@ -151,6 +151,72 @@ eventRoutes.get("/:id/participants", requireRole(...WRITE_ROLES), async (c) => {
   return c.json({ participants: list });
 });
 
+eventRoutes.get("/:id/participants.csv", requireRole(...WRITE_ROLES), async (c) => {
+  const id = c.req.param("id");
+  const list = await listParticipants(id, { events, participations });
+  const header = [
+    "userId",
+    "displayName",
+    "email",
+    "status",
+    "waitlistPosition",
+    "registeredAt",
+    "checkedInAt",
+    "cancelledAt",
+  ].join(",");
+  const lines = list.map((p) =>
+    [
+      p.userId,
+      csvEscape(p.userDisplayName),
+      csvEscape(p.userEmail),
+      p.status,
+      p.waitlistPosition ?? "",
+      p.registeredAt.toISOString(),
+      p.checkedInAt ? p.checkedInAt.toISOString() : "",
+      p.cancelledAt ? p.cancelledAt.toISOString() : "",
+    ].join(","),
+  );
+  const csv = `${header}\n${lines.join("\n")}\n`;
+  return new Response(csv, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": `attachment; filename="event-${id}-participants.csv"`,
+    },
+  });
+});
+
+eventRoutes.get("/:id/emergency-list", requireRole(...WRITE_ROLES), async (c) => {
+  const id = c.req.param("id");
+  const event = await getEvent(id, { events });
+  const list = await listParticipants(id, { events, participations });
+  const active = list.filter((p) => p.status === "registered" || p.status === "attended");
+  return c.json({
+    event: {
+      id: event.id,
+      title: event.title,
+      startAt: event.startAt,
+      endAt: event.endAt,
+      location: event.location,
+    },
+    generatedAt: new Date().toISOString(),
+    count: active.length,
+    participants: active.map((p) => ({
+      displayName: p.userDisplayName,
+      email: p.userEmail,
+      status: p.status,
+      checkedInAt: p.checkedInAt,
+    })),
+  });
+});
+
+function csvEscape(value: string): string {
+  if (/[",\n\r]/.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
 eventRoutes.post("/:id/register", async (c) => {
   const id = c.req.param("id");
   const actorId = c.get("auth").sub;

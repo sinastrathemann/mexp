@@ -6,6 +6,8 @@ import type {
   BudgetItemCreateInput,
   BudgetItemStatus,
   BudgetItemUpdateInput,
+  Document,
+  DocumentCreateInput,
   Event,
   EventCreateInput,
   EventStatus,
@@ -94,6 +96,13 @@ export interface ParticipationPort {
 
 export interface DashboardPort {
   portfolioStats(): Promise<PortfolioStats>;
+}
+
+export interface DocumentPort {
+  create(input: DocumentCreateInput): Promise<Document>;
+  findById(id: string): Promise<Document | null>;
+  listForEvent(eventId: string): Promise<Document[]>;
+  delete(id: string): Promise<void>;
 }
 
 export interface BudgetPort {

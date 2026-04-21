@@ -130,6 +130,36 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
 
       {canManage && (
         <>
+          <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+            <a
+              href={`/api/events/${event.id}/participants.csv`}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                padding: "0.5rem 1rem",
+                border: "1px solid #ccc",
+                borderRadius: 4,
+                textDecoration: "none",
+                color: "#333",
+              }}
+            >
+              {t("participants.exportCsv")}
+            </a>
+            <a
+              href={`/api/events/${event.id}/emergency-list`}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                padding: "0.5rem 1rem",
+                border: "1px solid #ccc",
+                borderRadius: 4,
+                textDecoration: "none",
+                color: "#333",
+              }}
+            >
+              {t("participants.emergencyList")}
+            </a>
+          </div>
           {waitlistCount > 0 && event.capacity !== null && activeCount < event.capacity && (
             <div style={{ marginTop: "1rem" }}>
               <button

@@ -81,6 +81,21 @@ export type BudgetCategory = (typeof BUDGET_CATEGORIES)[number];
 export const BUDGET_ITEM_STATUSES = ["draft", "submitted", "approved", "rejected"] as const;
 export type BudgetItemStatus = (typeof BUDGET_ITEM_STATUSES)[number];
 
+export const DOCUMENT_VISIBILITIES = ["event_staff", "participants", "public"] as const;
+export type DocumentVisibility = (typeof DOCUMENT_VISIBILITIES)[number];
+
+export interface DocumentDto {
+  id: string;
+  eventId: string;
+  name: string;
+  mimeType: string;
+  fileSize: number;
+  storageKey: string;
+  visibility: DocumentVisibility;
+  uploadedBy: string;
+  uploadedAt: string;
+}
+
 export interface BudgetItemDto {
   id: string;
   eventId: string;

@@ -128,6 +128,8 @@
     "yourStatusRegistered": "Du bist für dieses Event angemeldet.",
     "yourStatusWaitlisted": "Du stehst auf der Warteliste (Position {{position}}).",
     "registrationClosed": "Anmeldung derzeit nicht möglich (Status: {{status}}).",
+    "exportCsv": "Teilnehmer als CSV",
+    "emergencyList": "Notfallliste",
     "status": {
       "registered": "Angemeldet",
       "waitlisted": "Warteliste",
@@ -168,6 +170,24 @@
       "submitted": "Eingereicht",
       "approved": "Genehmigt",
       "rejected": "Abgelehnt"
+    }
+  },
+  "documents": {
+    "title": "Dokumente",
+    "empty": "Noch keine Dokumente hinterlegt.",
+    "addItem": "Dokument hinzufügen",
+    "uploadHint": "(Metadaten-Erfassung — Upload folgt)",
+    "delete": "Löschen",
+    "fieldName": "Name",
+    "fieldMimeType": "Dateityp",
+    "fieldFileSize": "Größe (Bytes)",
+    "fieldVisibility": "Sichtbarkeit",
+    "fieldUploadedAt": "Hochgeladen",
+    "fieldActions": "Aktionen",
+    "visibility": {
+      "event_staff": "Nur Event-Team",
+      "participants": "Teilnehmer",
+      "public": "Öffentlich"
     }
   }
 }

@@ -4,6 +4,7 @@ import {
   AuditRepository,
   BudgetRepository,
   DashboardRepository,
+  DocumentRepository,
   EventRepository,
   ParticipationRepository,
   RoleRepository,
@@ -22,6 +23,7 @@ export const participations = new ParticipationRepository(db);
 export const audit = new AuditRepository(db);
 export const dashboard = new DashboardRepository(db);
 export const budgets = new BudgetRepository(db);
+export const documents = new DocumentRepository(db);
 
 export const hasher: PasswordHasherPort = {
   hash: hashPassword,

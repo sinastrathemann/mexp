@@ -128,6 +128,8 @@
     "yourStatusRegistered": "You are registered for this event.",
     "yourStatusWaitlisted": "You are on the waitlist (position {{position}}).",
     "registrationClosed": "Registration is not available right now (status: {{status}}).",
+    "exportCsv": "Export participants CSV",
+    "emergencyList": "Emergency list",
     "status": {
       "registered": "Registered",
       "waitlisted": "Waitlisted",
@@ -168,6 +170,24 @@
       "submitted": "Submitted",
       "approved": "Approved",
       "rejected": "Rejected"
+    }
+  },
+  "documents": {
+    "title": "Documents",
+    "empty": "No documents yet.",
+    "addItem": "Add document",
+    "uploadHint": "(metadata registration — upload coming)",
+    "delete": "Delete",
+    "fieldName": "Name",
+    "fieldMimeType": "Mime type",
+    "fieldFileSize": "Size (bytes)",
+    "fieldVisibility": "Visibility",
+    "fieldUploadedAt": "Uploaded",
+    "fieldActions": "Actions",
+    "visibility": {
+      "event_staff": "Event staff only",
+      "participants": "Participants",
+      "public": "Public"
     }
   }
 }
