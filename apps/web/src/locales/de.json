@@ -15,5 +15,38 @@
   "status": {
     "healthy": "Verfügbar",
     "error": "Fehler"
+  },
+  "auth": {
+    "loginTitle": "Anmelden",
+    "emailLabel": "E-Mail",
+    "passwordLabel": "Passwort",
+    "loginSubmit": "Anmelden",
+    "loginPending": "Anmeldung läuft …",
+    "logout": "Abmelden",
+    "loading": "Wird geladen …",
+    "greeting": "Hallo {{name}}",
+    "forbiddenTitle": "Kein Zugriff",
+    "forbiddenBody": "Für diese Seite fehlt dir die erforderliche Rolle.",
+    "errorInvalid": "E-Mail oder Passwort ist falsch.",
+    "errorInactive": "Dieser Benutzer ist deaktiviert.",
+    "errorGeneric": "Anmeldung fehlgeschlagen. Bitte erneut versuchen."
+  },
+  "admin": {
+    "usersLink": "Benutzerverwaltung",
+    "usersTitle": "Benutzerverwaltung",
+    "usersListTitle": "Benutzer",
+    "colEmail": "E-Mail",
+    "colDisplayName": "Anzeigename",
+    "colRoles": "Rollen",
+    "colStatus": "Status",
+    "colActions": "Aktionen",
+    "active": "Aktiv",
+    "inactive": "Deaktiviert",
+    "create": "Benutzer anlegen",
+    "creating": "Wird angelegt …",
+    "deactivate": "Deaktivieren",
+    "activate": "Aktivieren",
+    "resetPassword": "Passwort zurücksetzen",
+    "newPasswordPrompt": "Neues Passwort (min. 8 Zeichen)"
   }
 }

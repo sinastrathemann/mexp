@@ -19,10 +19,7 @@ export interface CreateUserDeps {
   actingUserId: string;
 }
 
-export async function createUser(
-  input: CreateUserInput,
-  deps: CreateUserDeps,
-): Promise<User> {
+export async function createUser(input: CreateUserInput, deps: CreateUserDeps): Promise<User> {
   const email = input.email.toLowerCase().trim();
   const existing = await deps.users.findByEmail(email);
   if (existing) {

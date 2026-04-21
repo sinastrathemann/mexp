@@ -127,17 +127,11 @@ export class UserRepository {
   }
 
   async updateLastLogin(userId: string): Promise<void> {
-    await this.db
-      .update(users)
-      .set({ lastLoginAt: new Date() })
-      .where(eq(users.id, userId));
+    await this.db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, userId));
   }
 
   async assignRole(userId: string, roleId: string, assignedBy: string): Promise<void> {
-    await this.db
-      .insert(userRoles)
-      .values({ userId, roleId, assignedBy })
-      .onConflictDoNothing();
+    await this.db.insert(userRoles).values({ userId, roleId, assignedBy }).onConflictDoNothing();
   }
 
   async removeRole(userId: string, roleId: string): Promise<void> {
@@ -179,9 +173,7 @@ function rowsToUserWithHash(rows: UserJoinRow[]): UserWithPasswordHash | null {
   };
 }
 
-function rowsToUser(
-  rows: Omit<UserJoinRow, "passwordHash">[],
-): User | null {
+function rowsToUser(rows: Omit<UserJoinRow, "passwordHash">[]): User | null {
   const first = rows[0];
   if (!first) return null;
   const roleNames: RoleName[] = [];

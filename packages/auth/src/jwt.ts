@@ -26,10 +26,7 @@ export async function signSession(
     .sign(secretToKey(secret));
 }
 
-export async function verifySession(
-  token: string,
-  secret: string,
-): Promise<SessionPayload | null> {
+export async function verifySession(token: string, secret: string): Promise<SessionPayload | null> {
   try {
     const { payload } = await jwtVerify(token, secretToKey(secret));
     const parsed = sessionPayloadSchema.safeParse({

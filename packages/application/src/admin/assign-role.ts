@@ -16,10 +16,7 @@ export interface AssignRoleDeps {
   actingUserId: string;
 }
 
-export async function assignRole(
-  input: AssignRoleInput,
-  deps: AssignRoleDeps,
-): Promise<void> {
+export async function assignRole(input: AssignRoleInput, deps: AssignRoleDeps): Promise<void> {
   const user = await deps.users.findById(input.userId);
   if (!user) throw new UserNotFoundError(input.userId);
 
@@ -27,22 +24,13 @@ export async function assignRole(
   if (!role) throw new NotFoundError("Role", input.roleName);
 
   await deps.users.assignRole(user.id, role.id, deps.actingUserId);
-  log.info(
-    { userId: user.id, role: input.roleName, by: deps.actingUserId },
-    "Rolle zugewiesen",
-  );
+  log.info({ userId: user.id, role: input.roleName, by: deps.actingUserId }, "Rolle zugewiesen");
 }
 
-export async function removeRole(
-  input: AssignRoleInput,
-  deps: AssignRoleDeps,
-): Promise<void> {
+export async function removeRole(input: AssignRoleInput, deps: AssignRoleDeps): Promise<void> {
   const role = await deps.roles.findByName(input.roleName);
   if (!role) throw new NotFoundError("Role", input.roleName);
 
   await deps.users.removeRole(input.userId, role.id);
-  log.info(
-    { userId: input.userId, role: input.roleName, by: deps.actingUserId },
-    "Rolle entfernt",
-  );
+  log.info({ userId: input.userId, role: input.roleName, by: deps.actingUserId }, "Rolle entfernt");
 }

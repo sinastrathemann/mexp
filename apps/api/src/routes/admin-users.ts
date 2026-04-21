@@ -7,8 +7,8 @@ import {
   resetUserPassword,
   setUserActive,
 } from "@memp/application";
-import { ROLE_NAMES, type RoleName } from "@memp/domain";
 import { type AuthVariables, requireAuth, requireRole } from "@memp/auth";
+import { ROLE_NAMES, type RoleName } from "@memp/domain";
 import { Hono } from "hono";
 import { z } from "zod";
 import { hasher, roles, users } from "../deps.js";
@@ -52,17 +52,13 @@ adminUserRoutes.post("/", zValidator("json", createUserSchema), async (c) => {
   return c.json({ user }, 201);
 });
 
-adminUserRoutes.post(
-  "/:id/roles",
-  zValidator("json", assignRoleSchema),
-  async (c) => {
-    const userId = c.req.param("id");
-    const { role } = c.req.valid("json");
-    const actingUserId = c.get("auth").sub;
-    await assignRole({ userId, roleName: role }, { users, roles, actingUserId });
-    return c.json({ ok: true });
-  },
-);
+adminUserRoutes.post("/:id/roles", zValidator("json", assignRoleSchema), async (c) => {
+  const userId = c.req.param("id");
+  const { role } = c.req.valid("json");
+  const actingUserId = c.get("auth").sub;
+  await assignRole({ userId, roleName: role }, { users, roles, actingUserId });
+  return c.json({ ok: true });
+});
 
 adminUserRoutes.delete("/:id/roles/:role", async (c) => {
   const userId = c.req.param("id");
@@ -76,26 +72,18 @@ adminUserRoutes.delete("/:id/roles/:role", async (c) => {
   return c.json({ ok: true });
 });
 
-adminUserRoutes.patch(
-  "/:id/active",
-  zValidator("json", setActiveSchema),
-  async (c) => {
-    const userId = c.req.param("id");
-    const { isActive } = c.req.valid("json");
-    const actingUserId = c.get("auth").sub;
-    await setUserActive({ userId, isActive }, { users, actingUserId });
-    return c.json({ ok: true });
-  },
-);
+adminUserRoutes.patch("/:id/active", zValidator("json", setActiveSchema), async (c) => {
+  const userId = c.req.param("id");
+  const { isActive } = c.req.valid("json");
+  const actingUserId = c.get("auth").sub;
+  await setUserActive({ userId, isActive }, { users, actingUserId });
+  return c.json({ ok: true });
+});
 
-adminUserRoutes.post(
-  "/:id/password",
-  zValidator("json", resetPasswordSchema),
-  async (c) => {
-    const userId = c.req.param("id");
-    const { newPassword } = c.req.valid("json");
-    const actingUserId = c.get("auth").sub;
-    await resetUserPassword({ userId, newPassword }, { users, hasher, actingUserId });
-    return c.json({ ok: true });
-  },
-);
+adminUserRoutes.post("/:id/password", zValidator("json", resetPasswordSchema), async (c) => {
+  const userId = c.req.param("id");
+  const { newPassword } = c.req.valid("json");
+  const actingUserId = c.get("auth").sub;
+  await resetUserPassword({ userId, newPassword }, { users, hasher, actingUserId });
+  return c.json({ ok: true });
+});

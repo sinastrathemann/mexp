@@ -15,5 +15,38 @@
   "status": {
     "healthy": "Healthy",
     "error": "Error"
+  },
+  "auth": {
+    "loginTitle": "Sign in",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "loginSubmit": "Sign in",
+    "loginPending": "Signing in …",
+    "logout": "Sign out",
+    "loading": "Loading …",
+    "greeting": "Hello {{name}}",
+    "forbiddenTitle": "Access denied",
+    "forbiddenBody": "You are missing the required role for this page.",
+    "errorInvalid": "Email or password is incorrect.",
+    "errorInactive": "This user is deactivated.",
+    "errorGeneric": "Sign in failed. Please try again."
+  },
+  "admin": {
+    "usersLink": "User management",
+    "usersTitle": "User management",
+    "usersListTitle": "Users",
+    "colEmail": "Email",
+    "colDisplayName": "Display name",
+    "colRoles": "Roles",
+    "colStatus": "Status",
+    "colActions": "Actions",
+    "active": "Active",
+    "inactive": "Inactive",
+    "create": "Create user",
+    "creating": "Creating …",
+    "deactivate": "Deactivate",
+    "activate": "Activate",
+    "resetPassword": "Reset password",
+    "newPasswordPrompt": "New password (min. 8 characters)"
   }
 }
