@@ -58,12 +58,34 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
     onSuccess: invalidateAll,
   });
 
+  const checkInMut = useMutation({
+    mutationFn: (participationId: string) =>
+      apiFetch<{ participation: ParticipationDto }>(
+        `/events/${event.id}/participants/${participationId}/check-in`,
+        { method: "POST" },
+      ),
+    onSuccess: invalidateAll,
+  });
+
+  const noShowMut = useMutation({
+    mutationFn: (participationId: string) =>
+      apiFetch<{ participation: ParticipationDto }>(
+        `/events/${event.id}/participants/${participationId}/no-show`,
+        { method: "POST" },
+      ),
+    onSuccess: invalidateAll,
+  });
+
   const participants = participantsQ.data?.participants ?? [];
   const ownFromList = user ? participants.find((p) => p.userId === user.id) : undefined;
   const ownFromSelf = myParticipationQ.data?.participation ?? undefined;
   const own: ParticipationDto | undefined = ownFromList ?? ownFromSelf ?? undefined;
   const activeCount = participants.filter((p) => p.status === "registered").length;
   const waitlistCount = participants.filter((p) => p.status === "waitlisted").length;
+  const attendedCount = participants.filter((p) => p.status === "attended").length;
+  const noShowCount = participants.filter((p) => p.status === "no_show").length;
+  const checkInPhase = event.status === "open" || event.status === "running";
+  const noShowPhase = event.status === "running" || event.status === "closed";
 
   const fmtDate = (iso: string) =>
     new Date(iso).toLocaleString(i18n.language === "de" ? "de-DE" : "en-US", {
@@ -89,6 +111,8 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
           {t("participants.count", { count: activeCount })}
           {event.capacity !== null && ` / ${event.capacity}`}
           {waitlistCount > 0 && ` · ${t("participants.waitlistCount", { count: waitlistCount })}`}
+          {attendedCount > 0 && ` · ${t("participants.attendedCount", { count: attendedCount })}`}
+          {noShowCount > 0 && ` · ${t("participants.noShowCount", { count: noShowCount })}`}
         </p>
       )}
 
@@ -136,6 +160,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
                     <th style={{ padding: "0.5rem" }}>{t("participants.colStatus")}</th>
                     <th style={{ padding: "0.5rem" }}>{t("participants.colPosition")}</th>
                     <th style={{ padding: "0.5rem" }}>{t("participants.colRegisteredAt")}</th>
+                    <th style={{ padding: "0.5rem" }}>{t("participants.colActions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -146,6 +171,28 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
                       <td style={{ padding: "0.5rem" }}>{t(`participants.status.${p.status}`)}</td>
                       <td style={{ padding: "0.5rem" }}>{p.waitlistPosition ?? "—"}</td>
                       <td style={{ padding: "0.5rem" }}>{fmtDate(p.registeredAt)}</td>
+                      <td style={{ padding: "0.5rem", display: "flex", gap: "0.25rem" }}>
+                        {p.status === "registered" && checkInPhase && (
+                          <button
+                            type="button"
+                            disabled={checkInMut.isPending}
+                            onClick={() => checkInMut.mutate(p.id)}
+                            style={{ padding: "0.25rem 0.5rem", fontSize: "0.85rem" }}
+                          >
+                            {t("participants.checkIn")}
+                          </button>
+                        )}
+                        {p.status === "registered" && noShowPhase && (
+                          <button
+                            type="button"
+                            disabled={noShowMut.isPending}
+                            onClick={() => noShowMut.mutate(p.id)}
+                            style={{ padding: "0.25rem 0.5rem", fontSize: "0.85rem" }}
+                          >
+                            {t("participants.markNoShow")}
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

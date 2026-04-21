@@ -22,6 +22,8 @@ export const AUDIT_ACTIONS = [
   "participation.cancelled",
   "participation.promoted_from_waitlist",
   "participation.checked_in",
+  "participation.marked_no_show",
+  "participation.marked_attended_without_checkin",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

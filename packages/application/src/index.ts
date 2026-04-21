@@ -9,6 +9,7 @@ export * from "./events/get-event.js";
 export * from "./events/list-events.js";
 export * from "./events/transition-event-status.js";
 export * from "./events/update-event.js";
+export * from "./participation/check-in-participant.js";
 export * from "./participation/get-own-participation.js";
 export * from "./participation/list-participants.js";
 export * from "./participation/promote-from-waitlist.js";

@@ -1,10 +1,12 @@
 import { zValidator } from "@hono/zod-validator";
 import {
+  checkInParticipant,
   createEvent,
   getEvent,
   getOwnParticipation,
   listEvents,
   listParticipants,
+  markNoShow,
   promoteFromWaitlist,
   registerForEvent,
   transitionEventStatus,
@@ -181,3 +183,33 @@ eventRoutes.post("/:id/participants/promote-waitlist", requireRole(...WRITE_ROLE
   });
   return c.json({ participation });
 });
+
+eventRoutes.post(
+  "/:eventId/participants/:participationId/check-in",
+  requireRole(...WRITE_ROLES),
+  async (c) => {
+    const participationId = c.req.param("participationId");
+    const actorId = c.get("auth").sub;
+    const participation = await checkInParticipant(participationId, actorId, {
+      events,
+      participations,
+      audit,
+    });
+    return c.json({ participation });
+  },
+);
+
+eventRoutes.post(
+  "/:eventId/participants/:participationId/no-show",
+  requireRole(...WRITE_ROLES),
+  async (c) => {
+    const participationId = c.req.param("participationId");
+    const actorId = c.get("auth").sub;
+    const participation = await markNoShow(participationId, actorId, {
+      events,
+      participations,
+      audit,
+    });
+    return c.json({ participation });
+  },
+);
