@@ -14,12 +14,15 @@
     "clean": "rm -rf dist",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx src/db/seed.ts"
   },
   "dependencies": {
+    "@memp/auth": "workspace:*",
     "@memp/shared": "workspace:*",
     "@memp/domain": "workspace:*",
     "@memp/application": "workspace:*",
+    "argon2": "^0.41.1",
     "bullmq": "^5.28.0",
     "drizzle-orm": "^0.36.4",
     "ioredis": "^5.4.1",
@@ -27,6 +30,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "drizzle-kit": "^0.28.0"
+    "drizzle-kit": "^0.28.0",
+    "tsx": "^4.19.2"
   }
 }

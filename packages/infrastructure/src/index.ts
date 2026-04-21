@@ -1,9 +1,3 @@
-// Infrastructure Layer: konkrete Adapter.
-// Unterordner:
-//   db/       — Drizzle-Schema, Migrations, Repositories
-//   queue/    — BullMQ Worker, Job-Definitionen
-//   storage/  — SharePoint-Adapter (primär), S3 (Fallback)
-//   m365/     — Graph-Client, Outlook-, Teams-, SharePoint-Adapter
-//   powerbi/  — Export-Views, Dataset-Push
-
-export {};
+export * from "./db/client.js";
+export * from "./db/schema/tables.js";
+export * as schema from "./db/schema/tables.js";
