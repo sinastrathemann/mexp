@@ -1,10 +1,27 @@
+import "./bootstrap.js";
+
 import { serve } from "@hono/node-server";
 import { rootLogger } from "@memp/shared";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
+import { env } from "./deps.js";
+import { errorHandler } from "./error-handler.js";
+import { adminUserRoutes } from "./routes/admin-users.js";
+import { authRoutes } from "./routes/auth.js";
 
 const log = rootLogger.child({ module: "api" });
 
 const app = new Hono();
+
+app.use(
+  "*",
+  cors({
+    origin: ["http://localhost:8080", "http://localhost:5173"],
+    credentials: true,
+  }),
+);
+
+app.onError(errorHandler);
 
 app.get("/health", (c) =>
   c.json({
@@ -15,9 +32,9 @@ app.get("/health", (c) =>
   }),
 );
 
-const port = Number(process.env["API_PORT"] ?? 3000);
-const host = process.env["API_HOST"] ?? "0.0.0.0";
+app.route("/auth", authRoutes);
+app.route("/admin/users", adminUserRoutes);
 
-serve({ fetch: app.fetch, port, hostname: host }, (info) => {
-  log.info({ port: info.port, host }, "mEMP API gestartet");
+serve({ fetch: app.fetch, port: env.API_PORT, hostname: env.API_HOST }, (info) => {
+  log.info({ port: info.port, host: env.API_HOST }, "mEMP API gestartet");
 });
