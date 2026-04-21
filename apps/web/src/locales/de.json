@@ -172,6 +172,38 @@
       "rejected": "Abgelehnt"
     }
   },
+  "blueprints": {
+    "navLink": "Vorlagen",
+    "title": "Event-Vorlagen",
+    "intro": "Blueprints beschleunigen das Anlegen wiederkehrender Event-Typen. Standardwerte werden beim Anwenden in ein neues Event kopiert.",
+    "empty": "Noch keine Vorlagen angelegt.",
+    "create": "Vorlage anlegen",
+    "apply": "Anwenden",
+    "applyTitle": "Vorlage auf neues Event anwenden",
+    "delete": "Löschen",
+    "confirmDelete": "Vorlage wirklich löschen?",
+    "fieldName": "Name",
+    "fieldDescription": "Beschreibung (intern)",
+    "fieldDuration": "Dauer (Minuten)",
+    "fieldCapacity": "Standard-Teilnehmerlimit",
+    "fieldLocation": "Standard-Ort",
+    "fieldDefaultDescription": "Event-Beschreibung (Vorlage)",
+    "fieldActions": "Aktionen"
+  },
+  "feedback": {
+    "title": "Feedback",
+    "empty": "Noch kein Feedback eingegangen.",
+    "alreadySubmitted": "Danke — dein Feedback wurde gespeichert.",
+    "submit": "Feedback absenden",
+    "fieldOverall": "Gesamteindruck",
+    "fieldContent": "Inhalt",
+    "fieldOrganization": "Organisation",
+    "fieldComment": "Kommentar",
+    "kpiCount": "Antworten",
+    "kpiAvgOverall": "Ø Gesamt",
+    "kpiAvgContent": "Ø Inhalt",
+    "kpiAvgOrganization": "Ø Organisation"
+  },
   "documents": {
     "title": "Dokumente",
     "empty": "Noch keine Dokumente hinterlegt.",

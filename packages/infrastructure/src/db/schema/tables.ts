@@ -122,6 +122,42 @@ export const documents = pgTable("documents", {
   uploadedAt: timestamp("uploaded_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const eventBlueprints = pgTable("event_blueprints", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  eventType: text("event_type").notNull(),
+  visibility: text("visibility").notNull().default("internal"),
+  defaultDurationMinutes: integer("default_duration_minutes").notNull(),
+  defaultCapacity: integer("default_capacity"),
+  defaultLocation: text("default_location"),
+  defaultDescription: text("default_description").notNull().default(""),
+  createdBy: uuid("created_by")
+    .notNull()
+    .references(() => users.id, { onDelete: "restrict" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const eventFeedback = pgTable(
+  "event_feedback",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    ratingOverall: integer("rating_overall").notNull(),
+    ratingContent: integer("rating_content"),
+    ratingOrganization: integer("rating_organization"),
+    comment: text("comment"),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    uniqEventUser: uniqueIndex("event_feedback_event_user_uniq").on(t.eventId, t.userId),
+  }),
+);
+
 export const auditRecords = pgTable("audit_records", {
   id: uuid("id").defaultRandom().primaryKey(),
   entityType: text("entity_type").notNull(),
@@ -148,5 +184,9 @@ export type BudgetItemRow = typeof budgetItems.$inferSelect;
 export type BudgetItemInsert = typeof budgetItems.$inferInsert;
 export type DocumentRow = typeof documents.$inferSelect;
 export type DocumentInsert = typeof documents.$inferInsert;
+export type EventBlueprintRow = typeof eventBlueprints.$inferSelect;
+export type EventBlueprintInsert = typeof eventBlueprints.$inferInsert;
+export type EventFeedbackRow = typeof eventFeedback.$inferSelect;
+export type EventFeedbackInsert = typeof eventFeedback.$inferInsert;
 export type AuditRow = typeof auditRecords.$inferSelect;
 export type AuditInsert = typeof auditRecords.$inferInsert;

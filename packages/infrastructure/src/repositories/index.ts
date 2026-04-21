@@ -6,3 +6,5 @@ export * from "./participation-repository.js";
 export * from "./dashboard-repository.js";
 export * from "./budget-repository.js";
 export * from "./document-repository.js";
+export * from "./blueprint-repository.js";
+export * from "./feedback-repository.js";

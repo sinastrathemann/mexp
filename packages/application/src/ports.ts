@@ -9,7 +9,13 @@ import type {
   Document,
   DocumentCreateInput,
   Event,
+  EventBlueprint,
+  EventBlueprintCreateInput,
+  EventBlueprintUpdateInput,
   EventCreateInput,
+  EventFeedback,
+  EventFeedbackCreateInput,
+  EventFeedbackStats,
   EventStatus,
   EventUpdateInput,
   Participation,
@@ -103,6 +109,21 @@ export interface DocumentPort {
   findById(id: string): Promise<Document | null>;
   listForEvent(eventId: string): Promise<Document[]>;
   delete(id: string): Promise<void>;
+}
+
+export interface BlueprintPort {
+  create(input: EventBlueprintCreateInput): Promise<EventBlueprint>;
+  findById(id: string): Promise<EventBlueprint | null>;
+  list(): Promise<EventBlueprint[]>;
+  update(id: string, patch: EventBlueprintUpdateInput): Promise<EventBlueprint>;
+  delete(id: string): Promise<void>;
+}
+
+export interface FeedbackPort {
+  create(input: EventFeedbackCreateInput): Promise<EventFeedback>;
+  findByEventAndUser(eventId: string, userId: string): Promise<EventFeedback | null>;
+  listForEvent(eventId: string): Promise<EventFeedback[]>;
+  statsForEvent(eventId: string): Promise<EventFeedbackStats>;
 }
 
 export interface BudgetPort {

@@ -172,6 +172,38 @@
       "rejected": "Rejected"
     }
   },
+  "blueprints": {
+    "navLink": "Blueprints",
+    "title": "Event blueprints",
+    "intro": "Blueprints speed up creating recurring event types. Defaults are copied into a new event on apply.",
+    "empty": "No blueprints yet.",
+    "create": "Create blueprint",
+    "apply": "Apply",
+    "applyTitle": "Apply blueprint to new event",
+    "delete": "Delete",
+    "confirmDelete": "Really delete this blueprint?",
+    "fieldName": "Name",
+    "fieldDescription": "Description (internal)",
+    "fieldDuration": "Duration (minutes)",
+    "fieldCapacity": "Default capacity",
+    "fieldLocation": "Default location",
+    "fieldDefaultDescription": "Event description (template)",
+    "fieldActions": "Actions"
+  },
+  "feedback": {
+    "title": "Feedback",
+    "empty": "No feedback yet.",
+    "alreadySubmitted": "Thank you — your feedback has been recorded.",
+    "submit": "Submit feedback",
+    "fieldOverall": "Overall",
+    "fieldContent": "Content",
+    "fieldOrganization": "Organization",
+    "fieldComment": "Comment",
+    "kpiCount": "Responses",
+    "kpiAvgOverall": "Avg overall",
+    "kpiAvgContent": "Avg content",
+    "kpiAvgOrganization": "Avg organization"
+  },
   "documents": {
     "title": "Documents",
     "empty": "No documents yet.",

@@ -5,6 +5,8 @@ export const AUDIT_ENTITY_TYPES = [
   "budget",
   "approval",
   "document",
+  "blueprint",
+  "feedback",
 ] as const;
 export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];
 
@@ -32,6 +34,11 @@ export const AUDIT_ACTIONS = [
   "budget.reopened",
   "document.created",
   "document.deleted",
+  "blueprint.created",
+  "blueprint.updated",
+  "blueprint.deleted",
+  "blueprint.applied",
+  "feedback.submitted",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

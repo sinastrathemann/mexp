@@ -113,3 +113,36 @@ export interface BudgetItemDto {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface EventBlueprintDto {
+  id: string;
+  name: string;
+  description: string;
+  eventType: EventType;
+  visibility: EventVisibility;
+  defaultDurationMinutes: number;
+  defaultCapacity: number | null;
+  defaultLocation: string | null;
+  defaultDescription: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EventFeedbackDto {
+  id: string;
+  eventId: string;
+  userId: string | null;
+  ratingOverall: number;
+  ratingContent: number | null;
+  ratingOrganization: number | null;
+  comment: string | null;
+  submittedAt: string;
+}
+
+export interface EventFeedbackStatsDto {
+  count: number;
+  averageOverall: number | null;
+  averageContent: number | null;
+  averageOrganization: number | null;
+}

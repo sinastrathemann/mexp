@@ -8,10 +8,12 @@ import { env } from "./deps.js";
 import { errorHandler } from "./error-handler.js";
 import { adminUserRoutes } from "./routes/admin-users.js";
 import { authRoutes } from "./routes/auth.js";
+import { blueprintRoutes } from "./routes/blueprints.js";
 import { budgetRoutes } from "./routes/budget.js";
 import { dashboardRoutes } from "./routes/dashboard.js";
 import { documentRoutes } from "./routes/documents.js";
 import { eventRoutes } from "./routes/events.js";
+import { feedbackRoutes } from "./routes/feedback.js";
 
 const log = rootLogger.child({ module: "api" });
 
@@ -42,6 +44,8 @@ app.route("/events", eventRoutes);
 app.route("/dashboard", dashboardRoutes);
 app.route("/", budgetRoutes);
 app.route("/", documentRoutes);
+app.route("/", feedbackRoutes);
+app.route("/blueprints", blueprintRoutes);
 
 serve({ fetch: app.fetch, port: env.API_PORT, hostname: env.API_HOST }, (info) => {
   log.info({ port: info.port, host: env.API_HOST }, "mEMP API gestartet");

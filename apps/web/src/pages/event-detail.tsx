@@ -5,6 +5,7 @@ import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
 import { BudgetPanel } from "../events/budget-panel";
 import { DocumentsPanel } from "../events/documents-panel";
+import { FeedbackPanel } from "../events/feedback-panel";
 import { ParticipantsPanel } from "../events/participants-panel";
 import { type EventDto, type EventStatus, allowedTransitions } from "../events/types";
 
@@ -102,6 +103,7 @@ export default function EventDetailPage() {
       <ParticipantsPanel event={event} />
       <BudgetPanel event={event} />
       <DocumentsPanel event={event} />
+      <FeedbackPanel event={event} />
     </div>
   );
 }
