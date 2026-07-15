@@ -8,13 +8,14 @@ import {
   submitBudgetItem,
   updateBudgetItem,
 } from "@memp/application";
-import { type AuthVariables, requireAuth, requireRole } from "@memp/auth";
+import { getHubUser } from "@memp/auth";
 import { BUDGET_CATEGORIES } from "@memp/domain";
 import { Hono } from "hono";
-import { z } from "zod";
-import { env, events, audit, budgets } from "../deps.js";
-import { persistentMap } from "../dev-persistence.js";
 import { extractText, getDocumentProxy } from "unpdf";
+import { z } from "zod";
+import { events, audit, budgets, env } from "../deps.js";
+import { persistentMap } from "../dev-persistence.js";
+import { requireMempRole } from "./_user-resolution.js";
 
 const categorySchema = z.enum(BUDGET_CATEGORIES);
 
@@ -79,11 +80,9 @@ function touchBudget(item: DevBudgetItem): DevBudgetItem {
 }
 export type { DevBudgetItem };
 
-export const budgetRoutes = new Hono<{ Variables: AuthVariables }>();
+export const budgetRoutes = new Hono();
 
-budgetRoutes.use("*", requireAuth());
-
-budgetRoutes.get("/events/:eventId/budget", requireRole(...OWNER_ROLES), async (c) => {
+budgetRoutes.get("/events/:eventId/budget", requireMempRole(...OWNER_ROLES), async (c) => {
   const eventId = c.req.param("eventId");
   if (env.NODE_ENV === "development") {
     const items = Array.from(devBudgetStore.values()).filter((b) => b.eventId === eventId);
@@ -95,12 +94,12 @@ budgetRoutes.get("/events/:eventId/budget", requireRole(...OWNER_ROLES), async (
 
 budgetRoutes.post(
   "/events/:eventId/budget",
-  requireRole(...OWNER_ROLES),
+  requireMempRole(...OWNER_ROLES),
   zValidator("json", createSchema),
   async (c) => {
     const eventId = c.req.param("eventId");
     const input = c.req.valid("json");
-    const actorId = c.get("auth").sub;
+    const actorId = getHubUser(c).id;
     if (env.NODE_ENV === "development") {
       const now = new Date().toISOString();
       const item: DevBudgetItem = {
@@ -145,19 +144,20 @@ budgetRoutes.post(
 
 budgetRoutes.patch(
   "/budget/:id",
-  requireRole(...OWNER_ROLES),
+  requireMempRole(...OWNER_ROLES),
   zValidator("json", updateSchema),
   async (c) => {
     const id = c.req.param("id");
     const input = c.req.valid("json");
-    const actorId = c.get("auth").sub;
+    const actorId = getHubUser(c).id;
     if (env.NODE_ENV === "development") {
       const item = devBudgetStore.get(id);
       if (!item)
         return c.json({ error: { code: "NOT_FOUND", message: "Position nicht gefunden" } }, 404);
       if (input.category !== undefined) item.category = input.category;
       if (input.description !== undefined) item.description = input.description;
-      if (input.plannedAmountCents !== undefined) item.plannedAmountCents = input.plannedAmountCents;
+      if (input.plannedAmountCents !== undefined)
+        item.plannedAmountCents = input.plannedAmountCents;
       if (input.currency !== undefined) item.currency = input.currency;
       if (input.taxNote !== undefined) item.taxNote = input.taxNote;
       if (input.notes !== undefined) item.notes = input.notes;
@@ -178,7 +178,7 @@ budgetRoutes.patch(
 );
 
 // NEW: PDF hochladen + Netto automatisch extrahieren (Yokoy-light)
-budgetRoutes.post("/budget/:id/invoice/upload", requireRole(...OWNER_ROLES), async (c) => {
+budgetRoutes.post("/budget/:id/invoice/upload", requireMempRole(...OWNER_ROLES), async (c) => {
   const id = c.req.param("id");
   if (env.NODE_ENV !== "development") {
     return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Dev-only" } }, 501);
@@ -192,10 +192,7 @@ budgetRoutes.post("/budget/:id/invoice/upload", requireRole(...OWNER_ROLES), asy
   try {
     formData = await c.req.formData();
   } catch {
-    return c.json(
-      { error: { code: "INVALID_BODY", message: "Erwarte multipart/form-data" } },
-      400,
-    );
+    return c.json({ error: { code: "INVALID_BODY", message: "Erwarte multipart/form-data" } }, 400);
   }
 
   const file = formData.get("file");
@@ -203,10 +200,7 @@ budgetRoutes.post("/budget/:id/invoice/upload", requireRole(...OWNER_ROLES), asy
     return c.json({ error: { code: "NO_FILE", message: "Keine Datei übermittelt" } }, 400);
   }
   if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-    return c.json(
-      { error: { code: "INVALID_TYPE", message: "Nur PDF wird unterstützt" } },
-      400,
-    );
+    return c.json({ error: { code: "INVALID_TYPE", message: "Nur PDF wird unterstützt" } }, 400);
   }
 
   let extractedText = "";
@@ -284,11 +278,17 @@ function extractInvoiceData(text: string): ExtractionResult {
   const currencyPattern = "(?:\\s*€|\\s*EUR)?";
 
   const netPatterns: RegExp[] = [
-    new RegExp(`(?:Summe\\s+netto|Nettosumme|Netto[-\\s]?betrag|Netto[\\s:]+|Zwischensumme)[\\s:€EUR]*${amountPattern}${currencyPattern}`, "gi"),
+    new RegExp(
+      `(?:Summe\\s+netto|Nettosumme|Netto[-\\s]?betrag|Netto[\\s:]+|Zwischensumme)[\\s:€EUR]*${amountPattern}${currencyPattern}`,
+      "gi",
+    ),
     new RegExp(`${amountPattern}\\s*€?\\s*(?:Netto|netto)`, "gi"),
   ];
   const grossPatterns: RegExp[] = [
-    new RegExp(`(?:Gesamtbetrag|Brutto[-\\s]?betrag|Bruttosumme|Rechnungs[-\\s]?betrag|Endbetrag|Summe\\s+brutto)[\\s:€EUR]*${amountPattern}${currencyPattern}`, "gi"),
+    new RegExp(
+      `(?:Gesamtbetrag|Brutto[-\\s]?betrag|Bruttosumme|Rechnungs[-\\s]?betrag|Endbetrag|Summe\\s+brutto)[\\s:€EUR]*${amountPattern}${currencyPattern}`,
+      "gi",
+    ),
     new RegExp(`${amountPattern}\\s*€?\\s*(?:Brutto|brutto)`, "gi"),
   ];
   const vatPattern = /(?:MwSt|USt|Umsatzsteuer|Mehrwertsteuer)[\s:.]*(\d{1,2})\s?%/i;
@@ -334,9 +334,7 @@ function extractInvoiceData(text: string): ExtractionResult {
     // Nur Brutto, MwSt unbekannt → 19% annehmen
     const computed = Math.round(grossCents / 1.19);
     confidence = "low";
-    reasons.push(
-      `Nur Brutto (${(grossCents / 100).toFixed(2)} €) gefunden, 19% MwSt angenommen`,
-    );
+    reasons.push(`Nur Brutto (${(grossCents / 100).toFixed(2)} €) gefunden, 19% MwSt angenommen`);
     return {
       netCents: computed,
       grossCents,
@@ -360,7 +358,7 @@ function extractInvoiceData(text: string): ExtractionResult {
 // NEW: Rechnung & Netto-Ist eintragen
 budgetRoutes.post(
   "/budget/:id/invoice",
-  requireRole(...OWNER_ROLES),
+  requireMempRole(...OWNER_ROLES),
   zValidator("json", invoiceSchema),
   async (c) => {
     const id = c.req.param("id");
@@ -376,11 +374,14 @@ budgetRoutes.post(
       touchBudget(item);
       return c.json({ item });
     }
-    return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Invoice-Upload nur im Dev-Mode" } }, 501);
+    return c.json(
+      { error: { code: "NOT_IMPLEMENTED", message: "Invoice-Upload nur im Dev-Mode" } },
+      501,
+    );
   },
 );
 
-budgetRoutes.delete("/budget/:id/invoice", requireRole(...OWNER_ROLES), async (c) => {
+budgetRoutes.delete("/budget/:id/invoice", requireMempRole(...OWNER_ROLES), async (c) => {
   const id = c.req.param("id");
   if (env.NODE_ENV === "development") {
     const item = devBudgetStore.get(id);
@@ -396,9 +397,9 @@ budgetRoutes.delete("/budget/:id/invoice", requireRole(...OWNER_ROLES), async (c
   return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Dev-only" } }, 501);
 });
 
-budgetRoutes.post("/budget/:id/submit", requireRole(...OWNER_ROLES), async (c) => {
+budgetRoutes.post("/budget/:id/submit", requireMempRole(...OWNER_ROLES), async (c) => {
   const id = c.req.param("id");
-  const actorId = c.get("auth").sub;
+  const actorId = getHubUser(c).id;
   if (env.NODE_ENV === "development") {
     const item = devBudgetStore.get(id);
     if (!item) return c.json({ error: { code: "NOT_FOUND", message: "Nicht gefunden" } }, 404);
@@ -411,9 +412,9 @@ budgetRoutes.post("/budget/:id/submit", requireRole(...OWNER_ROLES), async (c) =
   return c.json({ item });
 });
 
-budgetRoutes.post("/budget/:id/approve", requireRole(...APPROVER_ROLES), async (c) => {
+budgetRoutes.post("/budget/:id/approve", requireMempRole(...APPROVER_ROLES), async (c) => {
   const id = c.req.param("id");
-  const actorId = c.get("auth").sub;
+  const actorId = getHubUser(c).id;
   if (env.NODE_ENV === "development") {
     const item = devBudgetStore.get(id);
     if (!item) return c.json({ error: { code: "NOT_FOUND", message: "Nicht gefunden" } }, 404);
@@ -431,12 +432,12 @@ budgetRoutes.post("/budget/:id/approve", requireRole(...APPROVER_ROLES), async (
 
 budgetRoutes.post(
   "/budget/:id/reject",
-  requireRole(...APPROVER_ROLES),
+  requireMempRole(...APPROVER_ROLES),
   zValidator("json", rejectSchema),
   async (c) => {
     const id = c.req.param("id");
     const { reason } = c.req.valid("json");
-    const actorId = c.get("auth").sub;
+    const actorId = getHubUser(c).id;
     if (env.NODE_ENV === "development") {
       const item = devBudgetStore.get(id);
       if (!item) return c.json({ error: { code: "NOT_FOUND", message: "Nicht gefunden" } }, 404);
@@ -452,9 +453,9 @@ budgetRoutes.post(
   },
 );
 
-budgetRoutes.post("/budget/:id/reopen", requireRole(...OWNER_ROLES), async (c) => {
+budgetRoutes.post("/budget/:id/reopen", requireMempRole(...OWNER_ROLES), async (c) => {
   const id = c.req.param("id");
-  const actorId = c.get("auth").sub;
+  const actorId = getHubUser(c).id;
   if (env.NODE_ENV === "development") {
     const item = devBudgetStore.get(id);
     if (!item) return c.json({ error: { code: "NOT_FOUND", message: "Nicht gefunden" } }, 404);

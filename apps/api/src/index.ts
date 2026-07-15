@@ -1,9 +1,10 @@
 import "./bootstrap.js";
 
+import { resolve } from "node:path";
 import { serve } from "@hono/node-server";
+import { hubAuthMiddleware } from "@memp/auth";
 import { rootLogger } from "@memp/shared";
 import { Hono } from "hono";
-import { cors } from "hono/cors";
 import { env } from "./deps.js";
 import { errorHandler } from "./error-handler.js";
 import { adminUserRoutes } from "./routes/admin-users.js";
@@ -20,31 +21,28 @@ import { registrationFormRoutes } from "./routes/registration-form.js";
 import { reportRoutes } from "./routes/reports.js";
 import { tenderRoutes } from "./routes/tenders.js";
 import { vendorRoutes } from "./routes/vendors.js";
+import { mountStatic } from "./static-serve.js";
 
 const log = rootLogger.child({ module: "api" });
 
 const app = new Hono();
 
-app.use(
-  "*",
-  cors({
-    origin: ["http://localhost:8080", "http://localhost:5173"],
-    credentials: true,
-  }),
-);
-
 app.onError(errorHandler);
 
+// Unauth: Hub-Upstream-Probe
 app.get("/health", (c) =>
   c.json({
     status: "ok",
-    service: "memp-api",
-    version: "0.1.0",
+    service: "memp",
+    version: process.env.APP_VERSION ?? "dev",
     timestamp: new Date().toISOString(),
   }),
 );
 
-app.route("/auth", authRoutes);
+// Hub-Auth for everything below
+app.use("*", hubAuthMiddleware());
+
+app.route("/", authRoutes);
 app.route("/admin/users", adminUserRoutes);
 app.route("/events", eventRoutes);
 app.route("/dashboard", dashboardRoutes);
@@ -59,6 +57,13 @@ app.route("/vendors", vendorRoutes);
 app.route("/", qnaRoutes);
 app.route("/blueprints", blueprintRoutes);
 
-serve({ fetch: app.fetch, port: env.API_PORT, hostname: env.API_HOST }, (info) => {
-  log.info({ port: info.port, host: env.API_HOST }, "mEMP API gestartet");
+// Serve SPA (last so API routes win on their prefixes)
+const webRoot = process.env.MEMP_WEB_DIST ?? resolve(process.cwd(), "web-dist");
+mountStatic(app, webRoot);
+
+const port = Number(process.env.PORT ?? env.API_PORT ?? 3000);
+const host = process.env.HOST ?? env.API_HOST ?? "0.0.0.0";
+
+serve({ fetch: app.fetch, port, hostname: host }, (info) => {
+  log.info({ port: info.port, host, webRoot }, "mEMP started");
 });

@@ -14,12 +14,13 @@ import {
   updateEvent,
   withdrawFromEvent,
 } from "@memp/application";
-import { type AuthVariables, requireAuth, requireRole } from "@memp/auth";
+import { getHubUser } from "@memp/auth";
 import { EVENT_STATUSES, EVENT_TYPES, EVENT_VISIBILITIES } from "@memp/domain";
 import { Hono } from "hono";
 import { z } from "zod";
+import { events, audit, env, participations } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
-import { env, events, audit, participations } from "../deps.js";
+import { requireMempRole, resolveMempRoles } from "./_user-resolution.js";
 import {
   devAnswerStore,
   devFormStore,
@@ -194,26 +195,20 @@ function buildMockEventList() {
   ];
 }
 
-export const eventRoutes = new Hono<{ Variables: AuthVariables }>();
-
-eventRoutes.use("*", requireAuth());
+export const eventRoutes = new Hono();
 
 eventRoutes.get("/", zValidator("query", listQuerySchema), async (c) => {
   if (env.NODE_ENV === "development") {
     const baseEvents = buildMockEventList();
-    const session = c.get("auth");
-    const userRoles = session.roles;
-    const userEmail = session.email.toLowerCase();
+    const user = getHubUser(c);
+    const userRoles = resolveMempRoles(c);
+    const userEmail = (user.email ?? "").toLowerCase();
     // Rollen, die Events managen (alle Status sehen): admin, manager, event_office, budget_owner, werkstudent
     const isPrivilegedRole = userRoles.some((r) =>
       ["admin", "manager", "event_office", "budget_owner", "werkstudent"].includes(r),
     );
     // Nicht-privilegierte User (Teilnehmer/Read-Only) sehen nur diese Status:
-    const VISIBLE_STATUSES_FOR_PARTICIPANT = new Set([
-      "planned",
-      "open",
-      "running",
-    ]);
+    const VISIBLE_STATUSES_FOR_PARTICIPANT = new Set(["planned", "open", "running"]);
 
     const events = baseEvents
       .map(applyOverride)
@@ -245,21 +240,21 @@ eventRoutes.get("/", zValidator("query", listQuerySchema), async (c) => {
   }
 
   const q = c.req.valid("query");
-  const session = c.get("auth");
+  const user = getHubUser(c);
   const filter: { status?: (typeof EVENT_STATUSES)[number]; ownerId?: string } = {};
   if (q.status) filter.status = q.status;
-  if (q.mine === "true") filter.ownerId = session.sub;
+  if (q.mine === "true") filter.ownerId = user.id;
   const list = await listEvents(filter, { events });
   return c.json({ events: list });
 });
 
 eventRoutes.post(
   "/",
-  requireRole(...WRITE_ROLES),
+  requireMempRole(...WRITE_ROLES),
   zValidator("json", createEventSchema),
   async (c) => {
     const input = c.req.valid("json");
-    const actorId = c.get("auth").sub;
+    const actorId = getHubUser(c).id;
     const event = await createEvent(
       {
         title: input.title,
@@ -399,7 +394,8 @@ eventRoutes.get("/:id", async (c) => {
       },
     };
     const event = mock[id];
-    if (!event) return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
+    if (!event)
+      return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
     const merged = applyOverride(event);
     if ((merged as { _deleted?: boolean })._deleted) {
       return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
@@ -412,12 +408,12 @@ eventRoutes.get("/:id", async (c) => {
 
 eventRoutes.patch(
   "/:id",
-  requireRole(...WRITE_ROLES),
+  requireMempRole(...WRITE_ROLES),
   zValidator("json", updateEventSchema),
   async (c) => {
     const id = c.req.param("id");
     const input = c.req.valid("json");
-    const actorId = c.get("auth").sub;
+    const actorId = getHubUser(c).id;
 
     if (env.NODE_ENV === "development") {
       // Dev-Mode: in den Override-Store schreiben
@@ -447,10 +443,7 @@ eventRoutes.patch(
       const baseList = buildMockEventList();
       const base = baseList.find((e) => e.id === id);
       if (!base) {
-        return c.json(
-          { error: { code: "NOT_FOUND", message: "Event nicht gefunden" } },
-          404,
-        );
+        return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
       }
       return c.json({ event: applyOverride(base) });
     }
@@ -555,7 +548,7 @@ function buildIcs(input: {
 }
 
 // Event "löschen" — nur Admin. Dev-Mode: in Override-Store als hidden markieren.
-eventRoutes.delete("/:id", requireRole("admin"), async (c) => {
+eventRoutes.delete("/:id", requireMempRole("admin"), async (c) => {
   const id = c.req.param("id");
   if (env.NODE_ENV === "development") {
     const current = devEventOverrideStore.get(id) ?? {};
@@ -571,12 +564,12 @@ eventRoutes.delete("/:id", requireRole("admin"), async (c) => {
 
 eventRoutes.patch(
   "/:id/status",
-  requireRole(...WRITE_ROLES),
+  requireMempRole(...WRITE_ROLES),
   zValidator("json", transitionSchema),
   async (c) => {
     const id = c.req.param("id");
     const { status } = c.req.valid("json");
-    const actorId = c.get("auth").sub;
+    const actorId = getHubUser(c).id;
 
     if (env.NODE_ENV === "development") {
       // Dev-Mode: Status im Override-Store ablegen
@@ -589,10 +582,7 @@ eventRoutes.patch(
       const baseList = buildMockEventList();
       const base = baseList.find((e) => e.id === id);
       if (!base) {
-        return c.json(
-          { error: { code: "NOT_FOUND", message: "Event nicht gefunden" } },
-          404,
-        );
+        return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
       }
       return c.json({ event: applyOverride(base) });
     }
@@ -604,7 +594,7 @@ eventRoutes.patch(
 
 eventRoutes.get("/:id/my-participation", async (c) => {
   const id = c.req.param("id");
-  const actorIdSession = c.get("auth").sub;
+  const actorIdSession = getHubUser(c).id;
   if (env.NODE_ENV === "development") {
     const live = devLiveParticipantsStore.get(id) ?? [];
     const found = live.find((p) => p.userId === actorIdSession);
@@ -618,7 +608,7 @@ eventRoutes.get("/:id/my-participation", async (c) => {
 // Notiz zur eigenen Anmeldung bearbeiten
 eventRoutes.patch("/:id/my-participation", async (c) => {
   const id = c.req.param("id");
-  const actorId = c.get("auth").sub;
+  const actorId = getHubUser(c).id;
   if (env.NODE_ENV !== "development") {
     return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Dev-only" } }, 501);
   }
@@ -656,7 +646,7 @@ eventRoutes.patch("/:id/my-participation", async (c) => {
   return c.json({ participation: updated });
 });
 
-eventRoutes.get("/:id/participants", requireRole(...WRITE_ROLES), async (c) => {
+eventRoutes.get("/:id/participants", requireMempRole(...WRITE_ROLES), async (c) => {
   const id = c.req.param("id");
   if (env.NODE_ENV === "development") {
     const now = new Date();
@@ -712,7 +702,7 @@ eventRoutes.get("/:id/participants", requireRole(...WRITE_ROLES), async (c) => {
   return c.json({ participants: list });
 });
 
-eventRoutes.get("/:id/participants.csv", requireRole(...WRITE_ROLES), async (c) => {
+eventRoutes.get("/:id/participants.csv", requireMempRole(...WRITE_ROLES), async (c) => {
   const id = c.req.param("id");
   const list = await listParticipants(id, { events, participations });
   const header = [
@@ -747,7 +737,7 @@ eventRoutes.get("/:id/participants.csv", requireRole(...WRITE_ROLES), async (c) 
   });
 });
 
-eventRoutes.get("/:id/emergency-list", requireRole(...WRITE_ROLES), async (c) => {
+eventRoutes.get("/:id/emergency-list", requireMempRole(...WRITE_ROLES), async (c) => {
   const id = c.req.param("id");
   const event = await getEvent(id, { events });
   const list = await listParticipants(id, { events, participations });
@@ -780,12 +770,11 @@ function csvEscape(value: string): string {
 
 eventRoutes.post("/:id/register", async (c) => {
   const id = c.req.param("id");
-  const actorId = c.get("auth").sub;
+  const actorId = getHubUser(c).id;
   if (env.NODE_ENV === "development") {
     // Anmeldefrist prüfen
     const override = devEventOverrideStore.get(id) ?? {};
-    const deadline = (override as { registrationDeadline?: string | null })
-      .registrationDeadline;
+    const deadline = (override as { registrationDeadline?: string | null }).registrationDeadline;
     if (deadline) {
       const deadlineMs = new Date(deadline).getTime();
       if (Number.isFinite(deadlineMs) && deadlineMs < Date.now()) {
@@ -824,10 +813,7 @@ eventRoutes.post("/:id/register", async (c) => {
     if (questions.length > 0) {
       const validation = validateAnswers(questions, answers);
       if (!validation.ok) {
-        return c.json(
-          { error: { code: "INVALID_ANSWERS", message: validation.message } },
-          400,
-        );
+        return c.json({ error: { code: "INVALID_ANSWERS", message: validation.message } }, 400);
       }
     }
 
@@ -893,7 +879,7 @@ eventRoutes.post("/:id/register", async (c) => {
 
 eventRoutes.post("/:id/withdraw", async (c) => {
   const id = c.req.param("id");
-  const actorId = c.get("auth").sub;
+  const actorId = getHubUser(c).id;
   if (env.NODE_ENV === "development") {
     const participationId = `p-${actorId.slice(0, 8)}`;
     // Aus Live-Store + Answer-Store entfernen
@@ -924,23 +910,27 @@ eventRoutes.post("/:id/withdraw", async (c) => {
   return c.json({ participation });
 });
 
-eventRoutes.post("/:id/participants/promote-waitlist", requireRole(...WRITE_ROLES), async (c) => {
-  const id = c.req.param("id");
-  const actorId = c.get("auth").sub;
-  const participation = await promoteFromWaitlist(id, actorId, {
-    events,
-    participations,
-    audit,
-  });
-  return c.json({ participation });
-});
+eventRoutes.post(
+  "/:id/participants/promote-waitlist",
+  requireMempRole(...WRITE_ROLES),
+  async (c) => {
+    const id = c.req.param("id");
+    const actorId = getHubUser(c).id;
+    const participation = await promoteFromWaitlist(id, actorId, {
+      events,
+      participations,
+      audit,
+    });
+    return c.json({ participation });
+  },
+);
 
 eventRoutes.post(
   "/:eventId/participants/:participationId/check-in",
-  requireRole(...WRITE_ROLES),
+  requireMempRole(...WRITE_ROLES),
   async (c) => {
     const participationId = c.req.param("participationId");
-    const actorId = c.get("auth").sub;
+    const actorId = getHubUser(c).id;
     const participation = await checkInParticipant(participationId, actorId, {
       events,
       participations,
@@ -952,10 +942,10 @@ eventRoutes.post(
 
 eventRoutes.post(
   "/:eventId/participants/:participationId/no-show",
-  requireRole(...WRITE_ROLES),
+  requireMempRole(...WRITE_ROLES),
   async (c) => {
     const participationId = c.req.param("participationId");
-    const actorId = c.get("auth").sub;
+    const actorId = getHubUser(c).id;
     const participation = await markNoShow(participationId, actorId, {
       events,
       participations,

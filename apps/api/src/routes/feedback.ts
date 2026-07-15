@@ -5,11 +5,12 @@ import {
   submitFeedback,
   summarizeEventFeedback,
 } from "@memp/application";
-import { type AuthVariables, requireAuth, requireRole } from "@memp/auth";
+import { getHubUser } from "@memp/auth";
 import { Hono } from "hono";
 import { z } from "zod";
-import { env, events, audit, feedback, llm } from "../deps.js";
+import { events, audit, env, feedback, llm } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
+import { requireMempRole } from "./_user-resolution.js";
 
 const ratingSchema = z.number().int().min(1).max(5);
 
@@ -36,18 +37,14 @@ interface DevFeedback {
 const devFeedbackStore = persistentMap<DevFeedback>("feedback");
 const devKey = (eventId: string, userId: string) => `${eventId}::${userId}`;
 
-export const feedbackRoutes = new Hono<{ Variables: AuthVariables }>();
+export const feedbackRoutes = new Hono();
 
-feedbackRoutes.use("*", requireAuth());
-
-feedbackRoutes.get("/events/:eventId/feedback", requireRole(...MANAGE_ROLES), async (c) => {
+feedbackRoutes.get("/events/:eventId/feedback", requireMempRole(...MANAGE_ROLES), async (c) => {
   const eventId = c.req.param("eventId");
   if (env.NODE_ENV === "development") {
     const items = Array.from(devFeedbackStore.values()).filter((f) => f.eventId === eventId);
     const avg =
-      items.length === 0
-        ? null
-        : items.reduce((sum, f) => sum + f.ratingOverall, 0) / items.length;
+      items.length === 0 ? null : items.reduce((sum, f) => sum + f.ratingOverall, 0) / items.length;
     return c.json({
       feedback: items,
       stats: {
@@ -62,7 +59,7 @@ feedbackRoutes.get("/events/:eventId/feedback", requireRole(...MANAGE_ROLES), as
 
 feedbackRoutes.get("/events/:eventId/feedback/mine", async (c) => {
   const eventId = c.req.param("eventId");
-  const userId = c.get("auth").sub;
+  const userId = getHubUser(c).id;
   if (env.NODE_ENV === "development") {
     const fb = devFeedbackStore.get(devKey(eventId, userId)) ?? null;
     return c.json({ feedback: fb });
@@ -73,7 +70,7 @@ feedbackRoutes.get("/events/:eventId/feedback/mine", async (c) => {
 
 feedbackRoutes.post(
   "/events/:eventId/feedback/summary",
-  requireRole(...MANAGE_ROLES),
+  requireMempRole(...MANAGE_ROLES),
   async (c) => {
     const eventId = c.req.param("eventId");
     const result = await summarizeEventFeedback(eventId, { events, feedback, llm });
@@ -84,12 +81,17 @@ feedbackRoutes.post(
 feedbackRoutes.post("/events/:eventId/feedback", zValidator("json", submitSchema), async (c) => {
   const eventId = c.req.param("eventId");
   const input = c.req.valid("json");
-  const actorId = c.get("auth").sub;
+  const actorId = getHubUser(c).id;
   if (env.NODE_ENV === "development") {
     const key = devKey(eventId, actorId);
     if (devFeedbackStore.has(key)) {
       return c.json(
-        { error: { code: "FEEDBACK_ALREADY_SUBMITTED", message: "Du hast für dieses Event bereits Feedback abgegeben." } },
+        {
+          error: {
+            code: "FEEDBACK_ALREADY_SUBMITTED",
+            message: "Du hast für dieses Event bereits Feedback abgegeben.",
+          },
+        },
         409,
       );
     }

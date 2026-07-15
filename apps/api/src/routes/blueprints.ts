@@ -6,11 +6,12 @@ import {
   listBlueprints,
   updateBlueprint,
 } from "@memp/application";
-import { type AuthVariables, requireAuth, requireRole } from "@memp/auth";
+import { getHubUser } from "@memp/auth";
 import { EVENT_TYPES, EVENT_VISIBILITIES } from "@memp/domain";
 import { Hono } from "hono";
 import { z } from "zod";
 import { events, audit, blueprints } from "../deps.js";
+import { requireMempRole } from "./_user-resolution.js";
 
 const eventTypeSchema = z.enum(EVENT_TYPES);
 const visibilitySchema = z.enum(EVENT_VISIBILITIES);
@@ -55,9 +56,7 @@ const applySchema = z.object({
 
 const WRITE_ROLES = ["admin", "manager", "event_office", "werkstudent"] as const;
 
-export const blueprintRoutes = new Hono<{ Variables: AuthVariables }>();
-
-blueprintRoutes.use("*", requireAuth());
+export const blueprintRoutes = new Hono();
 
 blueprintRoutes.get("/", async (c) => {
   const list = await listBlueprints({ blueprints });
@@ -66,11 +65,11 @@ blueprintRoutes.get("/", async (c) => {
 
 blueprintRoutes.post(
   "/",
-  requireRole(...WRITE_ROLES),
+  requireMempRole(...WRITE_ROLES),
   zValidator("json", createSchema),
   async (c) => {
     const input = c.req.valid("json");
-    const actorId = c.get("auth").sub;
+    const actorId = getHubUser(c).id;
     const blueprint = await createBlueprint(input, actorId, { blueprints, audit });
     return c.json({ blueprint }, 201);
   },
@@ -78,12 +77,12 @@ blueprintRoutes.post(
 
 blueprintRoutes.patch(
   "/:id",
-  requireRole(...WRITE_ROLES),
+  requireMempRole(...WRITE_ROLES),
   zValidator("json", updateSchema),
   async (c) => {
     const id = c.req.param("id");
     const input = c.req.valid("json");
-    const actorId = c.get("auth").sub;
+    const actorId = getHubUser(c).id;
     const patch: Parameters<typeof updateBlueprint>[1] = {};
     if (input.name !== undefined) patch.name = input.name;
     if (input.description !== undefined) patch.description = input.description;
@@ -99,21 +98,21 @@ blueprintRoutes.patch(
   },
 );
 
-blueprintRoutes.delete("/:id", requireRole(...WRITE_ROLES), async (c) => {
+blueprintRoutes.delete("/:id", requireMempRole(...WRITE_ROLES), async (c) => {
   const id = c.req.param("id");
-  const actorId = c.get("auth").sub;
+  const actorId = getHubUser(c).id;
   await deleteBlueprint(id, actorId, { blueprints, audit });
   return c.json({ ok: true });
 });
 
 blueprintRoutes.post(
   "/:id/apply",
-  requireRole(...WRITE_ROLES),
+  requireMempRole(...WRITE_ROLES),
   zValidator("json", applySchema),
   async (c) => {
     const id = c.req.param("id");
     const input = c.req.valid("json");
-    const actorId = c.get("auth").sub;
+    const actorId = getHubUser(c).id;
     const event = await applyBlueprint(
       { blueprintId: id, title: input.title, startAt: new Date(input.startAt) },
       actorId,

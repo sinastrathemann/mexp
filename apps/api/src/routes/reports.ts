@@ -1,6 +1,6 @@
-import { type AuthVariables, requireAuth, requireRole } from "@memp/auth";
 import { Hono } from "hono";
 import { env } from "../deps.js";
+import { requireMempRole } from "./_user-resolution.js";
 import { devBudgetStore } from "./budget.js";
 import { devLiveParticipantsStore } from "./registration-form.js";
 
@@ -122,7 +122,7 @@ function bucketFor(year: number, month: number): MonthBucket {
   const byTypePlannedCents: Record<string, number> = {};
   let registered = 0;
   let attended = 0;
-  let noShow = 0;
+  const noShow = 0;
   let totalCapacity = 0;
   let totalPlannedCents = 0;
   let totalNetCents = 0;
@@ -172,12 +172,10 @@ function bucketFor(year: number, month: number): MonthBucket {
     });
   }
 
-  const avgUtilization =
-    totalCapacity > 0 ? (registered + attended) / totalCapacity : null;
+  const avgUtilization = totalCapacity > 0 ? (registered + attended) / totalCapacity : null;
   const totalActuallyPresent = attended;
   const totalParticipants = registered + attended + noShow;
-  const attendanceRate =
-    totalParticipants > 0 ? totalActuallyPresent / totalParticipants : null;
+  const attendanceRate = totalParticipants > 0 ? totalActuallyPresent / totalParticipants : null;
   const noShowRate = totalParticipants > 0 ? noShow / totalParticipants : null;
 
   const topLocations = Object.entries(byLocation)
@@ -212,11 +210,10 @@ function bucketFor(year: number, month: number): MonthBucket {
   };
 }
 
-export const reportRoutes = new Hono<{ Variables: AuthVariables }>();
-reportRoutes.use("*", requireAuth());
+export const reportRoutes = new Hono();
 
 // JSON-Report
-reportRoutes.get("/monthly", requireRole(...MANAGE_ROLES), (c) => {
+reportRoutes.get("/monthly", requireMempRole(...MANAGE_ROLES), (c) => {
   const year = Number.parseInt(c.req.query("year") ?? "", 10);
   const month = Number.parseInt(c.req.query("month") ?? "", 10);
   if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) {
@@ -227,10 +224,7 @@ reportRoutes.get("/monthly", requireRole(...MANAGE_ROLES), (c) => {
   }
 
   if (env.NODE_ENV !== "development") {
-    return c.json(
-      { error: { code: "NOT_IMPLEMENTED", message: "Reports nur im Dev-Mode" } },
-      501,
-    );
+    return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Reports nur im Dev-Mode" } }, 501);
   }
 
   const current = bucketFor(year, month);
@@ -247,7 +241,7 @@ reportRoutes.get("/monthly", requireRole(...MANAGE_ROLES), (c) => {
 });
 
 // CSV-Export
-reportRoutes.get("/monthly.csv", requireRole(...MANAGE_ROLES), (c) => {
+reportRoutes.get("/monthly.csv", requireMempRole(...MANAGE_ROLES), (c) => {
   const year = Number.parseInt(c.req.query("year") ?? "", 10);
   const month = Number.parseInt(c.req.query("month") ?? "", 10);
   if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) {
@@ -296,12 +290,8 @@ reportRoutes.get("/monthly.csv", requireRole(...MANAGE_ROLES), (c) => {
   );
   row(
     "Netto / Person (€)",
-    current.costPerPersonCents !== null
-      ? (current.costPerPersonCents / 100).toFixed(2)
-      : "—",
-    previous.costPerPersonCents !== null
-      ? (previous.costPerPersonCents / 100).toFixed(2)
-      : "—",
+    current.costPerPersonCents !== null ? (current.costPerPersonCents / 100).toFixed(2) : "—",
+    previous.costPerPersonCents !== null ? (previous.costPerPersonCents / 100).toFixed(2) : "—",
   );
 
   lines.push("");

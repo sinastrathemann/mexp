@@ -1,9 +1,9 @@
 import { zValidator } from "@hono/zod-validator";
-import { type AuthVariables, requireAuth, requireRole } from "@memp/auth";
 import { Hono } from "hono";
 import { z } from "zod";
 import { env } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
+import { requireMempRole } from "./_user-resolution.js";
 
 // ─── Schemas ─────────────────────────────────────────────────────
 const questionTypeSchema = z.enum(["yes_no", "single_choice", "multi_choice", "date_pick"]);
@@ -125,9 +125,7 @@ export function validateAnswers(
 // ─── Routes ─────────────────────────────────────────────────────
 const MANAGE_ROLES = ["admin", "manager", "event_office", "werkstudent"] as const;
 
-export const registrationFormRoutes = new Hono<{ Variables: AuthVariables }>();
-
-registrationFormRoutes.use("*", requireAuth());
+export const registrationFormRoutes = new Hono();
 
 // GET: Alle eingeloggten User dürfen das Formular sehen (sonst können sie nicht antworten)
 registrationFormRoutes.get("/events/:eventId/registration-form", async (c) => {
@@ -145,7 +143,7 @@ registrationFormRoutes.get("/events/:eventId/registration-form", async (c) => {
 // PUT: Nur Admins/Manager/Event-Office dürfen das Formular bearbeiten
 registrationFormRoutes.put(
   "/events/:eventId/registration-form",
-  requireRole(...MANAGE_ROLES),
+  requireMempRole(...MANAGE_ROLES),
   zValidator("json", formSchema),
   async (c) => {
     const eventId = c.req.param("eventId");

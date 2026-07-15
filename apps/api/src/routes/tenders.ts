@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 /**
  * Ausschreibungs-Modul (Tender / RFP)
  * - Ein Event kann eine Ausschreibung haben
@@ -7,12 +8,12 @@
  * - Optional KI-Bewertung (Phase B)
  */
 import { zValidator } from "@hono/zod-validator";
-import { type AuthVariables, requireAuth, requireRole } from "@memp/auth";
+import { getHubUser } from "@memp/auth";
 import { Hono } from "hono";
 import { z } from "zod";
-import { randomUUID } from "node:crypto";
 import { env } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
+import { requireMempRole } from "./_user-resolution.js";
 
 const MANAGE_ROLES = ["admin", "manager", "event_office", "werkstudent"] as const;
 
@@ -56,12 +57,10 @@ export interface DevTender {
 
 export const devTenderStore = persistentMap<DevTender>("tenders");
 
-export const tenderRoutes = new Hono<{ Variables: AuthVariables }>();
-
-tenderRoutes.use("*", requireAuth());
+export const tenderRoutes = new Hono();
 
 // Liste aller Ausschreibungen — Filter nach eventId optional
-tenderRoutes.get("/", requireRole(...MANAGE_ROLES), (c) => {
+tenderRoutes.get("/", requireMempRole(...MANAGE_ROLES), (c) => {
   const eventId = c.req.query("eventId");
   const all = Array.from(devTenderStore.values());
   const filtered = eventId ? all.filter((t) => t.eventId === eventId) : all;
@@ -73,41 +72,47 @@ tenderRoutes.get("/", requireRole(...MANAGE_ROLES), (c) => {
 });
 
 // Ausschreibung lesen (Admin-Sicht)
-tenderRoutes.get("/:id", requireRole(...MANAGE_ROLES), (c) => {
+tenderRoutes.get("/:id", requireMempRole(...MANAGE_ROLES), (c) => {
   const id = c.req.param("id");
   const t = devTenderStore.get(id);
-  if (!t) return c.json({ error: { code: "NOT_FOUND", message: "Ausschreibung nicht gefunden" } }, 404);
+  if (!t)
+    return c.json({ error: { code: "NOT_FOUND", message: "Ausschreibung nicht gefunden" } }, 404);
   return c.json({ tender: t });
 });
 
 // Ausschreibung anlegen
-tenderRoutes.post("/", requireRole(...MANAGE_ROLES), zValidator("json", createTenderSchema), (c) => {
-  if (env.NODE_ENV !== "development") {
-    return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Dev-only" } }, 501);
-  }
-  const input = c.req.valid("json");
-  const actorId = c.get("auth").sub;
-  const now = new Date().toISOString();
-  const tender: DevTender = {
-    id: `tdr-${randomUUID()}`,
-    eventId: input.eventId,
-    title: input.title,
-    briefing: input.briefing,
-    deadline: input.deadline,
-    criteria: input.criteria,
-    status: "draft",
-    createdAt: now,
-    updatedAt: now,
-    createdBy: actorId,
-  };
-  devTenderStore.set(tender.id, tender);
-  return c.json({ tender }, 201);
-});
+tenderRoutes.post(
+  "/",
+  requireMempRole(...MANAGE_ROLES),
+  zValidator("json", createTenderSchema),
+  (c) => {
+    if (env.NODE_ENV !== "development") {
+      return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Dev-only" } }, 501);
+    }
+    const input = c.req.valid("json");
+    const actorId = getHubUser(c).id;
+    const now = new Date().toISOString();
+    const tender: DevTender = {
+      id: `tdr-${randomUUID()}`,
+      eventId: input.eventId,
+      title: input.title,
+      briefing: input.briefing,
+      deadline: input.deadline,
+      criteria: input.criteria,
+      status: "draft",
+      createdAt: now,
+      updatedAt: now,
+      createdBy: actorId,
+    };
+    devTenderStore.set(tender.id, tender);
+    return c.json({ tender }, 201);
+  },
+);
 
 // Ausschreibung bearbeiten
 tenderRoutes.patch(
   "/:id",
-  requireRole(...MANAGE_ROLES),
+  requireMempRole(...MANAGE_ROLES),
   zValidator("json", updateTenderSchema),
   (c) => {
     const id = c.req.param("id");
@@ -131,7 +136,7 @@ tenderRoutes.patch(
 );
 
 // Ausschreibung löschen — nur Admin
-tenderRoutes.delete("/:id", requireRole("admin"), (c) => {
+tenderRoutes.delete("/:id", requireMempRole("admin"), (c) => {
   const id = c.req.param("id");
   if (!devTenderStore.has(id)) {
     return c.json({ error: { code: "NOT_FOUND", message: "Nicht gefunden" } }, 404);

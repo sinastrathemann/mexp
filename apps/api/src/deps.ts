@@ -1,5 +1,4 @@
-import type { LlmPort, LlmSummaryInput, PasswordHasherPort } from "@memp/application";
-import { hashPassword, verifyPassword } from "@memp/auth";
+import type { LlmPort, LlmSummaryInput } from "@memp/application";
 import {
   AuditRepository,
   BlueprintRepository,
@@ -29,11 +28,6 @@ export const budgets = new BudgetRepository(db);
 export const documents = new DocumentRepository(db);
 export const blueprints = new BlueprintRepository(db);
 export const feedback = new FeedbackRepository(db);
-
-export const hasher: PasswordHasherPort = {
-  hash: hashPassword,
-  verify: verifyPassword,
-};
 
 const llmConfig = loadLlmConfig(env.LLM_CONFIG_PATH);
 const llmProvider = createLlmProvider({ config: llmConfig });
