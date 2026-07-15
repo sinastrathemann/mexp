@@ -49,3 +49,12 @@ export class IntegrationError extends MempError {
     super("INTEGRATION_ERROR", `[${system}] ${message}`, 502, { system, ...context });
   }
 }
+
+// Postgres ist im MVP Follow-up (Design-Spec §2 Non-Goals) — die Standard-Persistenz
+// läuft über JSON-Files im Volume. Diese Fehlerklasse markiert Endpunkte, die (noch)
+// echtes Postgres brauchen, aber ohne DATABASE_URL aufgerufen werden.
+export class NoDatabaseError extends MempError {
+  constructor(message = "DATABASE_URL nicht konfiguriert — dieser Endpunkt benötigt Postgres") {
+    super("NO_DATABASE", message, 503);
+  }
+}

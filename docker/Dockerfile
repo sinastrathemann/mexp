@@ -47,7 +47,6 @@ ENV PORT=3000
 ENV HOST=0.0.0.0
 ENV APP_VERSION=${APP_VERSION}
 ENV TZ=Europe/Berlin
-ENV LLM_CONFIG_PATH=/app/config/llm.yaml
 
 COPY --from=build /app/deploy/package.json ./
 COPY --from=build /app/deploy/node_modules ./node_modules

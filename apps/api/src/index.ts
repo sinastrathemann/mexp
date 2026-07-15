@@ -47,6 +47,9 @@ app.use(
     publicPathPatterns: [
       /^\/vendors\/session$/, // GET — vendor magic-link session lookup (vendors.ts)
       /^\/tenders\/[^/]+\/qna$/, // GET+POST — vendor Q&A list/ask via token (qna.ts)
+      /^\/$/, // SPA root — shell loads unauth, client-side /me fetch handles 401 redirect
+      /^\/assets\//, // SPA hashed assets (Vite build output)
+      /^\/[^/]+\.(?:png|jpg|jpeg|gif|svg|ico|webp|woff2?|ttf|css|js|map)$/, // public static files at root (favicon, logo, …)
     ],
   }),
 );
