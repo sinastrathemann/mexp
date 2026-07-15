@@ -1,160 +1,183 @@
 /* ============================================================
-   mindsquare Design System — Colors & Typography
-   Source: Logo analysis (April 2026) + mindsquare.de
+   mEMP Design System — Bold & Modern (v2)
+   Editorial-tech aesthetic: paper bg, charcoal contrast,
+   mindsquare orange + electric accents, oversized display type.
    ============================================================ */
 
-@import url("https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap");
 
 /* ─── BRAND COLOR TOKENS ─────────────────────────────────────── */
 :root {
-  /* Orange-Red — Primary brand accent (small square in logo) */
-  --color-orange-900: #7a2900;
-  --color-orange-800: #a83800;
-  --color-orange-700: #c44414;
-  --color-orange-600: #d4521a; /* ← Logo orange-red */
-  --color-orange-500: #e0651f;
-  --color-orange-400: #ec7e3c;
-  --color-orange-200: #f8c9a8;
-  --color-orange-100: #fdeee3;
-  --color-orange-50: #fef7f2;
+  /* Orange-Red — Primary brand accent, intensified for bold mode */
+  --color-orange-900: #5e1e00;
+  --color-orange-800: #8a2a00;
+  --color-orange-700: #b8350c;
+  --color-orange-600: #e85b2c;   /* ← Brand primary, brighter */
+  --color-orange-500: #f0703f;
+  --color-orange-400: #f78f63;
+  --color-orange-200: #fdcfb6;
+  --color-orange-100: #ffe9dc;
+  --color-orange-50:  #fff5ee;
 
-  /* Golden Yellow — Secondary brand accent (large square in logo) */
-  --color-yellow-800: #c27d00;
-  --color-yellow-700: #d48e00;
-  --color-yellow-600: #e6a200;
-  --color-yellow-500: #ffbb00; /* ← Logo golden yellow */
-  --color-yellow-400: #ffc933;
-  --color-yellow-300: #ffd666;
-  --color-yellow-200: #ffe499;
-  --color-yellow-100: #fff4cc;
-  --color-yellow-50: #fffbf0;
+  /* Golden Yellow — Secondary accent */
+  --color-yellow-800: #a86a00;
+  --color-yellow-700: #cc8200;
+  --color-yellow-600: #f5a300;
+  --color-yellow-500: #ffbb00;
+  --color-yellow-400: #ffd040;
+  --color-yellow-300: #ffe175;
+  --color-yellow-200: #fff0aa;
+  --color-yellow-100: #fff8d6;
+  --color-yellow-50:  #fffceb;
 
-  /* Charcoal Grays — From logo wordmark */
-  --color-gray-900: #1f1f1f;
-  --color-gray-800: #333333;
-  --color-gray-700: #4a4a4a;
-  --color-gray-600: #555555; /* ← "square" wordmark dark */
-  --color-gray-500: #777777;
-  --color-gray-400: #999999;
-  --color-gray-300: #aaaaaa; /* ← "mind" wordmark light */
-  --color-gray-200: #cccccc;
-  --color-gray-150: #e0e0e0;
-  --color-gray-100: #eeeeee;
-  --color-gray-50: #f5f5f5;
+  /* Electric Cobalt — NEW: sharp 3rd accent for status & data viz */
+  --color-cobalt-700: #1d3fc4;
+  --color-cobalt-600: #2752f0;
+  --color-cobalt-500: #4d75ff;
+  --color-cobalt-100: #dde5ff;
+  --color-cobalt-50:  #f0f4ff;
 
-  --color-white: #ffffff;
-  --color-black: #1f1f1f;
+  /* Lime — NEW: success/live indicator, deliberately punchy */
+  --color-lime-600: #00b86b;
+  --color-lime-500: #1ed881;
+  --color-lime-100: #c5f3da;
+  --color-lime-50:  #e6faf0;
 
-  /* Status */
-  --color-success: #3a9e5f;
-  --color-warning: #ffbb00; /* reuses brand yellow */
-  --color-error: #d4521a; /* reuses brand orange */
-  --color-info: #555555;
+  /* Charcoal — deep, near-black base for contrast blocks */
+  --color-ink-900: #0a0a0a;
+  --color-ink-800: #1a1a1a;
+  --color-ink-700: #262626;
+  --color-ink-600: #3d3d3d;
+  --color-ink-500: #5c5c5c;
+  --color-ink-400: #8a8a8a;
+  --color-ink-300: #b8b8b8;
+  --color-ink-200: #d4d4d4;
+  --color-ink-150: #e6e4df;
+  --color-ink-100: #ededea;
+  --color-ink-50:  #f5f3ee;     /* warm paper bg */
+
+  /* Paper / canvas */
+  --color-paper:   #faf8f3;     /* warm cream — main bg */
+  --color-paper-2: #f3f0e8;     /* slightly deeper */
+  --color-white:   #ffffff;
+
+  /* Status (semantic, bold) */
+  --color-success: var(--color-lime-600);
+  --color-warning: var(--color-yellow-500);
+  --color-error:   var(--color-orange-600);
+  --color-info:    var(--color-cobalt-600);
 }
 
 /* ─── SEMANTIC COLOR TOKENS ─────────────────────────────────── */
 :root {
   /* Brand */
-  --brand-orange: var(--color-orange-600); /* #d4521a */
+  --brand-orange: var(--color-orange-600);
   --brand-orange-dark: var(--color-orange-700);
   --brand-orange-light: var(--color-orange-100);
-  --brand-yellow: var(--color-yellow-500); /* #ffbb00 */
+  --brand-yellow: var(--color-yellow-500);
   --brand-yellow-dark: var(--color-yellow-700);
   --brand-yellow-light: var(--color-yellow-100);
+  --brand-cobalt: var(--color-cobalt-600);
+  --brand-cobalt-light: var(--color-cobalt-100);
+  --brand-lime: var(--color-lime-500);
+  --brand-lime-light: var(--color-lime-100);
 
   /* Foreground */
-  --fg-default: var(--color-gray-600); /* #555 — "square" gray */
-  --fg-strong: var(--color-gray-800); /* #333 — body text */
-  --fg-muted: var(--color-gray-400); /* #999 */
-  --fg-subtle: var(--color-gray-300); /* #aaa — "mind" gray */
+  --fg-default: var(--color-ink-700);
+  --fg-strong: var(--color-ink-900);
+  --fg-muted: var(--color-ink-500);
+  --fg-subtle: var(--color-ink-400);
   --fg-inverted: var(--color-white);
   --fg-accent: var(--brand-orange);
   --fg-link: var(--brand-orange);
-  --fg-link-hover: var(--brand-yellow-dark);
+  --fg-link-hover: var(--color-orange-700);
 
   /* Background */
-  --bg-default: var(--color-white);
-  --bg-subtle: var(--color-gray-50); /* #f5f5f5 */
-  --bg-muted: var(--color-gray-100);
-  --bg-dark: var(--color-gray-600);
-  --bg-darkest: var(--color-gray-800);
+  --bg-default: var(--color-paper);
+  --bg-card: var(--color-white);
+  --bg-subtle: var(--color-paper-2);
+  --bg-muted: var(--color-ink-100);
+  --bg-dark: var(--color-ink-900);
+  --bg-darkest: var(--color-ink-900);
   --bg-orange: var(--brand-orange);
   --bg-yellow: var(--brand-yellow);
 
   /* Border */
-  --border-default: var(--color-gray-150); /* #e0e0e0 */
-  --border-muted: var(--color-gray-100);
-  --border-strong: var(--color-gray-300);
+  --border-default: var(--color-ink-150);
+  --border-muted: var(--color-ink-100);
+  --border-strong: var(--color-ink-300);
+  --border-ink: var(--color-ink-900);
   --border-orange: var(--brand-orange);
   --border-yellow: var(--brand-yellow);
 }
 
 /* ─── TYPOGRAPHY TOKENS ─────────────────────────────────────── */
 :root {
-  /* Font families — ⚠️ Lato substituted: verify actual font from PPTX */
-  --font-sans: "Lato", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "Courier New", Courier, monospace;
+  --font-display: "Bricolage Grotesque", "Helvetica Neue", system-ui, sans-serif;
+  --font-sans: "Geist", "Helvetica Neue", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Courier New", monospace;
 
-  /* Weights */
   --weight-light: 300;
   --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
   --weight-bold: 700;
-  --weight-black: 900;
+  --weight-black: 800;
 
-  /* Scale */
+  /* Scale — pushed bigger for bold display */
   --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-md: 1.125rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-md: 1.0625rem;
   --text-lg: 1.25rem;
-  --text-xl: 1.5rem;
-  --text-2xl: 1.875rem;
-  --text-3xl: 2.25rem;
-  --text-4xl: 3rem;
-  --text-5xl: 3.75rem;
+  --text-xl: 1.625rem;
+  --text-2xl: 2.125rem;
+  --text-3xl: 2.875rem;
+  --text-4xl: 3.75rem;
+  --text-5xl: 5rem;
+  --text-6xl: 7rem;
 
-  /* Line heights */
-  --leading-tight: 1.2;
-  --leading-snug: 1.4;
-  --leading-normal: 1.6;
+  --leading-tight: 1.05;
+  --leading-snug: 1.25;
+  --leading-normal: 1.55;
   --leading-relaxed: 1.75;
 
-  /* Letter spacing */
+  --tracking-tightest: -0.04em;
   --tracking-tight: -0.02em;
   --tracking-normal: 0;
   --tracking-wide: 0.04em;
   --tracking-wider: 0.08em;
-  --tracking-widest: 0.12em;
+  --tracking-widest: 0.16em;
 }
 
 /* ─── SEMANTIC TYPE ROLES ────────────────────────────────────── */
 :root {
-  --display-size: var(--text-4xl);
+  --display-size: var(--text-5xl);
   --display-weight: var(--weight-black);
-  --display-color: var(--color-gray-600);
+  --display-color: var(--color-ink-900);
   --display-leading: var(--leading-tight);
 
-  --h1-size: var(--text-3xl);
+  --h1-size: var(--text-4xl);
   --h1-weight: var(--weight-black);
-  --h1-color: var(--color-gray-600);
+  --h1-color: var(--color-ink-900);
 
   --h2-size: var(--text-2xl);
   --h2-weight: var(--weight-bold);
-  --h2-color: var(--color-gray-600);
+  --h2-color: var(--color-ink-900);
 
-  --h3-size: var(--text-xl);
+  --h3-size: var(--text-lg);
   --h3-weight: var(--weight-bold);
-  --h3-color: var(--color-gray-700);
+  --h3-color: var(--color-ink-800);
 
   --body-size: var(--text-base);
   --body-weight: var(--weight-regular);
-  --body-color: var(--color-gray-800);
+  --body-color: var(--color-ink-700);
   --body-leading: var(--leading-normal);
 
-  --label-size: var(--text-xs);
+  --label-size: 0.6875rem;
   --label-weight: var(--weight-bold);
   --label-tracking: var(--tracking-widest);
-  --label-color: var(--brand-orange);
+  --label-color: var(--color-ink-900);
 }
 
 /* ─── SPACING TOKENS ─────────────────────────────────────────── */
@@ -170,30 +193,36 @@
   --space-12: 48px;
   --space-16: 64px;
   --space-20: 80px;
+  --space-24: 96px;
 }
 
 /* ─── RADIUS ─────────────────────────────────────────────────── */
 :root {
-  --radius-sm: 2px;
-  --radius-base: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
+  --radius-sm: 4px;
+  --radius-base: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 28px;
   --radius-full: 9999px;
 }
 
 /* ─── SHADOWS ─────────────────────────────────────────────────── */
 :root {
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --shadow-xs: 0 1px 2px rgba(10, 10, 10, 0.04);
+  --shadow-sm: 0 2px 6px rgba(10, 10, 10, 0.05), 0 1px 2px rgba(10, 10, 10, 0.04);
+  --shadow-md: 0 8px 24px -8px rgba(10, 10, 10, 0.12), 0 2px 6px rgba(10, 10, 10, 0.05);
+  --shadow-lg: 0 24px 48px -16px rgba(10, 10, 10, 0.18), 0 4px 12px rgba(10, 10, 10, 0.06);
+  --shadow-orange: 0 12px 28px -8px rgba(232, 91, 44, 0.45);
+  --shadow-ink: 0 12px 28px -8px rgba(10, 10, 10, 0.35);
 }
 
 /* ─── TRANSITIONS ─────────────────────────────────────────────── */
 :root {
-  --transition-fast: 120ms ease;
-  --transition-base: 200ms ease;
-  --transition-slow: 300ms ease;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --transition-fast: 140ms var(--ease-out);
+  --transition-base: 240ms var(--ease-out);
+  --transition-slow: 420ms var(--ease-out);
 }
 
 /* ─── BASE STYLES ─────────────────────────────────────────────── */
@@ -205,12 +234,14 @@ body {
   color: var(--body-color);
   background: var(--bg-default);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv11";
 }
 
 a {
   color: var(--fg-link);
   text-decoration: none;
-  transition: color var(--transition-base);
+  transition: color var(--transition-fast);
 }
 a:hover {
   color: var(--fg-link-hover);

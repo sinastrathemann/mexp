@@ -32,7 +32,7 @@ export function DocumentsPanel({ event }: DocumentsPanelProps) {
   const { t, i18n } = useTranslation();
   const { hasRole } = useAuth();
   const qc = useQueryClient();
-  const canWrite = hasRole("admin", "manager", "event_office");
+  const canWrite = hasRole("admin", "manager", "event_office", "werkstudent");
   const canDelete = hasRole("admin", "manager");
   const [form, setForm] = useState<FormState>(initialForm);
   const [showForm, setShowForm] = useState(false);
@@ -85,6 +85,9 @@ export function DocumentsPanel({ event }: DocumentsPanelProps) {
       visibility: form.visibility,
     });
   };
+
+  // Mitarbeiter (ohne Verwaltungs-Rolle) sehen den Dokumente-Bereich komplett nicht
+  if (!canWrite) return null;
 
   return (
     <section className="card">

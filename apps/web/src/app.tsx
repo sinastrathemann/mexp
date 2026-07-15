@@ -11,6 +11,8 @@ import EventDetailPage from "./pages/event-detail";
 import EventsListPage from "./pages/events-list";
 import HomePage from "./pages/home";
 import LoginPage from "./pages/login";
+import ReportsPage from "./pages/reports";
+import VendorPage from "./pages/vendor";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -21,6 +23,9 @@ function TopBar() {
   const { user, logout, hasRole } = useAuth();
   const location = useLocation();
   const isLogin = location.pathname === "/login";
+  const isVendor = location.pathname === "/vendor";
+
+  if (isVendor) return null;
 
   return (
     <div className="ms-topbar-wrap">
@@ -29,7 +34,7 @@ function TopBar() {
         <span>mEMP · Event Management</span>
       </div>
       <div className="ms-topbar">
-        <NavLink to={user ? "/dashboard" : "/"} className="ms-logo">
+        <NavLink to="/" className="ms-logo">
           <img src="/logo-mindsquare.png" alt="mindsquare" />
         </NavLink>
         {!isLogin && (
@@ -51,6 +56,14 @@ function TopBar() {
               </NavLink>
             )}
             {hasRole("admin", "manager", "event_office") && (
+              <NavLink
+                to="/reports"
+                className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
+              >
+                Reports
+              </NavLink>
+            )}
+            {hasRole("admin", "manager", "event_office", "werkstudent") && (
               <NavLink
                 to="/blueprints"
                 className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
@@ -94,6 +107,8 @@ function Shell() {
       <TopBar />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        {/* Anbieter-Landingpage — öffentlich, Auth via Token in URL */}
+        <Route path="/vendor" element={<VendorPage />} />
         <Route
           path="/"
           element={
@@ -121,7 +136,7 @@ function Shell() {
         <Route
           path="/events/new"
           element={
-            <ProtectedRoute roles={["admin", "manager", "event_office"]}>
+            <ProtectedRoute roles={["admin", "manager", "event_office", "werkstudent"]}>
               <EventCreatePage />
             </ProtectedRoute>
           }
@@ -135,9 +150,17 @@ function Shell() {
           }
         />
         <Route
-          path="/blueprints"
+          path="/reports"
           element={
             <ProtectedRoute roles={["admin", "manager", "event_office"]}>
+              <ReportsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/blueprints"
+          element={
+            <ProtectedRoute roles={["admin", "manager", "event_office", "werkstudent"]}>
               <BlueprintsPage />
             </ProtectedRoute>
           }

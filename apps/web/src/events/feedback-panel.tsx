@@ -11,23 +11,28 @@ interface FeedbackPanelProps {
 
 interface FormState {
   ratingOverall: number;
-  ratingContent: number | null;
-  ratingOrganization: number | null;
-  comment: string;
+  highlightText: string;
+  improvementText: string;
+  otherText: string;
 }
 
 const initialForm: FormState = {
   ratingOverall: 5,
-  ratingContent: null,
-  ratingOrganization: null,
-  comment: "",
+  highlightText: "",
+  improvementText: "",
+  otherText: "",
 };
+
+const Q1 = "Wie hat dir das Event gefallen?";
+const Q2 = "Was war dein Highlight oder hat dir besonders gut gefallen?";
+const Q3 = "Was hat dir nicht gefallen? Was können wir besser machen?";
+const Q4 = "Sonstige Anmerkungen";
 
 export function FeedbackPanel({ event }: FeedbackPanelProps) {
   const { t } = useTranslation();
   const { hasRole } = useAuth();
   const qc = useQueryClient();
-  const canManage = hasRole("admin", "manager", "event_office");
+  const canManage = hasRole("admin", "manager", "event_office", "werkstudent");
   const canSubmit = event.status === "running" || event.status === "closed";
   const [form, setForm] = useState<FormState>(initialForm);
 
@@ -69,11 +74,12 @@ export function FeedbackPanel({ event }: FeedbackPanelProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const trimOrNull = (s: string) => (s.trim() === "" ? null : s.trim());
     submitMut.mutate({
       ratingOverall: form.ratingOverall,
-      ratingContent: form.ratingContent,
-      ratingOrganization: form.ratingOrganization,
-      comment: form.comment.trim() === "" ? null : form.comment.trim(),
+      highlightText: trimOrNull(form.highlightText),
+      improvementText: trimOrNull(form.improvementText),
+      otherText: trimOrNull(form.otherText),
     });
   };
 
@@ -91,33 +97,7 @@ export function FeedbackPanel({ event }: FeedbackPanelProps) {
             <p className="muted" style={{ marginTop: 0 }}>
               {t("feedback.alreadySubmitted")}
             </p>
-            <div>
-              <span className="label" style={{ display: "inline", marginRight: 8 }}>
-                {t("feedback.fieldOverall")}
-              </span>
-              {stars(ownQ.data.feedback.ratingOverall)}
-            </div>
-            {ownQ.data.feedback.ratingContent !== null && (
-              <div>
-                <span className="label" style={{ display: "inline", marginRight: 8 }}>
-                  {t("feedback.fieldContent")}
-                </span>
-                {stars(ownQ.data.feedback.ratingContent)}
-              </div>
-            )}
-            {ownQ.data.feedback.ratingOrganization !== null && (
-              <div>
-                <span className="label" style={{ display: "inline", marginRight: 8 }}>
-                  {t("feedback.fieldOrganization")}
-                </span>
-                {stars(ownQ.data.feedback.ratingOrganization)}
-              </div>
-            )}
-            {ownQ.data.feedback.comment && (
-              <p style={{ whiteSpace: "pre-wrap", color: "var(--fg-strong)" }}>
-                {ownQ.data.feedback.comment}
-              </p>
-            )}
+            <FeedbackView fb={ownQ.data.feedback} />
           </div>
         ) : (
           <form
@@ -126,33 +106,54 @@ export function FeedbackPanel({ event }: FeedbackPanelProps) {
             style={{ marginTop: "var(--space-3)" }}
           >
             <RatingField
-              label={t("feedback.fieldOverall")}
+              label={`1. ${Q1}`}
               required
               value={form.ratingOverall}
               onChange={(v) => setForm({ ...form, ratingOverall: v ?? 5 })}
             />
-            <RatingField
-              label={t("feedback.fieldContent")}
-              value={form.ratingContent}
-              onChange={(v) => setForm({ ...form, ratingContent: v })}
-            />
-            <RatingField
-              label={t("feedback.fieldOrganization")}
-              value={form.ratingOrganization}
-              onChange={(v) => setForm({ ...form, ratingOrganization: v })}
-            />
+
             <div className="field">
-              <label className="label" htmlFor="fb-comment">
-                {t("feedback.fieldComment")}
+              <label className="label" htmlFor="fb-highlight">
+                2. {Q2}
               </label>
               <textarea
-                id="fb-comment"
+                id="fb-highlight"
                 className="textarea"
-                value={form.comment}
-                onChange={(e) => setForm({ ...form, comment: e.target.value })}
+                value={form.highlightText}
+                onChange={(e) => setForm({ ...form, highlightText: e.target.value })}
                 rows={3}
+                placeholder="Was war richtig gut?"
               />
             </div>
+
+            <div className="field">
+              <label className="label" htmlFor="fb-improvement">
+                3. {Q3}
+              </label>
+              <textarea
+                id="fb-improvement"
+                className="textarea"
+                value={form.improvementText}
+                onChange={(e) => setForm({ ...form, improvementText: e.target.value })}
+                rows={3}
+                placeholder="Konstruktive Kritik hilft uns weiter"
+              />
+            </div>
+
+            <div className="field">
+              <label className="label" htmlFor="fb-other">
+                4. {Q4}
+              </label>
+              <textarea
+                id="fb-other"
+                className="textarea"
+                value={form.otherText}
+                onChange={(e) => setForm({ ...form, otherText: e.target.value })}
+                rows={2}
+                placeholder="Optional"
+              />
+            </div>
+
             <div className="form-actions">
               <button type="submit" disabled={submitMut.isPending} className="btn btn-primary">
                 {t("feedback.submit")}
@@ -166,19 +167,11 @@ export function FeedbackPanel({ event }: FeedbackPanelProps) {
 
       {canManage && allQ.data && (
         <div style={{ marginTop: "var(--space-4)" }}>
-          <div className="stat-grid">
+          <div className="stat-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
             <Kpi label={t("feedback.kpiCount")} value={String(allQ.data.stats.count)} />
             <Kpi
               label={t("feedback.kpiAvgOverall")}
               value={fmtAvg(allQ.data.stats.averageOverall)}
-            />
-            <Kpi
-              label={t("feedback.kpiAvgContent")}
-              value={fmtAvg(allQ.data.stats.averageContent)}
-            />
-            <Kpi
-              label={t("feedback.kpiAvgOrganization")}
-              value={fmtAvg(allQ.data.stats.averageOrganization)}
             />
           </div>
           {allQ.data.feedback.length > 0 && (
@@ -235,44 +228,12 @@ export function FeedbackPanel({ event }: FeedbackPanelProps) {
                     style={{
                       fontSize: "var(--text-xs)",
                       color: "var(--fg-muted)",
-                      marginBottom: "var(--space-1)",
+                      marginBottom: "var(--space-2)",
                     }}
                   >
                     {new Date(fb.submittedAt).toLocaleString()}
                   </div>
-                  <div>
-                    <span className="label" style={{ display: "inline", marginRight: 8 }}>
-                      {t("feedback.fieldOverall")}
-                    </span>
-                    {stars(fb.ratingOverall)}
-                  </div>
-                  {fb.ratingContent !== null && (
-                    <div>
-                      <span className="label" style={{ display: "inline", marginRight: 8 }}>
-                        {t("feedback.fieldContent")}
-                      </span>
-                      {stars(fb.ratingContent)}
-                    </div>
-                  )}
-                  {fb.ratingOrganization !== null && (
-                    <div>
-                      <span className="label" style={{ display: "inline", marginRight: 8 }}>
-                        {t("feedback.fieldOrganization")}
-                      </span>
-                      {stars(fb.ratingOrganization)}
-                    </div>
-                  )}
-                  {fb.comment && (
-                    <p
-                      style={{
-                        whiteSpace: "pre-wrap",
-                        margin: "var(--space-2) 0 0",
-                        color: "var(--fg-strong)",
-                      }}
-                    >
-                      {fb.comment}
-                    </p>
-                  )}
+                  <FeedbackView fb={fb} />
                 </li>
               ))}
             </ul>
@@ -280,6 +241,41 @@ export function FeedbackPanel({ event }: FeedbackPanelProps) {
         </div>
       )}
     </section>
+  );
+}
+
+function FeedbackView({ fb }: { fb: EventFeedbackDto }) {
+  return (
+    <div style={{ display: "grid", gap: "var(--space-3)" }}>
+      <div>
+        <span className="label" style={{ display: "inline", marginRight: 8 }}>
+          {Q1}
+        </span>
+        <span style={{ color: "var(--brand-yellow)", fontSize: "1.1rem", letterSpacing: 2 }}>
+          {stars(fb.ratingOverall)}
+        </span>
+      </div>
+      {fb.highlightText && (
+        <Answer label={Q2} value={fb.highlightText} />
+      )}
+      {fb.improvementText && (
+        <Answer label={Q3} value={fb.improvementText} />
+      )}
+      {fb.otherText && (
+        <Answer label={Q4} value={fb.otherText} />
+      )}
+    </div>
+  );
+}
+
+function Answer({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="label" style={{ marginBottom: 4 }}>
+        {label}
+      </div>
+      <p style={{ whiteSpace: "pre-wrap", margin: 0, color: "var(--fg-strong)" }}>{value}</p>
+    </div>
   );
 }
 
@@ -310,53 +306,61 @@ function RatingField({ label, value, required, onChange }: RatingFieldProps) {
     <fieldset
       style={{
         display: "flex",
-        alignItems: "center",
+        flexDirection: "column",
         gap: "var(--space-2)",
-        marginBottom: "var(--space-3)",
+        marginBottom: "var(--space-4)",
       }}
     >
       <legend
         style={{
-          minWidth: 160,
           padding: 0,
-          float: "left",
           fontSize: "var(--label-size)",
           fontWeight: "var(--label-weight)",
-          color: "var(--fg-subtle)",
-          letterSpacing: "var(--tracking-wide)",
+          color: "var(--fg-strong)",
+          fontFamily: "var(--font-mono)",
+          letterSpacing: "var(--tracking-wider)",
           textTransform: "uppercase",
         }}
       >
         {label}
       </legend>
-      {[1, 2, 3, 4, 5].map((n) => (
-        <button
-          key={n}
-          type="button"
-          onClick={() => onChange(n)}
-          style={{
-            border: "none",
-            background: "transparent",
-            cursor: "pointer",
-            fontSize: "1.35rem",
-            color: value !== null && n <= value ? "var(--brand-yellow)" : "var(--border-strong)",
-            padding: "0 2px",
-          }}
-          aria-label={`${n}`}
-        >
-          ★
-        </button>
-      ))}
-      {!required && value !== null && (
-        <button
-          type="button"
-          onClick={() => onChange(null)}
-          className="btn btn-ghost btn-sm"
-          style={{ marginLeft: "var(--space-2)" }}
-        >
-          ×
-        </button>
-      )}
+      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => onChange(n)}
+            style={{
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              fontSize: "1.75rem",
+              color: value !== null && n <= value ? "var(--brand-yellow)" : "var(--border-strong)",
+              padding: "0 4px",
+              transition: "transform 120ms ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "scale(1.15)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "scale(1)";
+            }}
+            aria-label={`${n} Sterne`}
+          >
+            ★
+          </button>
+        ))}
+        {!required && value !== null && (
+          <button
+            type="button"
+            onClick={() => onChange(null)}
+            className="btn btn-ghost btn-sm"
+            style={{ marginLeft: "var(--space-2)" }}
+          >
+            ×
+          </button>
+        )}
+      </div>
     </fieldset>
   );
 }

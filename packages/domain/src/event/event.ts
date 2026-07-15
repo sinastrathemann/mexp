@@ -3,7 +3,15 @@ import type { EventStatus } from "./status.js";
 export const EVENT_VISIBILITIES = ["internal", "public"] as const;
 export type EventVisibility = (typeof EVENT_VISIBILITIES)[number];
 
-export const EVENT_TYPES = ["training", "workshop", "company_event", "other"] as const;
+export const EVENT_TYPES = [
+  "mindsquare",
+  "office",
+  "feelgood",
+  "team",
+  "strategy",
+  "division",
+  "local_experience",
+] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 
 export interface Event {

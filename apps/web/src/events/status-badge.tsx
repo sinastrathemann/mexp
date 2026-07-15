@@ -1,11 +1,11 @@
 import { useTranslation } from "react-i18next";
 
 const STATUS_CLASS: Record<string, string> = {
-  draft: "badge badge-muted",
+  draft: "badge badge-outline",
   planned: "badge badge-yellow",
   open: "badge badge-orange",
-  running: "badge badge-orange",
-  closed: "badge badge-muted",
+  running: "badge badge-success badge-live",
+  closed: "badge badge-ink",
   cancelled: "badge badge-muted",
 };
 

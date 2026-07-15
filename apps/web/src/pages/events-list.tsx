@@ -9,7 +9,7 @@ import type { EventDto } from "../events/types";
 export default function EventsListPage() {
   const { t, i18n } = useTranslation();
   const { hasRole } = useAuth();
-  const canCreate = hasRole("admin", "manager", "event_office");
+  const canCreate = hasRole("admin", "manager", "event_office", "werkstudent");
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["events", "list"],
@@ -22,15 +22,22 @@ export default function EventsListPage() {
       timeStyle: "short",
     });
 
+  const total = data?.events.length ?? 0;
+
   return (
     <div className="page">
       <div className="page-header">
         <div>
-          <div className="eyebrow">Events</div>
+          <div className="eyebrow">
+            Events · {total.toString().padStart(2, "0")} aktiv
+          </div>
           <h1 className="page-title">{t("events.listTitle")}</h1>
+          <p className="page-subtitle">
+            mindsquare Events, Büro-, Feelgood-, Team-, Strategie-, Bereichsevents & Local Experiences im Überblick
+          </p>
         </div>
         {canCreate && (
-          <Link to="/events/new" className="btn btn-primary">
+          <Link to="/events/new" className="btn btn-primary btn-lg">
             + {t("events.create")}
           </Link>
         )}
@@ -39,35 +46,54 @@ export default function EventsListPage() {
       {isLoading && <div className="card">{t("auth.loading")}</div>}
       {error instanceof Error && <div className="alert alert-error">{error.message}</div>}
 
-      {data && data.events.length === 0 && <div className="card muted">{t("events.empty")}</div>}
+      {data && data.events.length === 0 && (
+        <div
+          className="card"
+          style={{
+            textAlign: "center",
+            padding: "var(--space-16) var(--space-6)",
+            color: "var(--fg-muted)",
+          }}
+        >
+          <div className="bento-eyebrow">Noch nichts hier</div>
+          <h3 style={{ marginTop: "var(--space-3)" }}>{t("events.empty")}</h3>
+        </div>
+      )}
+
       {data && data.events.length > 0 && (
-        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>{t("events.colTitle")}</th>
-                <th>{t("events.colType")}</th>
-                <th>{t("events.colStart")}</th>
-                <th>{t("events.colStatus")}</th>
-                <th>{t("events.colLocation")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.events.map((e) => (
-                <tr key={e.id}>
-                  <td>
-                    <Link to={`/events/${e.id}`}>{e.title}</Link>
-                  </td>
-                  <td>{t(`events.type.${e.eventType}`)}</td>
-                  <td>{fmtDate(e.startAt)}</td>
-                  <td>
-                    <EventStatusBadge status={e.status} />
-                  </td>
-                  <td>{e.location ?? "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="event-grid">
+          {data.events.map((e) => (
+            <Link
+              key={e.id}
+              to={`/events/${e.id}`}
+              className="event-card"
+              data-status={e.status}
+            >
+              <div className="event-card-head">
+                <span className="event-card-type">{t(`events.type.${e.eventType}`)}</span>
+                <EventStatusBadge status={e.status} />
+              </div>
+
+              <h2 className="event-card-title">{e.title}</h2>
+
+              <div className="event-card-meta">
+                <div className="event-card-meta-row">
+                  <span className="event-card-meta-label">Start</span>
+                  <span className="event-card-meta-value">{fmtDate(e.startAt)}</span>
+                </div>
+                <div className="event-card-meta-row">
+                  <span className="event-card-meta-label">Ort</span>
+                  <span className="event-card-meta-value">{e.location ?? "—"}</span>
+                </div>
+                {e.capacity !== null && e.capacity !== undefined && (
+                  <div className="event-card-meta-row">
+                    <span className="event-card-meta-label">Plätze</span>
+                    <span className="event-card-meta-value text-mono">{e.capacity}</span>
+                  </div>
+                )}
+              </div>
+            </Link>
+          ))}
         </div>
       )}
     </div>

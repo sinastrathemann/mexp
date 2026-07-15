@@ -45,3 +45,7 @@ specs/**/*.svg
 # Temporary
 *.tmp
 tmp/
+
+# Dev-Mode in-memory store persistence (lokale JSON-Dateien)
+apps/api/data/
+apps/api/data.backup-*/

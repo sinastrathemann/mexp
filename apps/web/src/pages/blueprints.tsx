@@ -27,7 +27,7 @@ interface CreateFormState {
 const initialCreate: CreateFormState = {
   name: "",
   description: "",
-  eventType: "training",
+  eventType: "team",
   visibility: "internal",
   defaultDurationMinutes: "120",
   defaultCapacity: "",

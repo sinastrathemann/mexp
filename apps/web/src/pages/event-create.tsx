@@ -19,7 +19,7 @@ export default function EventCreatePage() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [eventType, setEventType] = useState<EventType>("training");
+  const [eventType, setEventType] = useState<EventType>("team");
   const [visibility, setVisibility] = useState<EventVisibility>("internal");
   const [startAt, setStartAt] = useState("");
   const [endAt, setEndAt] = useState("");

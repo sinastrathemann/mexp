@@ -14,6 +14,12 @@ import { dashboardRoutes } from "./routes/dashboard.js";
 import { documentRoutes } from "./routes/documents.js";
 import { eventRoutes } from "./routes/events.js";
 import { feedbackRoutes } from "./routes/feedback.js";
+import { myDashboardRoutes } from "./routes/my-dashboard.js";
+import { qnaRoutes } from "./routes/qna.js";
+import { registrationFormRoutes } from "./routes/registration-form.js";
+import { reportRoutes } from "./routes/reports.js";
+import { tenderRoutes } from "./routes/tenders.js";
+import { vendorRoutes } from "./routes/vendors.js";
 
 const log = rootLogger.child({ module: "api" });
 
@@ -45,6 +51,12 @@ app.route("/dashboard", dashboardRoutes);
 app.route("/", budgetRoutes);
 app.route("/", documentRoutes);
 app.route("/", feedbackRoutes);
+app.route("/", registrationFormRoutes);
+app.route("/reports", reportRoutes);
+app.route("/my", myDashboardRoutes);
+app.route("/tenders", tenderRoutes);
+app.route("/vendors", vendorRoutes);
+app.route("/", qnaRoutes);
 app.route("/blueprints", blueprintRoutes);
 
 serve({ fetch: app.fetch, port: env.API_PORT, hostname: env.API_HOST }, (info) => {

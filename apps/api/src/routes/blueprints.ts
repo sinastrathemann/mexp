@@ -53,7 +53,7 @@ const applySchema = z.object({
   startAt: z.string().datetime({ offset: true }),
 });
 
-const WRITE_ROLES = ["admin", "manager", "event_office"] as const;
+const WRITE_ROLES = ["admin", "manager", "event_office", "werkstudent"] as const;
 
 export const blueprintRoutes = new Hono<{ Variables: AuthVariables }>();
 

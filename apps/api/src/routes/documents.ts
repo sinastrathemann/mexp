@@ -5,7 +5,7 @@ import { type AuthVariables, requireAuth, requireRole } from "@memp/auth";
 import { DOCUMENT_VISIBILITIES } from "@memp/domain";
 import { Hono } from "hono";
 import { z } from "zod";
-import { events, audit, documents } from "../deps.js";
+import { env, events, audit, documents } from "../deps.js";
 
 const visibilitySchema = z.enum(DOCUMENT_VISIBILITIES);
 
@@ -20,7 +20,7 @@ const createSchema = z.object({
   visibility: visibilitySchema.default("event_staff"),
 });
 
-const WRITE_ROLES = ["admin", "manager", "event_office"] as const;
+const WRITE_ROLES = ["admin", "manager", "event_office", "werkstudent"] as const;
 const DELETE_ROLES = ["admin", "manager"] as const;
 
 export const documentRoutes = new Hono<{ Variables: AuthVariables }>();
@@ -29,6 +29,9 @@ documentRoutes.use("*", requireAuth());
 
 documentRoutes.get("/events/:eventId/documents", async (c) => {
   const eventId = c.req.param("eventId");
+  if (env.NODE_ENV === "development") {
+    return c.json({ documents: [] });
+  }
   const items = await listDocuments(eventId, { events, documents });
   return c.json({ documents: items });
 });

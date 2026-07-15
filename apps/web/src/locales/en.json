@@ -86,10 +86,13 @@
     "fieldLocation": "Location",
     "fieldCapacity": "Capacity",
     "type": {
-      "training": "Training",
-      "workshop": "Workshop",
-      "company_event": "Company event",
-      "other": "Other"
+      "mindsquare": "mindsquare Event",
+      "office": "Office event",
+      "feelgood": "Feelgood event",
+      "team": "Team event",
+      "strategy": "Strategy event",
+      "division": "Division event",
+      "local_experience": "Local Experience"
     },
     "visibility": {
       "internal": "Internal",

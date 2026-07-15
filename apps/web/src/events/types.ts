@@ -8,7 +8,15 @@ export const EVENT_STATUSES = [
 ] as const;
 export type EventStatus = (typeof EVENT_STATUSES)[number];
 
-export const EVENT_TYPES = ["training", "workshop", "company_event", "other"] as const;
+export const EVENT_TYPES = [
+  "mindsquare",
+  "office",
+  "feelgood",
+  "team",
+  "strategy",
+  "division",
+  "local_experience",
+] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 
 export const EVENT_VISIBILITIES = ["internal", "public"] as const;
@@ -24,19 +32,29 @@ export interface EventDto {
   startAt: string;
   endAt: string;
   location: string | null;
+  // Zusatz-Infos zur Location: Adresse, Parkmöglichkeiten, Besonderheiten
+  locationDetails?: string | null;
   capacity: number | null;
+  // Anmeldung wird automatisch geschlossen ab diesem Datum
+  registrationDeadline?: string | null;
+  // Sichtbarkeits-Filter
+  audienceScope?: "all" | "roles" | "emails";
+  audienceRoles?: string[];
+  audienceEmails?: string[];
   ownerId: string;
   createdAt: string;
   updatedAt: string;
 }
 
+// Admins können flexibel zwischen Status wechseln (Anmeldung öffnen, wieder schließen, Event starten/zurückziehen).
+// Nur abgesagt/closed sind ohne weitere Aktionen finale Zustände, aber auch dort erlaubt wir Rückgang in den Vorzustand.
 const TRANSITIONS: Record<EventStatus, readonly EventStatus[]> = {
-  draft: ["planned", "cancelled"],
-  planned: ["open", "cancelled"],
-  open: ["running", "cancelled"],
-  running: ["closed"],
-  closed: [],
-  cancelled: [],
+  draft: ["planned", "open", "cancelled"],
+  planned: ["draft", "open", "running", "cancelled"],
+  open: ["draft", "planned", "running", "cancelled"],
+  running: ["open", "closed", "cancelled"],
+  closed: ["running"],
+  cancelled: ["draft", "planned"],
 };
 
 export function allowedTransitions(status: EventStatus): readonly EventStatus[] {
@@ -61,11 +79,43 @@ export interface ParticipationDto {
   registeredAt: string;
   cancelledAt: string | null;
   checkedInAt: string | null;
+  // Freitext-Notiz des Teilnehmers (z.B. "komme mit Partner")
+  personalNote?: string | null;
 }
 
 export interface ParticipantDto extends ParticipationDto {
   userEmail: string;
   userDisplayName: string;
+  answers?: RegistrationAnswer[];
+}
+
+// ─── Registrierungs-Formular pro Event ─────────────────────────
+export const QUESTION_TYPES = [
+  "yes_no",
+  "single_choice",
+  "multi_choice",
+  "date_pick",
+] as const;
+export type QuestionType = (typeof QUESTION_TYPES)[number];
+
+export interface RegistrationQuestion {
+  id: string;
+  order: number;
+  type: QuestionType;
+  label: string;
+  required: boolean;
+  // Für single_choice/multi_choice: Antwort-Optionen
+  // Für date_pick: ISO-Datums-Strings als Slots
+  options: string[];
+}
+
+// Antwort kann sein: boolean (yes_no), string (single_choice),
+// string[] (multi_choice / date_pick)
+export type AnswerValue = boolean | string | string[] | null;
+
+export interface RegistrationAnswer {
+  questionId: string;
+  value: AnswerValue;
 }
 
 export const BUDGET_CATEGORIES = [
@@ -110,6 +160,10 @@ export interface BudgetItemDto {
   approverId: string | null;
   approvedAt: string | null;
   rejectedReason: string | null;
+  // Tatsächliche Netto-Summe aus eingereichter Rechnung
+  actualNetCents: number | null;
+  invoiceFileName: string | null;
+  invoiceUploadedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -134,15 +188,47 @@ export interface EventFeedbackDto {
   eventId: string;
   userId: string | null;
   ratingOverall: number;
-  ratingContent: number | null;
-  ratingOrganization: number | null;
-  comment: string | null;
+  highlightText: string | null;
+  improvementText: string | null;
+  otherText: string | null;
   submittedAt: string;
 }
 
 export interface EventFeedbackStatsDto {
   count: number;
   averageOverall: number | null;
-  averageContent: number | null;
-  averageOrganization: number | null;
+}
+
+// ─── Ausschreibungen / Tender ─────────────────────────────────
+export const TENDER_STATUSES = ["draft", "published", "closed", "awarded"] as const;
+export type TenderStatus = (typeof TENDER_STATUSES)[number];
+
+export interface TenderCriterion {
+  label: string;
+  weight: number;
+}
+
+export interface TenderDto {
+  id: string;
+  eventId: string;
+  title: string;
+  briefing: string;
+  deadline: string | null;
+  criteria: TenderCriterion[];
+  status: TenderStatus;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+}
+
+export interface VendorDto {
+  id: string;
+  tenderId: string;
+  email: string;
+  companyName: string;
+  contactName: string;
+  magicToken: string;
+  invitedAt: string;
+  lastAccessAt: string | null;
+  revoked: boolean;
 }

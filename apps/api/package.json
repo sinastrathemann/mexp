@@ -21,6 +21,7 @@
     "@memp/llm": "workspace:*",
     "@memp/shared": "workspace:*",
     "hono": "^4.6.12",
+    "unpdf": "^1.6.2",
     "yaml": "^2.6.1",
     "zod": "^3.23.8"
   },

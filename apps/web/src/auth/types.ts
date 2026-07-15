@@ -1,6 +1,7 @@
 export const ROLE_NAMES = [
   "read_only",
   "participant",
+  "werkstudent",
   "event_office",
   "budget_owner",
   "manager",

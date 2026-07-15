@@ -19,14 +19,13 @@ export default function LoginPage() {
 
   if (user) return <Navigate to={from} replace />;
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function loginWith(emailVal: string, passwordVal: string) {
     setError(null);
     setPending(true);
     try {
       await apiFetch("/auth/login", {
         method: "POST",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: emailVal, password: passwordVal }),
       });
       await refresh();
       navigate(from, { replace: true });
@@ -47,12 +46,21 @@ export default function LoginPage() {
     }
   }
 
+  function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    void loginWith(email, password);
+  }
+
   return (
-    <div className="login-wrap">
-      <div className="card login-card">
+    <div className="sso-wrap">
+      <div className="sso-card">
         <div className="eyebrow">mindsquare · mEMP</div>
-        <h1 style={{ marginTop: 0 }}>{t("auth.loginTitle")}</h1>
-        <form onSubmit={onSubmit}>
+        <h1 className="sso-title" style={{ fontSize: "var(--text-2xl)" }}>
+          {t("auth.loginTitle")}
+        </h1>
+        <p className="sso-sub">Melde dich mit deiner mindsquare E-Mail an.</p>
+
+        <form onSubmit={onSubmit} style={{ textAlign: "left" }}>
           <div className="field">
             <label className="label" htmlFor="login-email">
               {t("auth.emailLabel")}
@@ -65,6 +73,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
+              placeholder="vorname.nachname@mindsquare.de"
             />
           </div>
           <div className="field">
@@ -79,6 +88,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
+              placeholder="••••••••"
             />
           </div>
           {error && (
@@ -90,11 +100,54 @@ export default function LoginPage() {
             type="submit"
             disabled={pending}
             className="btn btn-primary btn-lg"
-            style={{ width: "100%" }}
+            style={{ width: "100%", marginTop: "var(--space-2)" }}
           >
-            {pending ? t("auth.loginPending") : t("auth.loginSubmit")}
+            {pending ? t("auth.loginPending") : t("auth.loginSubmit")} →
           </button>
         </form>
+
+        <div className="sso-divider" style={{ marginTop: "var(--space-6)" }}>
+          <span>Test-Accounts</span>
+        </div>
+
+        <div className="sso-quick-grid">
+          <button
+            type="button"
+            className="sso-quick-btn"
+            disabled={pending}
+            onClick={() => loginWith("sina.strathemann@mindsquare.de", "password")}
+          >
+            <span className="sso-quick-avatar sso-quick-avatar-admin" aria-hidden="true">S</span>
+            <span className="sso-quick-info">
+              <span className="sso-quick-name">Sina (Dev)</span>
+              <span className="sso-quick-role">Admin</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            className="sso-quick-btn"
+            disabled={pending}
+            onClick={() => loginWith("max.mustermann@mindsquare.de", "password")}
+          >
+            <span className="sso-quick-avatar sso-quick-avatar-user" aria-hidden="true">M</span>
+            <span className="sso-quick-info">
+              <span className="sso-quick-name">Max Mustermann</span>
+              <span className="sso-quick-role">Mitarbeiter</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            className="sso-quick-btn"
+            disabled={pending}
+            onClick={() => loginWith("lisa.werkstudi@mindsquare.de", "password")}
+          >
+            <span className="sso-quick-avatar sso-quick-avatar-user" aria-hidden="true">L</span>
+            <span className="sso-quick-info">
+              <span className="sso-quick-name">Lisa (Werkstudentin)</span>
+              <span className="sso-quick-role">Werkstudent</span>
+            </span>
+          </button>
+        </div>
       </div>
     </div>
   );

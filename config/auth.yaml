@@ -3,7 +3,7 @@
 # ============================================================
 
 auth:
-  strategy: "oidc"                   # "oidc" | "jwt" | "none" (nur lokal)
+  strategy: "none"                   # "oidc" | "jwt" | "none" (nur lokal)
   oidc:
     provider: "entra-id"
     tenant_id: ${ENTRA_TENANT_ID}
