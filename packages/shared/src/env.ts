@@ -5,11 +5,10 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error", "fatal"]).default("info"),
   API_PORT: z.coerce.number().int().positive().default(3000),
   API_HOST: z.string().default("0.0.0.0"),
-  DATABASE_URL: z.string().url(),
-  AUTH_PROVIDER: z.enum(["local", "entra"]).default("local"),
-  AUTH_JWT_SECRET: z.string().min(32, "AUTH_JWT_SECRET muss mindestens 32 Zeichen haben"),
-  AUTH_SESSION_COOKIE_NAME: z.string().default("memp_session"),
-  AUTH_SESSION_MAX_AGE_SECONDS: z.coerce.number().int().positive().default(28800),
+  // Postgres ist Follow-up (siehe Design-Spec §2 Non-Goals) — MVP persistiert über
+  // JSON-Files im Volume (dev-persistence.ts). DATABASE_URL ist daher optional; wenn
+  // gesetzt, bleibt der Postgres-Pfad rückwärtskompatibel nutzbar (apps/api/src/deps.ts).
+  DATABASE_URL: z.string().url().optional(),
   LLM_CONFIG_PATH: z.string().default("../../config/llm.yaml"),
   LLM_PROVIDER: z.string().default("mock"),
 });
