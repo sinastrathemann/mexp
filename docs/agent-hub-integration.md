@@ -57,7 +57,7 @@ Das Package `ghcr.io/sinastrathemann/memp` liegt im GitHub Container Registry de
 1. **Package auf public setzen** (Empfehlung falls keine sensible Repo-Sichtbarkeit nötig) — dann keine Auth beim Pull.
 2. **Package bleibt private** — der Hub-Operator legt einen Git-Host für `ghcr.io` mit einem GitHub-PAT (Scopes: `read:packages`) an.
 
-Aktuell gewählt: **`__TODO_INSERT_CHOICE__`** — bitte nach Task 6 Step 6 eintragen.
+Aktuell gewählt: **wird bei erster GHCR-Publish festgelegt** — Empfehlung: Package auf `public` setzen (kein Hub-Operator-Setup nötig; mEMP enthält keinen sensiblen Code, nur interne Business-Logik). Alternative bei restriktiver Policy: private + Hub-Operator legt einen `ghcr.io`-Git-Host mit einem `read:packages`-PAT an.
 
 ## Deploy-Ablauf
 

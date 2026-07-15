@@ -2,24 +2,6 @@ import path from "node:path";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 
-// Direkte Route-Prefixe, unter denen die API (apps/api/src/index.ts) im
-// Hub-Setup mountet — Hub und API laufen im selben Container/Origin,
-// daher proxyt der Dev-Server 1:1 dieselben Prefixe zu localhost:3000.
-const API_ROUTE_PREFIXES = [
-  "/health",
-  "/me",
-  "/admin/users",
-  "/events",
-  "/dashboard",
-  "/budget",
-  "/documents",
-  "/reports",
-  "/my",
-  "/tenders",
-  "/vendors",
-  "/blueprints",
-] as const;
-
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
   const apiBase = env["VITE_API_BASE_URL"] ?? "http://localhost:3000";
@@ -34,7 +16,16 @@ export default defineConfig(({ mode }) => {
     server: {
       port: Number(env["WEB_PORT"] ?? 8080),
       proxy: {
-        ...Object.fromEntries(API_ROUTE_PREFIXES.map((prefix) => [prefix, apiBase])),
+        // Die API (apps/api/src/index.ts) mountet alle Routen unter /api/* —
+        // Hub und API laufen im selben Container/Origin, daher genügt ein
+        // einziger Proxy-Eintrag für den Dev-Server. /health bleibt bewusst
+        // außerhalb von /api (Hub-Smoke-Test), wird im Dev-Modus aber nicht
+        // separat benötigt.
+        "/api": {
+          target: apiBase,
+          changeOrigin: false,
+        },
+        "/health": apiBase,
       },
     },
     build: {

@@ -21,7 +21,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
  * Anmeldung neu. Es gibt bewusst keinen eigenen Login-/Logout-Endpunkt mehr.
  */
 async function fetchMe(): Promise<AuthUser | null> {
-  const res = await fetch("/me");
+  const res = await fetch("/api/me");
   if (res.status === 401) {
     window.location.href = "/auth/logout";
     return null;

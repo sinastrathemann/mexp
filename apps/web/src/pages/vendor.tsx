@@ -183,7 +183,7 @@ function VendorQnaSection({ tenderId, token }: { tenderId: string; token: string
   const askMut = useMutation({
     mutationFn: async (question: string) => {
       const res = await fetch(
-        `/tenders/${tenderId}/qna?token=${encodeURIComponent(token)}`,
+        `/api/tenders/${tenderId}/qna?token=${encodeURIComponent(token)}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

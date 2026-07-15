@@ -74,6 +74,10 @@ Siehe `docs/agent-hub-integration.md` — Registrierungs-Werte für den Hub-Oper
 3. **`apps/web/dist/` fehlte zu Beginn des Tests** und musste neu gebaut werden. Der reguläre `pnpm --filter @memp/web build`-Lauf schlug mit `EPERM` an einem leeren, gesperrten Reparse-Point `apps/web/dist/subpath-test` fehl (vermutlich Altlast aus früherem manuellem Test, evtl. OneDrive-Sync-Artefakt). Umgangen durch Build in ein alternatives `--outDir` (danach gelöscht) statt destruktivem Löschen des Reparse-Points. Dieses Verzeichnis sollte manuell bereinigt werden — siehe Follow-ups.
 4. **Nur Lese-/Schreibpersistenz für `persistentMap`-basierte Routen verifiziert**, nicht für alle Domänen (Events, Budget, Tenders, Vendors, Blueprints, Documents, Reports). Ob diese Routen file-store-fähig sind, wurde nicht einzeln geprüft.
 
+## Nachtrag: Post-DoD Arch-Fix (SPA-Refresh)
+
+Nach dieser DoD-Prüfung deckte ein Whole-Branch-Code-Review auf, dass die interne API und die React-SPA um dieselben Pfade konkurrierten (`/events`, `/dashboard`, `/admin/users`, …): Ein Seiten-Refresh auf einer SPA-Detailroute (z. B. `/memp/events/evt-001`) traf serverseitig auf `eventRoutes.get("/:id")` statt auf den SPA-Shell-Fallback und lieferte JSON statt HTML — die SPA bootete dann nicht neu. Behoben durch Mounten aller API-Routen unter `/api/*` (Frontend `apiFetch`, Vite-Dev-Proxy, `static-serve.ts`-Fallback entsprechend angepasst); zusätzlich wurde in `static-serve.ts` ein Path-Traversal-Schutz ergänzt. Die oben dokumentierten `curl`-Nachweise (A.1.4 etc.) bleiben inhaltlich gültig, referenzieren aber jetzt `/api/events` statt `/events` für API-Aufrufe.
+
 ## Follow-ups vor produktivem Hub-Deploy
 
 1. **Merge nach `main`** → GitHub-Actions-Workflow (Task 6) baut und published `ghcr.io/sinastrathemann/memp:latest` + `:sha-<abbrev>`. Danach A.1.1 mit echtem `docker pull` erneut verifizieren.

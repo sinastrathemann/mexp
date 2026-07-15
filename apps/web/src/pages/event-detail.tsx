@@ -95,7 +95,7 @@ export default function EventDetailPage() {
         </div>
         <div className="row" style={{ gap: 8 }}>
           <a
-            href={`/events/${event.id}/calendar.ics`}
+            href={`/api/events/${event.id}/calendar.ics`}
             className="btn btn-outline"
             title="Lädt eine .ics-Datei herunter, die in Outlook, Apple Calendar oder Google Calendar geöffnet werden kann."
           >

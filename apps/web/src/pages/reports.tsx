@@ -54,7 +54,7 @@ export default function ReportsPage() {
   const data = reportQ.data;
 
   const handleCsv = () => {
-    window.open(`/reports/monthly.csv?year=${year}&month=${month}`, "_blank");
+    window.open(`/api/reports/monthly.csv?year=${year}&month=${month}`, "_blank");
   };
 
   return (

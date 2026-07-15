@@ -1,29 +1,12 @@
 import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { resolve, sep } from "node:path";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { rootLogger } from "@memp/shared";
 import type { Hono } from "hono";
 
 const log = rootLogger.child({ module: "api/static-serve" });
 
-const API_PREFIXES = [
-  "/health",
-  "/ready",
-  "/me",
-  "/admin",
-  "/events",
-  "/dashboard",
-  "/reports",
-  "/my",
-  "/tenders",
-  "/vendors",
-  "/blueprints",
-  "/budgets",
-  "/documents",
-  "/feedback",
-  "/registration-forms",
-  "/qna",
-];
+const API_PREFIXES = ["/api"];
 
 function isApiPath(path: string): boolean {
   return API_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
@@ -52,6 +35,10 @@ export function mountStatic(app: Hono, webRoot: string): void {
       return c.notFound();
     }
     const filePath = resolve(webRoot, `.${c.req.path}`);
+    if (!filePath.startsWith(webRoot + sep) && filePath !== webRoot) {
+      // Path traversal attempt — reject
+      return c.notFound();
+    }
     if (c.req.path !== "/" && existsSync(filePath) && !filePath.endsWith("index.html")) {
       return serveStatic({ root: webRoot })(c, async () => {});
     }

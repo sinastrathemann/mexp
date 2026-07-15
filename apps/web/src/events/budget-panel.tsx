@@ -149,7 +149,7 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
     mutationFn: async ({ id, file }: { id: string; file: File }) => {
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch(`/budget/${id}/invoice/upload`, {
+      const res = await fetch(`/api/budget/${id}/invoice/upload`, {
         method: "POST",
         body: fd,
         credentials: "include",

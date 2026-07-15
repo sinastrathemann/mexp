@@ -45,29 +45,31 @@ app.use(
   "*",
   hubAuthMiddleware({
     publicPathPatterns: [
-      /^\/vendors\/session$/, // GET — vendor magic-link session lookup (vendors.ts)
-      /^\/tenders\/[^/]+\/qna$/, // GET+POST — vendor Q&A list/ask via token (qna.ts)
-      /^\/$/, // SPA root — shell loads unauth, client-side /me fetch handles 401 redirect
-      /^\/assets\//, // SPA hashed assets (Vite build output)
-      /^\/[^/]+\.(?:png|jpg|jpeg|gif|svg|ico|webp|woff2?|ttf|css|js|map)$/, // public static files at root (favicon, logo, …)
+      /^\/api\/vendors\/session$/, // GET — vendor magic-link session lookup (vendors.ts)
+      /^\/api\/tenders\/[^/]+\/qna$/, // GET+POST — vendor Q&A list/ask via token (qna.ts)
+      // Everything outside /api/* is public: the SPA shell + hashed assets + any
+      // client-side route (e.g. /events/evt-1, /admin/users on a hard refresh).
+      // Real auth is enforced by (a) the /api/* endpoints themselves and (b) the
+      // SPA's own /api/me bootstrap, which redirects to /auth/logout on 401.
+      /^(?!\/api(?:\/|$))/,
     ],
   }),
 );
 
-app.route("/", authRoutes);
-app.route("/admin/users", adminUserRoutes);
-app.route("/events", eventRoutes);
-app.route("/dashboard", dashboardRoutes);
-app.route("/", budgetRoutes);
-app.route("/", documentRoutes);
-app.route("/", feedbackRoutes);
-app.route("/", registrationFormRoutes);
-app.route("/reports", reportRoutes);
-app.route("/my", myDashboardRoutes);
-app.route("/tenders", tenderRoutes);
-app.route("/vendors", vendorRoutes);
-app.route("/", qnaRoutes);
-app.route("/blueprints", blueprintRoutes);
+app.route("/api", authRoutes);
+app.route("/api/admin/users", adminUserRoutes);
+app.route("/api/events", eventRoutes);
+app.route("/api/dashboard", dashboardRoutes);
+app.route("/api", budgetRoutes);
+app.route("/api", documentRoutes);
+app.route("/api", feedbackRoutes);
+app.route("/api", registrationFormRoutes);
+app.route("/api/reports", reportRoutes);
+app.route("/api/my", myDashboardRoutes);
+app.route("/api/tenders", tenderRoutes);
+app.route("/api/vendors", vendorRoutes);
+app.route("/api", qnaRoutes);
+app.route("/api/blueprints", blueprintRoutes);
 
 // Serve SPA (last so API routes win on their prefixes)
 const webRoot = process.env.MEMP_WEB_DIST ?? resolve(process.cwd(), "web-dist");
