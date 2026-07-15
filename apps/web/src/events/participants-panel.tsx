@@ -206,7 +206,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
         <>
           <div className="row" style={{ marginTop: "var(--space-4)" }}>
             <a
-              href={`/api/events/${event.id}/participants.csv`}
+              href={`/events/${event.id}/participants.csv`}
               target="_blank"
               rel="noreferrer"
               className="btn btn-outline btn-sm"
@@ -214,7 +214,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
               {t("participants.exportCsv")}
             </a>
             <a
-              href={`/api/events/${event.id}/emergency-list`}
+              href={`/events/${event.id}/emergency-list`}
               target="_blank"
               rel="noreferrer"
               className="btn btn-outline btn-sm"

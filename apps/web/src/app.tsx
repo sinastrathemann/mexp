@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { BrowserRouter, NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import logoUrl from "./assets/logo-mindsquare.png";
 import { AuthProvider, useAuth } from "./auth/auth-context";
 import { ProtectedRoute } from "./auth/protected-route";
 import AdminUsersPage from "./pages/admin-users";
@@ -33,7 +34,7 @@ function TopBar() {
       </div>
       <div className="ms-topbar">
         <NavLink to="/" className="ms-logo">
-          <img src="/logo-mindsquare.png" alt="mindsquare" />
+          <img src={logoUrl} alt="mindsquare" />
         </NavLink>
         <nav className="ms-nav-links">
           {user && (

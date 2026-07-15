@@ -545,7 +545,7 @@ function MyEventCard({ event, compact }: { event: MyEventShort; compact?: boolea
             Details →
           </Link>
           <a
-            href={`/api/events/${event.id}/calendar.ics`}
+            href={`/events/${event.id}/calendar.ics`}
             className="btn btn-ghost btn-sm"
             title="In Outlook / Apple Calendar / Google Calendar speichern"
             onClick={(e) => e.stopPropagation()}

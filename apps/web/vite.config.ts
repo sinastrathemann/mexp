@@ -34,12 +34,6 @@ export default defineConfig(({ mode }) => {
     server: {
       port: Number(env["WEB_PORT"] ?? 8080),
       proxy: {
-        // Legacy-Präfix (falls noch von älteren Aufrufen genutzt): strippt /api und leitet weiter.
-        "/api": {
-          target: apiBase,
-          changeOrigin: true,
-          rewrite: (p) => p.replace(/^\/api/, ""),
-        },
         ...Object.fromEntries(API_ROUTE_PREFIXES.map((prefix) => [prefix, apiBase])),
       },
     },
