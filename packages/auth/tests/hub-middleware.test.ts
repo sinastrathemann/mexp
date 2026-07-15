@@ -57,6 +57,7 @@ describe("hubAuthMiddleware", () => {
   });
 
   it("defaults to hub mode when AUTH_MODE is unset in production", async () => {
+    // biome-ignore lint/performance/noDelete: env cleanup requires actual deletion, not undefined assignment
     delete process.env.AUTH_MODE;
     process.env.NODE_ENV = "production";
 
