@@ -334,7 +334,9 @@ export function EventEditModal({
 
             {audienceScope === "roles" && (
               <div className="field" style={{ margin: "var(--space-3) 0 0" }}>
-                <label className="label" htmlFor="allowed-roles">Erlaubte Rollen</label>
+                <label className="label" htmlFor="allowed-roles">
+                  Erlaubte Rollen
+                </label>
                 <div id="allowed-roles" className="row" style={{ gap: 8, flexWrap: "wrap" }}>
                   {(
                     [

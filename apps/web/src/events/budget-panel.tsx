@@ -445,7 +445,7 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
                             >
                               📄{" "}
                               {item.invoiceFileName.length > 22
-                                ? item.invoiceFileName.slice(0, 20) + "…"
+                                ? `${item.invoiceFileName.slice(0, 20)}…`
                                 : item.invoiceFileName}
                             </span>
                             <button
@@ -576,7 +576,7 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
                     </td>
                   </tr>
                   {isOpen && !item.invoiceFileName && (
-                    <tr key={item.id + "-invoice"}>
+                    <tr key={`${item.id}-invoice`}>
                       <td colSpan={7} style={{ background: "var(--bg-subtle)" }}>
                         <div
                           style={{
@@ -588,7 +588,9 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
                           }}
                         >
                           <div className="field" style={{ margin: 0, flex: "1 1 240px" }}>
-                            <label className="label" htmlFor="invoice-file">Rechnungs-Datei</label>
+                            <label className="label" htmlFor="invoice-file">
+                              Rechnungs-Datei
+                            </label>
                             <input
                               id="invoice-file"
                               type="file"
@@ -606,7 +608,9 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
                             />
                           </div>
                           <div className="field" style={{ margin: 0, flex: "0 1 180px" }}>
-                            <label className="label" htmlFor="net-amount">Netto-Betrag (€)</label>
+                            <label className="label" htmlFor="net-amount">
+                              Netto-Betrag (€)
+                            </label>
                             <input
                               id="net-amount"
                               className="input"

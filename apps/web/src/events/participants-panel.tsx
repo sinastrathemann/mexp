@@ -546,7 +546,6 @@ function MyNoteBlock({
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder='z. B. "komme mit Partner"'
-            autoFocus
           />
           <div className="row" style={{ gap: 8, marginTop: 8 }}>
             <button

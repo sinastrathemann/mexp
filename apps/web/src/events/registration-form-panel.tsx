@@ -98,7 +98,7 @@ export function RegistrationFormPanel({ event }: Props) {
   // Client-seitige Vorab-Validierung — verhindert hängende Saves
   const clientValidationError = (() => {
     for (const q of questions) {
-      if (!q.label.trim()) return `Eine Frage hat keinen Text.`;
+      if (!q.label.trim()) return "Eine Frage hat keinen Text.";
       if (
         (q.type === "single_choice" || q.type === "multi_choice" || q.type === "date_pick") &&
         q.options.length === 0
@@ -326,7 +326,7 @@ function QuestionEditor({ question, onChange, onRemove, onMoveUp, onMoveDown }: 
           {(isChoice || isDate) && (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {question.options.map((opt, idx) => (
-                <div key={idx} className="row" style={{ gap: 6 }}>
+                <div key={`option-${idx}-${opt}`} className="row" style={{ gap: 6 }}>
                   <input
                     className="input"
                     type={isDate ? "datetime-local" : "text"}

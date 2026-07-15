@@ -138,7 +138,7 @@ export default function VendorPage() {
             </thead>
             <tbody>
               {tender.criteria.map((c, idx) => (
-                <tr key={idx}>
+                <tr key={`criterion-${idx}-${c.label}`}>
                   <td className="text-bold">{c.label}</td>
                   <td className="text-mono" style={{ textAlign: "right" }}>
                     {c.weight}%

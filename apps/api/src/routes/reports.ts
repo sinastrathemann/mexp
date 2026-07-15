@@ -312,7 +312,7 @@ reportRoutes.get("/monthly.csv", requireMempRole(...MANAGE_ROLES), (c) => {
     lines.push(`${e.title};${e.eventType};${(e.netCents / 100).toFixed(2)}`);
   }
 
-  const csv = "﻿" + lines.join("\n"); // BOM für Excel-DE
+  const csv = `﻿${lines.join("\n")}`; // BOM für Excel-DE
   c.header("Content-Type", "text/csv; charset=utf-8");
   c.header(
     "Content-Disposition",

@@ -172,7 +172,9 @@ function TenderEditor({ tender, eventId }: { tender: TenderDto; eventId: string 
       {expanded && (
         <div style={{ marginTop: "var(--space-3)", display: "grid", gap: "var(--space-3)" }}>
           <div className="field" style={{ margin: 0 }}>
-            <label className="label" htmlFor="tender-title">Titel</label>
+            <label className="label" htmlFor="tender-title">
+              Titel
+            </label>
             <input
               id="tender-title"
               className="input"
@@ -183,7 +185,9 @@ function TenderEditor({ tender, eventId }: { tender: TenderDto; eventId: string 
           </div>
 
           <div className="field" style={{ margin: 0 }}>
-            <label className="label" htmlFor="tender-briefing">Briefing für Anbieter</label>
+            <label className="label" htmlFor="tender-briefing">
+              Briefing für Anbieter
+            </label>
             <textarea
               id="tender-briefing"
               className="textarea"
@@ -196,7 +200,9 @@ function TenderEditor({ tender, eventId }: { tender: TenderDto; eventId: string 
 
           <div className="field-row">
             <div className="field" style={{ margin: 0 }}>
-              <label className="label" htmlFor="tender-deadline">Deadline für Angebote</label>
+              <label className="label" htmlFor="tender-deadline">
+                Deadline für Angebote
+              </label>
               <input
                 id="tender-deadline"
                 className="input"
@@ -206,7 +212,9 @@ function TenderEditor({ tender, eventId }: { tender: TenderDto; eventId: string 
               />
             </div>
             <div className="field" style={{ margin: 0 }}>
-              <label className="label" htmlFor="tender-status">Status</label>
+              <label className="label" htmlFor="tender-status">
+                Status
+              </label>
               <select
                 id="tender-status"
                 className="select"
@@ -244,7 +252,7 @@ function TenderEditor({ tender, eventId }: { tender: TenderDto; eventId: string 
             </legend>
             {criteria.map((c, idx) => (
               <div
-                key={idx}
+                key={`criterion-${idx}-${c.label}`}
                 className="row"
                 style={{ gap: 8, marginBottom: 6, alignItems: "center" }}
               >
@@ -525,7 +533,9 @@ function VendorList({ tenderId }: { tenderId: string }) {
         >
           <div className="field-row" style={{ gap: 8 }}>
             <div className="field" style={{ margin: 0 }}>
-              <label className="label" htmlFor="tender-company">Firma</label>
+              <label className="label" htmlFor="tender-company">
+                Firma
+              </label>
               <input
                 id="tender-company"
                 className="input"
@@ -537,7 +547,9 @@ function VendorList({ tenderId }: { tenderId: string }) {
               />
             </div>
             <div className="field" style={{ margin: 0 }}>
-              <label className="label" htmlFor="tender-email">E-Mail</label>
+              <label className="label" htmlFor="tender-email">
+                E-Mail
+              </label>
               <input
                 id="tender-email"
                 className="input"
@@ -550,7 +562,9 @@ function VendorList({ tenderId }: { tenderId: string }) {
             </div>
           </div>
           <div className="field" style={{ margin: "8px 0 0" }}>
-            <label className="label" htmlFor="tender-contact">Ansprechpartner (optional)</label>
+            <label className="label" htmlFor="tender-contact">
+              Ansprechpartner (optional)
+            </label>
             <input
               id="tender-contact"
               className="input"

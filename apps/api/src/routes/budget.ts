@@ -297,7 +297,7 @@ function extractInvoiceData(text: string): ExtractionResult {
     for (const pat of patterns) {
       pat.lastIndex = 0;
       const m = pat.exec(normalized);
-      if (m && m[1]) {
+      if (m?.[1]) {
         const parsed = parseGermanNumber(m[1]);
         if (parsed !== null) return parsed;
       }
