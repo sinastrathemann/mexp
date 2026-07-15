@@ -64,6 +64,9 @@ function anonymizeFor(items: DevQna[], viewerVendorId: string | null) {
 
 /**
  * Anbieter-Sicht via Token: anonymisierte Fragesteller-Labels
+ *
+ * Public: no Hub-auth required — the vendor-token IS the authentication.
+ * Bypass configured via hubAuthMiddleware({publicPathPatterns:[...]}) in apps/api/src/index.ts.
  */
 qnaRoutes.get("/tenders/:tenderId/qna", (c) => {
   const tenderId = c.req.param("tenderId");
@@ -110,6 +113,9 @@ qnaRoutes.get("/tenders/:tenderId/qna/admin", requireMempRole(...MANAGE_ROLES), 
 
 /**
  * Anbieter stellt eine Frage (via Token)
+ *
+ * Public: no Hub-auth required — the vendor-token IS the authentication.
+ * Bypass configured via hubAuthMiddleware({publicPathPatterns:[...]}) in apps/api/src/index.ts.
  */
 qnaRoutes.post("/tenders/:tenderId/qna", zValidator("json", askSchema), (c) => {
   const tenderId = c.req.param("tenderId");

@@ -29,11 +29,26 @@ function resolveAuthMode(): "hub" | "dev-bypass" {
   return process.env.NODE_ENV === "production" ? "hub" : "dev-bypass";
 }
 
-export function hubAuthMiddleware(): MiddlewareHandler {
+export type HubAuthOptions = {
+  /**
+   * Path patterns that bypass Hub-identity resolution entirely (no synthetic user is
+   * injected). Intended for routes that carry their own token-based auth — e.g. vendor
+   * magic-link / Q&A endpoints reachable by external parties without Entra SSO.
+   * Route handlers on these paths MUST NOT call `getHubUser(c)`.
+   */
+  publicPathPatterns?: readonly RegExp[];
+};
+
+export function hubAuthMiddleware(options: HubAuthOptions = {}): MiddlewareHandler {
+  const publicPatterns = options.publicPathPatterns ?? [];
   return async (c, next) => {
     const mode = resolveAuthMode();
 
     if (c.req.path === "/health" || c.req.path === "/ready") {
+      return next();
+    }
+
+    if (publicPatterns.some((re) => re.test(c.req.path))) {
       return next();
     }
 

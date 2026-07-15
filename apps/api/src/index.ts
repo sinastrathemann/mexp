@@ -39,8 +39,17 @@ app.get("/health", (c) =>
   }),
 );
 
-// Hub-Auth for everything below
-app.use("*", hubAuthMiddleware());
+// Hub-Auth for everything below — except vendor/qna routes that carry their own
+// token-based auth (external vendors have no Entra SSO identity).
+app.use(
+  "*",
+  hubAuthMiddleware({
+    publicPathPatterns: [
+      /^\/vendors\/session$/, // GET — vendor magic-link session lookup (vendors.ts)
+      /^\/tenders\/[^/]+\/qna$/, // GET+POST — vendor Q&A list/ask via token (qna.ts)
+    ],
+  }),
+);
 
 app.route("/", authRoutes);
 app.route("/admin/users", adminUserRoutes);

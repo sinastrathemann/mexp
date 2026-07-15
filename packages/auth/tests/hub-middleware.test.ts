@@ -67,4 +67,21 @@ describe("hubAuthMiddleware", () => {
     const res = await app.request("/x");
     expect(res.status).toBe(401);
   });
+
+  it("bypasses paths matching publicPathPatterns", async () => {
+    const app = new Hono();
+    app.use(
+      "*",
+      hubAuthMiddleware({
+        publicPathPatterns: [/^\/vendors\/session$/, /^\/tenders\/[^/]+\/qna$/],
+      }),
+    );
+    app.get("/vendors/session", (c) => c.text("public-ok"));
+    app.get("/tenders/tender-123/qna", (c) => c.text("qna-ok"));
+    app.get("/events", (c) => c.text("should-not-reach"));
+
+    expect((await app.request("/vendors/session")).status).toBe(200);
+    expect((await app.request("/tenders/tender-123/qna")).status).toBe(200);
+    expect((await app.request("/events")).status).toBe(401);
+  });
 });

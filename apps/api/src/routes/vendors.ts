@@ -132,7 +132,8 @@ adminRoutes.post("/:id/revoke", requireMempRole(...MANAGE_ROLES), (c) => {
 vendorRoutes.route("/admin", adminRoutes);
 
 // ─── Public Vendor-Access via Token ──────────────────────────────
-// Kein requireAuth — der Token IST die Authentifizierung
+// Public: no Hub-auth required — the vendor-token IS the authentication.
+// Bypass configured via hubAuthMiddleware({publicPathPatterns:[...]}) in apps/api/src/index.ts.
 vendorRoutes.get("/session", (c) => {
   const token = c.req.query("token");
   if (!token) {
