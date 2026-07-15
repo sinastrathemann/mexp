@@ -55,4 +55,16 @@ describe("hubAuthMiddleware", () => {
     });
     expect(await res.json()).toEqual({ isGuest: true });
   });
+
+  it("defaults to hub mode when AUTH_MODE is unset in production", async () => {
+    delete process.env.AUTH_MODE;
+    process.env.NODE_ENV = "production";
+
+    const app = new Hono();
+    app.use("*", hubAuthMiddleware());
+    app.get("/x", (c) => c.text("ok"));
+
+    const res = await app.request("/x");
+    expect(res.status).toBe(401);
+  });
 });
