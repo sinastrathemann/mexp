@@ -28,12 +28,11 @@ export default function EventsListPage() {
     <div className="page">
       <div className="page-header">
         <div>
-          <div className="eyebrow">
-            Events · {total.toString().padStart(2, "0")} aktiv
-          </div>
+          <div className="eyebrow">Events · {total.toString().padStart(2, "0")} aktiv</div>
           <h1 className="page-title">{t("events.listTitle")}</h1>
           <p className="page-subtitle">
-            mindsquare Events, Büro-, Feelgood-, Team-, Strategie-, Bereichsevents & Local Experiences im Überblick
+            mindsquare Events, Büro-, Feelgood-, Team-, Strategie-, Bereichsevents & Local
+            Experiences im Überblick
           </p>
         </div>
         {canCreate && (
@@ -63,12 +62,7 @@ export default function EventsListPage() {
       {data && data.events.length > 0 && (
         <div className="event-grid">
           {data.events.map((e) => (
-            <Link
-              key={e.id}
-              to={`/events/${e.id}`}
-              className="event-card"
-              data-status={e.status}
-            >
+            <Link key={e.id} to={`/events/${e.id}`} className="event-card" data-status={e.status}>
               <div className="event-card-head">
                 <span className="event-card-type">{t(`events.type.${e.eventType}`)}</span>
                 <EventStatusBadge status={e.status} />

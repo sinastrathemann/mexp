@@ -90,12 +90,7 @@ export interface ParticipantDto extends ParticipationDto {
 }
 
 // ─── Registrierungs-Formular pro Event ─────────────────────────
-export const QUESTION_TYPES = [
-  "yes_no",
-  "single_choice",
-  "multi_choice",
-  "date_pick",
-] as const;
+export const QUESTION_TYPES = ["yes_no", "single_choice", "multi_choice", "date_pick"] as const;
 export type QuestionType = (typeof QUESTION_TYPES)[number];
 
 export interface RegistrationQuestion {

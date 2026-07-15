@@ -37,10 +37,7 @@ export function RegistrationModal({
     for (const q of questions) {
       const v = values[q.id];
       const empty =
-        v === undefined ||
-        v === null ||
-        v === "" ||
-        (Array.isArray(v) && v.length === 0);
+        v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0);
       if (q.required && empty) {
         setValidationError(`Bitte beantworte: "${q.label}"`);
         return;
@@ -58,7 +55,9 @@ export function RegistrationModal({
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="card-header" style={{ marginBottom: "var(--space-2)" }}>
           <div>
-            <div className="eyebrow">{previewMode ? "Vorschau · Anmelde-Formular" : "Anmeldung"}</div>
+            <div className="eyebrow">
+              {previewMode ? "Vorschau · Anmelde-Formular" : "Anmeldung"}
+            </div>
             <h2 className="card-title" style={{ marginTop: 4 }}>
               {eventTitle}
             </h2>
@@ -160,7 +159,9 @@ function QuestionField({ question, value, onChange }: FieldProps) {
         {question.required && <span style={{ color: "var(--brand-orange)" }}> *</span>}
       </legend>
 
-      {question.type === "yes_no" && <YesNoField value={value as boolean | null | undefined} onChange={onChange} />}
+      {question.type === "yes_no" && (
+        <YesNoField value={value as boolean | null | undefined} onChange={onChange} />
+      )}
       {question.type === "single_choice" && (
         <SingleChoiceField
           options={question.options}

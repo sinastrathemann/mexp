@@ -12,12 +12,12 @@
   --color-orange-900: #5e1e00;
   --color-orange-800: #8a2a00;
   --color-orange-700: #b8350c;
-  --color-orange-600: #e85b2c;   /* ← Brand primary, brighter */
+  --color-orange-600: #e85b2c; /* ← Brand primary, brighter */
   --color-orange-500: #f0703f;
   --color-orange-400: #f78f63;
   --color-orange-200: #fdcfb6;
   --color-orange-100: #ffe9dc;
-  --color-orange-50:  #fff5ee;
+  --color-orange-50: #fff5ee;
 
   /* Golden Yellow — Secondary accent */
   --color-yellow-800: #a86a00;
@@ -28,20 +28,20 @@
   --color-yellow-300: #ffe175;
   --color-yellow-200: #fff0aa;
   --color-yellow-100: #fff8d6;
-  --color-yellow-50:  #fffceb;
+  --color-yellow-50: #fffceb;
 
   /* Electric Cobalt — NEW: sharp 3rd accent for status & data viz */
   --color-cobalt-700: #1d3fc4;
   --color-cobalt-600: #2752f0;
   --color-cobalt-500: #4d75ff;
   --color-cobalt-100: #dde5ff;
-  --color-cobalt-50:  #f0f4ff;
+  --color-cobalt-50: #f0f4ff;
 
   /* Lime — NEW: success/live indicator, deliberately punchy */
   --color-lime-600: #00b86b;
   --color-lime-500: #1ed881;
   --color-lime-100: #c5f3da;
-  --color-lime-50:  #e6faf0;
+  --color-lime-50: #e6faf0;
 
   /* Charcoal — deep, near-black base for contrast blocks */
   --color-ink-900: #0a0a0a;
@@ -54,18 +54,18 @@
   --color-ink-200: #d4d4d4;
   --color-ink-150: #e6e4df;
   --color-ink-100: #ededea;
-  --color-ink-50:  #f5f3ee;     /* warm paper bg */
+  --color-ink-50: #f5f3ee; /* warm paper bg */
 
   /* Paper / canvas */
-  --color-paper:   #faf8f3;     /* warm cream — main bg */
-  --color-paper-2: #f3f0e8;     /* slightly deeper */
-  --color-white:   #ffffff;
+  --color-paper: #faf8f3; /* warm cream — main bg */
+  --color-paper-2: #f3f0e8; /* slightly deeper */
+  --color-white: #ffffff;
 
   /* Status (semantic, bold) */
   --color-success: var(--color-lime-600);
   --color-warning: var(--color-yellow-500);
-  --color-error:   var(--color-orange-600);
-  --color-info:    var(--color-cobalt-600);
+  --color-error: var(--color-orange-600);
+  --color-info: var(--color-cobalt-600);
 }
 
 /* ─── SEMANTIC COLOR TOKENS ─────────────────────────────────── */

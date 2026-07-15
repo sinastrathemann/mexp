@@ -2,13 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
-import type {
-  EventDto,
-  TenderCriterion,
-  TenderDto,
-  TenderStatus,
-  VendorDto,
-} from "./types";
+import type { EventDto, TenderCriterion, TenderDto, TenderStatus, VendorDto } from "./types";
 
 interface Props {
   event: EventDto;
@@ -85,7 +79,8 @@ export function TenderPanel({ event }: Props) {
 
       {!tendersQ.isLoading && tenders.length === 0 && (
         <p className="muted">
-          Noch keine Ausschreibung. Lege eine an, um externe Anbieter (Catering, Location, Agentur) Angebote einreichen zu lassen.
+          Noch keine Ausschreibung. Lege eine an, um externe Anbieter (Catering, Location, Agentur)
+          Angebote einreichen zu lassen.
         </p>
       )}
 
@@ -105,9 +100,7 @@ function TenderEditor({ tender, eventId }: { tender: TenderDto; eventId: string 
 
   const [title, setTitle] = useState(tender.title);
   const [briefing, setBriefing] = useState(tender.briefing);
-  const [deadline, setDeadline] = useState(
-    tender.deadline ? toLocalInput(tender.deadline) : "",
-  );
+  const [deadline, setDeadline] = useState(tender.deadline ? toLocalInput(tender.deadline) : "");
   const [criteria, setCriteria] = useState<TenderCriterion[]>(tender.criteria);
   const [status, setStatus] = useState<TenderStatus>(tender.status);
   const [expanded, setExpanded] = useState(false);
@@ -131,8 +124,7 @@ function TenderEditor({ tender, eventId }: { tender: TenderDto; eventId: string 
   });
 
   const deleteMut = useMutation({
-    mutationFn: () =>
-      apiFetch<{ ok: true }>(`/tenders/${tender.id}`, { method: "DELETE" }),
+    mutationFn: () => apiFetch<{ ok: true }>(`/tenders/${tender.id}`, { method: "DELETE" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tenders", eventId] }),
   });
 
@@ -172,15 +164,17 @@ function TenderEditor({ tender, eventId }: { tender: TenderDto; eventId: string 
       {!expanded && (
         <div className="muted text-sm" style={{ marginTop: 6 }}>
           {tender.criteria.length} Kriterien
-          {tender.deadline && ` · Deadline ${new Date(tender.deadline).toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" })}`}
+          {tender.deadline &&
+            ` · Deadline ${new Date(tender.deadline).toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" })}`}
         </div>
       )}
 
       {expanded && (
         <div style={{ marginTop: "var(--space-3)", display: "grid", gap: "var(--space-3)" }}>
           <div className="field" style={{ margin: 0 }}>
-            <label className="label">Titel</label>
+            <label className="label" htmlFor="tender-title">Titel</label>
             <input
+              id="tender-title"
               className="input"
               type="text"
               value={title}
@@ -189,8 +183,9 @@ function TenderEditor({ tender, eventId }: { tender: TenderDto; eventId: string 
           </div>
 
           <div className="field" style={{ margin: 0 }}>
-            <label className="label">Briefing für Anbieter</label>
+            <label className="label" htmlFor="tender-briefing">Briefing für Anbieter</label>
             <textarea
+              id="tender-briefing"
               className="textarea"
               rows={6}
               value={briefing}
@@ -201,8 +196,9 @@ function TenderEditor({ tender, eventId }: { tender: TenderDto; eventId: string 
 
           <div className="field-row">
             <div className="field" style={{ margin: 0 }}>
-              <label className="label">Deadline für Angebote</label>
+              <label className="label" htmlFor="tender-deadline">Deadline für Angebote</label>
               <input
+                id="tender-deadline"
                 className="input"
                 type="datetime-local"
                 value={deadline}
@@ -210,8 +206,9 @@ function TenderEditor({ tender, eventId }: { tender: TenderDto; eventId: string 
               />
             </div>
             <div className="field" style={{ margin: 0 }}>
-              <label className="label">Status</label>
+              <label className="label" htmlFor="tender-status">Status</label>
               <select
+                id="tender-status"
                 className="select"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as TenderStatus)}
@@ -279,7 +276,9 @@ function TenderEditor({ tender, eventId }: { tender: TenderDto; eventId: string 
                   }}
                   style={{ width: 80 }}
                 />
-                <span className="muted text-xs" style={{ minWidth: 16 }}>%</span>
+                <span className="muted text-xs" style={{ minWidth: 16 }}>
+                  %
+                </span>
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
@@ -303,17 +302,14 @@ function TenderEditor({ tender, eventId }: { tender: TenderDto; eventId: string 
                 color: weightWarning ? "var(--brand-orange)" : "var(--fg-muted)",
               }}
             >
-              Σ Gewichtung: {weightSum}%
-              {weightWarning && " — bitte auf 100% summieren"}
+              Σ Gewichtung: {weightSum}%{weightWarning && " — bitte auf 100% summieren"}
             </div>
           </fieldset>
 
           {saveMut.error instanceof Error && (
             <div className="alert alert-error">{saveMut.error.message}</div>
           )}
-          {saveMut.isSuccess && (
-            <div className="alert alert-info">✓ Gespeichert.</div>
-          )}
+          {saveMut.isSuccess && <div className="alert alert-info">✓ Gespeichert.</div>}
 
           <div className="row" style={{ gap: 8, justifyContent: "space-between" }}>
             <div className="row" style={{ gap: 8 }}>
@@ -368,8 +364,7 @@ function VendorList({ tenderId }: { tenderId: string }) {
 
   const vendorsQ = useQuery({
     queryKey: ["vendors", tenderId],
-    queryFn: () =>
-      apiFetch<{ vendors: VendorDto[] }>(`/vendors/admin?tenderId=${tenderId}`),
+    queryFn: () => apiFetch<{ vendors: VendorDto[] }>(`/vendors/admin?tenderId=${tenderId}`),
   });
 
   const inviteMut = useMutation({
@@ -456,7 +451,10 @@ function VendorList({ tenderId }: { tenderId: string }) {
                 }}
               >
                 <div style={{ flex: "1 1 200px", minWidth: 0 }}>
-                  <span className="text-bold" style={{ textDecoration: v.revoked ? "line-through" : "none" }}>
+                  <span
+                    className="text-bold"
+                    style={{ textDecoration: v.revoked ? "line-through" : "none" }}
+                  >
                     {v.companyName}
                   </span>
                   <span className="muted text-xs" style={{ marginLeft: 6 }}>
@@ -468,7 +466,10 @@ function VendorList({ tenderId }: { tenderId: string }) {
                     </span>
                   )}
                   {v.lastAccessAt && (
-                    <span className="text-mono text-xs" style={{ marginLeft: 6, color: "var(--brand-lime)" }}>
+                    <span
+                      className="text-mono text-xs"
+                      style={{ marginLeft: 6, color: "var(--brand-lime)" }}
+                    >
                       · zuletzt: {new Date(v.lastAccessAt).toLocaleString("de-DE")}
                     </span>
                   )}
@@ -496,9 +497,7 @@ function VendorList({ tenderId }: { tenderId: string }) {
                     </button>
                   </>
                 )}
-                {v.revoked && (
-                  <span className="badge badge-muted">widerrufen</span>
-                )}
+                {v.revoked && <span className="badge badge-muted">widerrufen</span>}
               </div>
             );
           })}
@@ -526,8 +525,9 @@ function VendorList({ tenderId }: { tenderId: string }) {
         >
           <div className="field-row" style={{ gap: 8 }}>
             <div className="field" style={{ margin: 0 }}>
-              <label className="label">Firma</label>
+              <label className="label" htmlFor="tender-company">Firma</label>
               <input
+                id="tender-company"
                 className="input"
                 type="text"
                 value={companyName}
@@ -537,8 +537,9 @@ function VendorList({ tenderId }: { tenderId: string }) {
               />
             </div>
             <div className="field" style={{ margin: 0 }}>
-              <label className="label">E-Mail</label>
+              <label className="label" htmlFor="tender-email">E-Mail</label>
               <input
+                id="tender-email"
                 className="input"
                 type="email"
                 value={email}
@@ -549,8 +550,9 @@ function VendorList({ tenderId }: { tenderId: string }) {
             </div>
           </div>
           <div className="field" style={{ margin: "8px 0 0" }}>
-            <label className="label">Ansprechpartner (optional)</label>
+            <label className="label" htmlFor="tender-contact">Ansprechpartner (optional)</label>
             <input
+              id="tender-contact"
               className="input"
               type="text"
               value={contactName}
@@ -660,9 +662,7 @@ function QnaAdminList({ tenderId }: { tenderId: string }) {
             key={q.id}
             qna={q}
             tenderId={tenderId}
-            onChange={() =>
-              qc.invalidateQueries({ queryKey: ["qna", "admin", tenderId] })
-            }
+            onChange={() => qc.invalidateQueries({ queryKey: ["qna", "admin", tenderId] })}
           />
         ))}
       </div>
@@ -718,7 +718,10 @@ function QnaAdminItem({
       <div className="row" style={{ justifyContent: "space-between", gap: 8 }}>
         <span className="text-bold">{qna.askerLabel}</span>
         <span className="muted text-xs">
-          {new Date(qna.askedAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
+          {new Date(qna.askedAt).toLocaleString("de-DE", {
+            dateStyle: "short",
+            timeStyle: "short",
+          })}
         </span>
       </div>
       <p style={{ margin: "4px 0 0", whiteSpace: "pre-wrap" }}>{qna.question}</p>
@@ -743,11 +746,7 @@ function QnaAdminItem({
           </div>
           <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{qna.answer}</p>
           <div className="row" style={{ gap: 6, marginTop: 6 }}>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => setEditing(true)}
-            >
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditing(true)}>
               ✎ Bearbeiten
             </button>
             <button
@@ -787,7 +786,11 @@ function QnaAdminItem({
               disabled={answerMut.isPending || draft.trim().length === 0}
               onClick={() => answerMut.mutate(draft.trim())}
             >
-              {answerMut.isPending ? "Speichere…" : qna.answer ? "Antwort aktualisieren" : "Antworten"}
+              {answerMut.isPending
+                ? "Speichere…"
+                : qna.answer
+                  ? "Antwort aktualisieren"
+                  : "Antworten"}
             </button>
             {qna.answer && (
               <button

@@ -255,15 +255,9 @@ function FeedbackView({ fb }: { fb: EventFeedbackDto }) {
           {stars(fb.ratingOverall)}
         </span>
       </div>
-      {fb.highlightText && (
-        <Answer label={Q2} value={fb.highlightText} />
-      )}
-      {fb.improvementText && (
-        <Answer label={Q3} value={fb.improvementText} />
-      )}
-      {fb.otherText && (
-        <Answer label={Q4} value={fb.otherText} />
-      )}
+      {fb.highlightText && <Answer label={Q2} value={fb.highlightText} />}
+      {fb.improvementText && <Answer label={Q3} value={fb.improvementText} />}
+      {fb.otherText && <Answer label={Q4} value={fb.otherText} />}
     </div>
   );
 }
