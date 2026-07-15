@@ -1,6 +1,6 @@
 # mEMP — mindsquare Event Management Platform
 
-Interne HR-zentrierte Event-Plattform für mindsquare AG. Deckt den Lifecycle von internen Events (Schulungen, Workshops, Betriebsveranstaltungen) ab: Portfolio, Teilnehmerverwaltung, Budget/Tax, Dokumente, Check-in, Analytics. M365-first, Hetzner-Deployment, KI als späterer Zusatz.
+Interne HR-zentrierte Event-Plattform für mindsquare AG. Deckt den Lifecycle von internen Events (Schulungen, Workshops, Betriebsveranstaltungen) ab: Portfolio, Teilnehmerverwaltung, Budget/Tax, Dokumente, Check-in, Analytics. M365-first, Agent-Hub-Deployment, KI als späterer Zusatz.
 
 ## Stack
 - TypeScript 5.x strict, ES Modules, Node.js 22
@@ -9,6 +9,14 @@ Interne HR-zentrierte Event-Plattform für mindsquare AG. Deckt den Lifecycle vo
 - Frontend: Vite + React + shadcn/ui + TanStack Query + react-i18next (DE default, EN Pflicht)
 - Tooling: Biome (Linter + Formatter), Vitest (Tests)
 - Observability: OpenTelemetry + pino; Langfuse erst mit AI-Modul (Phase 4)
+
+## Deployment
+- **Target**: mindsquare Agent Hub (Managed) — hosted at `https://<hub-domain>/memp/`
+- **Container**: `ghcr.io/sinastrathemann/memp:latest` (auto-published via GH Actions on push to `main`)
+- **Auth**: SSO via Hub → Identity in `X-MSQ-*`-Headern; kein eigenes Login-Form
+- **State**: Docker-Volume `appdata-memp-data` → `/app/data`
+- **Local Dev**: `AUTH_MODE=dev-bypass` mit User aus `config/dev-user.yaml`
+- **Reference**: `docs/agent-hub-integration.md` und `docs/mindCoder/specs/2026-07-15-agent-hub-integration-design.md`
 
 ## Verzeichnisstruktur
 - `apps/api/` — Hono HTTP-API + Queue-Worker-Entrypoints
