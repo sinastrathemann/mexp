@@ -41,6 +41,8 @@
     "greeting": "Hallo {{name}}",
     "forbiddenTitle": "Kein Zugriff",
     "forbiddenBody": "Für diese Seite fehlt dir die erforderliche Rolle.",
+    "errorTitle": "Fehler beim Laden",
+    "errorBody": "Deine Sitzung konnte nicht geladen werden. Bitte lade die Seite neu.",
     "errorInvalid": "E-Mail oder Passwort ist falsch.",
     "errorInactive": "Dieser Benutzer ist deaktiviert.",
     "errorGeneric": "Anmeldung fehlgeschlagen. Bitte erneut versuchen."

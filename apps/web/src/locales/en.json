@@ -41,6 +41,8 @@
     "greeting": "Hello {{name}}",
     "forbiddenTitle": "Access denied",
     "forbiddenBody": "You are missing the required role for this page.",
+    "errorTitle": "Failed to load",
+    "errorBody": "Your session could not be loaded. Please reload the page.",
     "errorInvalid": "Email or password is incorrect.",
     "errorInactive": "This user is deactivated.",
     "errorGeneric": "Sign in failed. Please try again."

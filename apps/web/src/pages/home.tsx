@@ -140,9 +140,7 @@ export default function HomePage() {
               {live.length > 0 ? `${live.length} Event live` : "Alle ruhig"}
             </span>
           </div>
-          <h1 className="page-title">
-            Hallo {user?.displayName.split(" ")[0] ?? "👋"}.
-          </h1>
+          <h1 className="page-title">Hallo {user?.name?.split(" ")[0] ?? "👋"}.</h1>
           <p className="page-subtitle">
             {isAdmin
               ? "Dein Portfolio auf einen Blick — was läuft, was offen ist, was kommt."

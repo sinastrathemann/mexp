@@ -10,7 +10,6 @@ import EventCreatePage from "./pages/event-create";
 import EventDetailPage from "./pages/event-detail";
 import EventsListPage from "./pages/events-list";
 import HomePage from "./pages/home";
-import LoginPage from "./pages/login";
 import ReportsPage from "./pages/reports";
 import VendorPage from "./pages/vendor";
 
@@ -20,9 +19,8 @@ const queryClient = new QueryClient({
 
 function TopBar() {
   const { t, i18n } = useTranslation();
-  const { user, logout, hasRole } = useAuth();
+  const { user, hasRole } = useAuth();
   const location = useLocation();
-  const isLogin = location.pathname === "/login";
   const isVendor = location.pathname === "/vendor";
 
   if (isVendor) return null;
@@ -37,52 +35,50 @@ function TopBar() {
         <NavLink to="/" className="ms-logo">
           <img src="/logo-mindsquare.png" alt="mindsquare" />
         </NavLink>
-        {!isLogin && (
-          <nav className="ms-nav-links">
-            {user && (
-              <NavLink
-                to="/dashboard"
-                className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
-              >
-                {t("dashboard.navLink")}
-              </NavLink>
-            )}
-            {user && (
-              <NavLink
-                to="/events"
-                className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
-              >
-                {t("events.navLink")}
-              </NavLink>
-            )}
-            {hasRole("admin", "manager", "event_office") && (
-              <NavLink
-                to="/reports"
-                className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
-              >
-                Reports
-              </NavLink>
-            )}
-            {hasRole("admin", "manager", "event_office", "werkstudent") && (
-              <NavLink
-                to="/blueprints"
-                className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
-              >
-                {t("blueprints.navLink")}
-              </NavLink>
-            )}
-            {hasRole("admin") && (
-              <NavLink
-                to="/admin/users"
-                className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
-              >
-                {t("admin.usersLink")}
-              </NavLink>
-            )}
-          </nav>
-        )}
+        <nav className="ms-nav-links">
+          {user && (
+            <NavLink
+              to="/dashboard"
+              className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
+            >
+              {t("dashboard.navLink")}
+            </NavLink>
+          )}
+          {user && (
+            <NavLink
+              to="/events"
+              className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
+            >
+              {t("events.navLink")}
+            </NavLink>
+          )}
+          {hasRole("admin", "manager", "event_office") && (
+            <NavLink
+              to="/reports"
+              className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
+            >
+              Reports
+            </NavLink>
+          )}
+          {hasRole("admin", "manager", "event_office", "werkstudent") && (
+            <NavLink
+              to="/blueprints"
+              className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
+            >
+              {t("blueprints.navLink")}
+            </NavLink>
+          )}
+          {hasRole("admin") && (
+            <NavLink
+              to="/admin/users"
+              className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
+            >
+              {t("admin.usersLink")}
+            </NavLink>
+          )}
+        </nav>
         <div className="ms-nav-actions">
-          {user && <span className="ms-nav-user">{user.displayName}</span>}
+          {user && <span className="ms-nav-user">{user.name}</span>}
           <button
             type="button"
             className="btn btn-ghost btn-sm"
@@ -91,9 +87,9 @@ function TopBar() {
             {i18n.language === "de" ? "EN" : "DE"}
           </button>
           {user && (
-            <button type="button" className="btn btn-outline btn-sm" onClick={() => void logout()}>
+            <a href="/auth/logout" className="btn btn-outline btn-sm">
               {t("auth.logout")}
-            </button>
+            </a>
           )}
         </div>
       </div>
@@ -106,7 +102,6 @@ function Shell() {
     <>
       <TopBar />
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
         {/* Anbieter-Landingpage — öffentlich, Auth via Token in URL */}
         <Route path="/vendor" element={<VendorPage />} />
         <Route
