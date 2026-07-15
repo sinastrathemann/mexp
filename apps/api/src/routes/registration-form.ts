@@ -66,11 +66,13 @@ export interface DevLiveParticipant {
   userId: string;
   userDisplayName: string;
   userEmail: string;
-  status: "registered";
-  waitlistPosition: null;
+  // Nach Anlage immer "registered" — check-in/no-show/promote-waitlist verändern den
+  // Status über den participation-override-Store (siehe events.ts), nicht hier direkt.
+  status: "registered" | "waitlisted" | "attended" | "no_show" | "cancelled";
+  waitlistPosition: number | null;
   registeredAt: string;
-  checkedInAt: null;
-  cancelledAt: null;
+  checkedInAt: string | null;
+  cancelledAt: string | null;
   // Freitext-Notiz vom User selbst (z.B. "komme mit Partner") — editierbar
   personalNote?: string | null;
 }
