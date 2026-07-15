@@ -86,7 +86,7 @@ tenderRoutes.post(
   requireMempRole(...MANAGE_ROLES),
   zValidator("json", createTenderSchema),
   (c) => {
-    if (env.NODE_ENV !== "development") {
+    if (env.DATABASE_URL) {
       return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Dev-only" } }, 501);
     }
     const input = c.req.valid("json");

@@ -130,7 +130,7 @@ export const registrationFormRoutes = new Hono();
 // GET: Alle eingeloggten User dürfen das Formular sehen (sonst können sie nicht antworten)
 registrationFormRoutes.get("/events/:eventId/registration-form", async (c) => {
   const eventId = c.req.param("eventId");
-  if (env.NODE_ENV !== "development") {
+  if (env.DATABASE_URL) {
     return c.json({ questions: [] });
   }
   const questions = devFormStore.get(eventId) ?? [];
@@ -148,7 +148,7 @@ registrationFormRoutes.put(
   async (c) => {
     const eventId = c.req.param("eventId");
     const { questions } = c.req.valid("json");
-    if (env.NODE_ENV !== "development") {
+    if (env.DATABASE_URL) {
       return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Dev-only" } }, 501);
     }
     // Validierung: bei choice/date_pick muss mind. eine Option vorhanden sein

@@ -198,7 +198,7 @@ function buildMockEventList() {
 export const eventRoutes = new Hono();
 
 eventRoutes.get("/", zValidator("query", listQuerySchema), async (c) => {
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     const baseEvents = buildMockEventList();
     const user = getHubUser(c);
     const userRoles = resolveMempRoles(c);
@@ -276,7 +276,7 @@ eventRoutes.post(
 
 eventRoutes.get("/:id", async (c) => {
   const id = c.req.param("id");
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     const now = new Date();
     const inDays = (d: number) => new Date(now.getTime() + d * 86400000).toISOString();
     const mock: Record<string, ReturnType<typeof JSON.parse>> = {
@@ -415,7 +415,7 @@ eventRoutes.patch(
     const input = c.req.valid("json");
     const actorId = getHubUser(c).id;
 
-    if (env.NODE_ENV === "development") {
+    if (!env.DATABASE_URL) {
       // Dev-Mode: in den Override-Store schreiben
       const current = devEventOverrideStore.get(id) ?? {};
       const next: Record<string, unknown> = { ...current };
@@ -467,7 +467,7 @@ eventRoutes.get("/:id/calendar.ics", async (c) => {
   const id = c.req.param("id");
   let evt: Record<string, unknown> | null = null;
 
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     const baseList = buildMockEventList();
     const base = baseList.find((e) => e.id === id);
     if (!base) return c.text("Event nicht gefunden", 404);
@@ -550,7 +550,7 @@ function buildIcs(input: {
 // Event "löschen" — nur Admin. Dev-Mode: in Override-Store als hidden markieren.
 eventRoutes.delete("/:id", requireMempRole("admin"), async (c) => {
   const id = c.req.param("id");
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     const current = devEventOverrideStore.get(id) ?? {};
     devEventOverrideStore.set(id, {
       ...current,
@@ -571,7 +571,7 @@ eventRoutes.patch(
     const { status } = c.req.valid("json");
     const actorId = getHubUser(c).id;
 
-    if (env.NODE_ENV === "development") {
+    if (!env.DATABASE_URL) {
       // Dev-Mode: Status im Override-Store ablegen
       const current = devEventOverrideStore.get(id) ?? {};
       devEventOverrideStore.set(id, {
@@ -595,7 +595,7 @@ eventRoutes.patch(
 eventRoutes.get("/:id/my-participation", async (c) => {
   const id = c.req.param("id");
   const actorIdSession = getHubUser(c).id;
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     const live = devLiveParticipantsStore.get(id) ?? [];
     const found = live.find((p) => p.userId === actorIdSession);
     return c.json({ participation: found ?? null });
@@ -609,7 +609,7 @@ eventRoutes.get("/:id/my-participation", async (c) => {
 eventRoutes.patch("/:id/my-participation", async (c) => {
   const id = c.req.param("id");
   const actorId = getHubUser(c).id;
-  if (env.NODE_ENV !== "development") {
+  if (env.DATABASE_URL) {
     return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Dev-only" } }, 501);
   }
   let personalNote: string | null = null;
@@ -648,7 +648,7 @@ eventRoutes.patch("/:id/my-participation", async (c) => {
 
 eventRoutes.get("/:id/participants", requireMempRole(...WRITE_ROLES), async (c) => {
   const id = c.req.param("id");
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     const now = new Date();
     const staticParticipants = [
       {
@@ -771,7 +771,7 @@ function csvEscape(value: string): string {
 eventRoutes.post("/:id/register", async (c) => {
   const id = c.req.param("id");
   const actorId = getHubUser(c).id;
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     // Anmeldefrist prüfen
     const override = devEventOverrideStore.get(id) ?? {};
     const deadline = (override as { registrationDeadline?: string | null }).registrationDeadline;
@@ -880,7 +880,7 @@ eventRoutes.post("/:id/register", async (c) => {
 eventRoutes.post("/:id/withdraw", async (c) => {
   const id = c.req.param("id");
   const actorId = getHubUser(c).id;
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     const participationId = `p-${actorId.slice(0, 8)}`;
     // Aus Live-Store + Answer-Store entfernen
     const existing = devLiveParticipantsStore.get(id) ?? [];

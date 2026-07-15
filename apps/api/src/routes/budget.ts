@@ -84,7 +84,7 @@ export const budgetRoutes = new Hono();
 
 budgetRoutes.get("/events/:eventId/budget", requireMempRole(...OWNER_ROLES), async (c) => {
   const eventId = c.req.param("eventId");
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     const items = Array.from(devBudgetStore.values()).filter((b) => b.eventId === eventId);
     return c.json({ items });
   }
@@ -100,7 +100,7 @@ budgetRoutes.post(
     const eventId = c.req.param("eventId");
     const input = c.req.valid("json");
     const actorId = getHubUser(c).id;
-    if (env.NODE_ENV === "development") {
+    if (!env.DATABASE_URL) {
       const now = new Date().toISOString();
       const item: DevBudgetItem = {
         id: `bg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -150,7 +150,7 @@ budgetRoutes.patch(
     const id = c.req.param("id");
     const input = c.req.valid("json");
     const actorId = getHubUser(c).id;
-    if (env.NODE_ENV === "development") {
+    if (!env.DATABASE_URL) {
       const item = devBudgetStore.get(id);
       if (!item)
         return c.json({ error: { code: "NOT_FOUND", message: "Position nicht gefunden" } }, 404);
@@ -180,7 +180,7 @@ budgetRoutes.patch(
 // NEW: PDF hochladen + Netto automatisch extrahieren (Yokoy-light)
 budgetRoutes.post("/budget/:id/invoice/upload", requireMempRole(...OWNER_ROLES), async (c) => {
   const id = c.req.param("id");
-  if (env.NODE_ENV !== "development") {
+  if (env.DATABASE_URL) {
     return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Dev-only" } }, 501);
   }
 
@@ -363,7 +363,7 @@ budgetRoutes.post(
   async (c) => {
     const id = c.req.param("id");
     const input = c.req.valid("json");
-    if (env.NODE_ENV === "development") {
+    if (!env.DATABASE_URL) {
       const item = devBudgetStore.get(id);
       if (!item)
         return c.json({ error: { code: "NOT_FOUND", message: "Position nicht gefunden" } }, 404);
@@ -383,7 +383,7 @@ budgetRoutes.post(
 
 budgetRoutes.delete("/budget/:id/invoice", requireMempRole(...OWNER_ROLES), async (c) => {
   const id = c.req.param("id");
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     const item = devBudgetStore.get(id);
     if (!item)
       return c.json({ error: { code: "NOT_FOUND", message: "Position nicht gefunden" } }, 404);
@@ -400,7 +400,7 @@ budgetRoutes.delete("/budget/:id/invoice", requireMempRole(...OWNER_ROLES), asyn
 budgetRoutes.post("/budget/:id/submit", requireMempRole(...OWNER_ROLES), async (c) => {
   const id = c.req.param("id");
   const actorId = getHubUser(c).id;
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     const item = devBudgetStore.get(id);
     if (!item) return c.json({ error: { code: "NOT_FOUND", message: "Nicht gefunden" } }, 404);
     item.status = "submitted";
@@ -415,7 +415,7 @@ budgetRoutes.post("/budget/:id/submit", requireMempRole(...OWNER_ROLES), async (
 budgetRoutes.post("/budget/:id/approve", requireMempRole(...APPROVER_ROLES), async (c) => {
   const id = c.req.param("id");
   const actorId = getHubUser(c).id;
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     const item = devBudgetStore.get(id);
     if (!item) return c.json({ error: { code: "NOT_FOUND", message: "Nicht gefunden" } }, 404);
     item.status = "approved";
@@ -438,7 +438,7 @@ budgetRoutes.post(
     const id = c.req.param("id");
     const { reason } = c.req.valid("json");
     const actorId = getHubUser(c).id;
-    if (env.NODE_ENV === "development") {
+    if (!env.DATABASE_URL) {
       const item = devBudgetStore.get(id);
       if (!item) return c.json({ error: { code: "NOT_FOUND", message: "Nicht gefunden" } }, 404);
       item.status = "rejected";
@@ -456,7 +456,7 @@ budgetRoutes.post(
 budgetRoutes.post("/budget/:id/reopen", requireMempRole(...OWNER_ROLES), async (c) => {
   const id = c.req.param("id");
   const actorId = getHubUser(c).id;
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     const item = devBudgetStore.get(id);
     if (!item) return c.json({ error: { code: "NOT_FOUND", message: "Nicht gefunden" } }, 404);
     item.status = "draft";

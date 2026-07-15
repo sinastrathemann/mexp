@@ -16,7 +16,7 @@ export const myDashboardRoutes = new Hono();
 myDashboardRoutes.get("/dashboard", (c) => {
   const userId = getHubUser(c).id;
 
-  if (env.NODE_ENV !== "development") {
+  if (env.DATABASE_URL) {
     return c.json({
       upcoming: [],
       past: [],

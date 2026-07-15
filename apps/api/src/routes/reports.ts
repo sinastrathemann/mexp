@@ -223,7 +223,7 @@ reportRoutes.get("/monthly", requireMempRole(...MANAGE_ROLES), (c) => {
     );
   }
 
-  if (env.NODE_ENV !== "development") {
+  if (env.DATABASE_URL) {
     return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Reports nur im Dev-Mode" } }, 501);
   }
 
@@ -247,7 +247,7 @@ reportRoutes.get("/monthly.csv", requireMempRole(...MANAGE_ROLES), (c) => {
   if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) {
     return c.text("Invalid params", 400);
   }
-  if (env.NODE_ENV !== "development") {
+  if (env.DATABASE_URL) {
     return c.text("Not implemented", 501);
   }
   const current = bucketFor(year, month);

@@ -28,7 +28,7 @@ export const documentRoutes = new Hono();
 
 documentRoutes.get("/events/:eventId/documents", async (c) => {
   const eventId = c.req.param("eventId");
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     return c.json({ documents: [] });
   }
   const items = await listDocuments(eventId, { events, documents });

@@ -6,7 +6,7 @@ export const dashboardRoutes = new Hono();
 
 dashboardRoutes.get("/portfolio", async (c) => {
   // Dev-Mode: Return mock stats
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     return c.json({
       stats: {
         eventsByStatus: {

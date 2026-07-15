@@ -41,7 +41,7 @@ export const feedbackRoutes = new Hono();
 
 feedbackRoutes.get("/events/:eventId/feedback", requireMempRole(...MANAGE_ROLES), async (c) => {
   const eventId = c.req.param("eventId");
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     const items = Array.from(devFeedbackStore.values()).filter((f) => f.eventId === eventId);
     const avg =
       items.length === 0 ? null : items.reduce((sum, f) => sum + f.ratingOverall, 0) / items.length;
@@ -60,7 +60,7 @@ feedbackRoutes.get("/events/:eventId/feedback", requireMempRole(...MANAGE_ROLES)
 feedbackRoutes.get("/events/:eventId/feedback/mine", async (c) => {
   const eventId = c.req.param("eventId");
   const userId = getHubUser(c).id;
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     const fb = devFeedbackStore.get(devKey(eventId, userId)) ?? null;
     return c.json({ feedback: fb });
   }
@@ -82,7 +82,7 @@ feedbackRoutes.post("/events/:eventId/feedback", zValidator("json", submitSchema
   const eventId = c.req.param("eventId");
   const input = c.req.valid("json");
   const actorId = getHubUser(c).id;
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     const key = devKey(eventId, actorId);
     if (devFeedbackStore.has(key)) {
       return c.json(
