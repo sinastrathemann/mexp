@@ -68,7 +68,13 @@
     "personioSyncing": "⏳ Syncing…",
     "personioSyncResult": "✓ {{total}} employees · {{created}} new · {{updated}} updated · {{deactivated}} deactivated",
     "personioSyncError": "Error: {{message}}",
-    "personioBadge": "Personio"
+    "personioBadge": "Personio",
+    "sharepointSync": "🎓 Sync SharePoint students",
+    "sharepointSyncing": "⏳ Syncing students…",
+    "sharepointSyncResult": "✓ {{total}} students · {{created}} new · {{updated}} updated · {{deactivated}} deactivated",
+    "sharepointSyncResultNoEmail": "✓ {{total}} students · {{created}} new · {{updated}} updated · {{deactivated}} deactivated · {{skippedNoEmail}} skipped (no email)",
+    "sharepointSyncError": "Error: {{message}}",
+    "sharepointBadge": "Student/Intern"
   },
   "events": {
     "navLink": "Events",

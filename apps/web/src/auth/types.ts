@@ -52,4 +52,9 @@ export interface AdminUserRow {
   // (siehe apps/api/src/routes/admin-personio.ts).
   personioId?: string;
   department?: string | null;
+  // Optional: nur gesetzt für User, die aus/mit der SharePoint-Studi-Liste
+  // synchronisiert wurden (siehe apps/api/src/routes/admin-sharepoint.ts).
+  sharepointStudiId?: string;
+  position?: string | null;
+  team?: string | null;
 }

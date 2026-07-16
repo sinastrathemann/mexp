@@ -16,6 +16,14 @@ const envSchema = z.object({
   PERSONIO_CLIENT_ID: z.string().optional(),
   PERSONIO_CLIENT_SECRET: z.string().optional(),
   PERSONIO_API_URL: z.string().url().default("https://api.personio.de/v1"),
+  // SharePoint-Werkstudi/Praktikanten-Sync via Microsoft Graph (siehe
+  // docs/sharepoint-integration.md) — ebenfalls optional; die App muss ohne diese
+  // Werte booten, der Sync-Endpoint meldet 400, solange sie fehlen.
+  AZURE_TENANT_ID: z.string().optional(),
+  AZURE_CLIENT_ID: z.string().optional(),
+  AZURE_CLIENT_SECRET: z.string().optional(),
+  SHAREPOINT_SITE_URL: z.string().default("https://mindsquare1.sharepoint.com/sites/fk/tl"),
+  SHAREPOINT_STUDIS_LIST_ID: z.string().default("c2364bea-6f17-4532-b1ca-ebd9dee40c13"),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

@@ -27,6 +27,12 @@ export interface MexpUser {
   /** Rohstatus aus Personio: "active" | "inactive" | "onboarding" | "leave" | "removed" (Reverse-Sync). */
   personioStatus?: string | null;
   personioSyncedAt?: string;
+  // --- SharePoint-Sync (optional; nur gesetzt für Werkstudenten/Praktikanten, die aus der
+  // SharePoint-Liste stammen oder per Sync damit verknüpft wurden — siehe
+  // admin-sharepoint.ts). Kann gemeinsam mit personioId gesetzt sein, falls ein Studi
+  // zusätzlich in Personio geführt wird (E-Mail-Match findet dann denselben User). ---
+  sharepointStudiId?: string;
+  sharepointSyncedAt?: string;
 }
 
 // Persistiert in apps/api/data/memp-users.json — bleibt bei Neustarts erhalten

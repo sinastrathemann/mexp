@@ -13,9 +13,9 @@ function employeeAttrs(overrides: Partial<{ id: number; email: string; status: s
     email: { value: overrides.email ?? "sina@example.com" },
     status: { value: overrides.status ?? "active" },
     employment_type: { value: "internal" },
-    department: { value: { attributes: { name: { value: "IT" } } } },
+    department: { value: { attributes: { name: "IT" } } },
     position: { value: "Consultant" },
-    office: { value: { attributes: { name: { value: "Münster" } } } },
+    office: { value: { attributes: { name: "Münster" } } },
     hire_date: { value: "2020-01-01" },
   };
 }

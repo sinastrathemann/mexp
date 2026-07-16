@@ -16,7 +16,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/db/seed.ts",
-    "test": "vitest run --root ../.. packages/infrastructure/src/personio"
+    "test": "vitest run --root ../.. packages/infrastructure/src/personio packages/infrastructure/src/sharepoint"
   },
   "dependencies": {
     "@mexp/auth": "workspace:*",

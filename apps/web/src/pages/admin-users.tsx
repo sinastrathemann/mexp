@@ -16,6 +16,16 @@ interface PersonioSyncResult {
   syncedAt: string;
 }
 
+interface SharepointSyncResult {
+  ok: boolean;
+  total: number;
+  created: number;
+  updated: number;
+  deactivated: number;
+  skippedNoEmail: number;
+  syncedAt: string;
+}
+
 export default function AdminUsersPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
@@ -30,6 +40,12 @@ export default function AdminUsersPage() {
 
   const syncMut = useMutation({
     mutationFn: () => apiFetch<PersonioSyncResult>("/admin/personio/sync", { method: "POST" }),
+    onSuccess: invalidate,
+  });
+
+  const spSyncMut = useMutation({
+    mutationFn: () =>
+      apiFetch<SharepointSyncResult>("/admin/sharepoint/sync-studis", { method: "POST" }),
     onSuccess: invalidate,
   });
 
@@ -122,6 +138,42 @@ export default function AdminUsersPage() {
         </div>
       )}
 
+      {isAdmin && (
+        <div className="row" style={{ gap: 12, marginTop: "var(--space-2)", alignItems: "center" }}>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={() => spSyncMut.mutate()}
+            disabled={spSyncMut.isPending}
+          >
+            {spSyncMut.isPending ? t("admin.sharepointSyncing") : t("admin.sharepointSync")}
+          </button>
+          {spSyncMut.data && (
+            <span className="badge badge-success">
+              {spSyncMut.data.skippedNoEmail > 0
+                ? t("admin.sharepointSyncResultNoEmail", {
+                    total: spSyncMut.data.total,
+                    created: spSyncMut.data.created,
+                    updated: spSyncMut.data.updated,
+                    deactivated: spSyncMut.data.deactivated,
+                    skippedNoEmail: spSyncMut.data.skippedNoEmail,
+                  })
+                : t("admin.sharepointSyncResult", {
+                    total: spSyncMut.data.total,
+                    created: spSyncMut.data.created,
+                    updated: spSyncMut.data.updated,
+                    deactivated: spSyncMut.data.deactivated,
+                  })}
+            </span>
+          )}
+          {spSyncMut.error instanceof Error && (
+            <span className="alert alert-error" style={{ padding: "4px 12px" }}>
+              {t("admin.sharepointSyncError", { message: spSyncMut.error.message })}
+            </span>
+          )}
+        </div>
+      )}
+
       <h2 style={{ marginTop: "var(--space-4)" }}>{t("admin.usersListTitle")}</h2>
       {isLoading && <div className="card muted">{t("auth.loading")}</div>}
       {data && (
@@ -148,6 +200,12 @@ export default function AdminUsersPage() {
                         {u.department && (
                           <span className="badge badge-outline">{u.department}</span>
                         )}
+                      </div>
+                    )}
+                    {u.sharepointStudiId && (
+                      <div className="row" style={{ gap: 6, marginTop: 4 }}>
+                        <span className="badge badge-cobalt">{t("admin.sharepointBadge")}</span>
+                        {u.team && <span className="badge badge-outline">{u.team}</span>}
                       </div>
                     )}
                   </td>

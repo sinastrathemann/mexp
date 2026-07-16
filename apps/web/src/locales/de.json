@@ -68,7 +68,13 @@
     "personioSyncing": "⏳ Synchronisiere…",
     "personioSyncResult": "✓ {{total}} Mitarbeiter · {{created}} neu · {{updated}} aktualisiert · {{deactivated}} deaktiviert",
     "personioSyncError": "Fehler: {{message}}",
-    "personioBadge": "Personio"
+    "personioBadge": "Personio",
+    "sharepointSync": "🎓 SharePoint-Studis synchronisieren",
+    "sharepointSyncing": "⏳ Studis synchronisiere…",
+    "sharepointSyncResult": "✓ {{total}} Studis · {{created}} neu · {{updated}} aktualisiert · {{deactivated}} deaktiviert",
+    "sharepointSyncResultNoEmail": "✓ {{total}} Studis · {{created}} neu · {{updated}} aktualisiert · {{deactivated}} deaktiviert · {{skippedNoEmail}} ohne E-Mail übersprungen",
+    "sharepointSyncError": "Fehler: {{message}}",
+    "sharepointBadge": "Studi/Praktikant"
   },
   "events": {
     "navLink": "Events",
