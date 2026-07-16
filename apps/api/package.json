@@ -12,7 +12,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hono/node-server": "^1.13.7",
+    "@hono/node-server": "^2.0.10",
     "@hono/zod-validator": "^0.4.1",
     "@mexp/application": "workspace:*",
     "@mexp/auth": "workspace:*",
