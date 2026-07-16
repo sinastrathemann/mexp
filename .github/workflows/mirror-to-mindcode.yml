@@ -19,12 +19,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Push refs to mindcode
+      - name: Push refs to mindcode (safe, non-force)
         env:
           MINDCODE_USER: sina.strathemann
           MINDCODE_TOKEN: ${{ secrets.MINDCODE_TOKEN }}
         run: |
           git remote add mindcode "https://${MINDCODE_USER}:${MINDCODE_TOKEN}@mindcode.mindsquare.de/sina.strathemann/mexp.git"
-          # Push all branches and tags; force-with-lease to avoid clobbering unknown remote updates
-          git push mindcode --all --force-with-lease
-          git push mindcode --tags --force
+          # Plain push: succeeds as fast-forward, fails visibly if mindcode has diverged.
+          # No --force anywhere — divergence must be resolved manually before mirror resumes.
+          git push mindcode --all
+          git push mindcode --tags
