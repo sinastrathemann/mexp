@@ -216,33 +216,41 @@ export default function HomePage() {
           style={{ marginBottom: "var(--space-8)", gridAutoRows: "minmax(110px, auto)" }}
         >
           <div className="bento-tile tone-ink span-3">
-            <div className="bento-eyebrow">Portfolio</div>
+            <div className="bento-eyebrow">🗂️ Portfolio</div>
             <div className="bento-headline size-md">{stats.total}</div>
             <div className="bento-sub">Events gesamt</div>
           </div>
           <div className="bento-tile tone-orange span-3">
-            <div className="bento-eyebrow">Anmeldung offen</div>
-            <div className="bento-headline size-md">{stats.open}</div>
+            <div className="bento-eyebrow">📅 Anmeldung offen</div>
+            <div className="bento-headline size-md">{stats.open > 0 ? stats.open : "–"}</div>
             <div className="bento-sub">Mitarbeiter können sich anmelden</div>
           </div>
           <div className="bento-tile tone-yellow span-3">
-            <div className="bento-eyebrow">Geplant</div>
-            <div className="bento-headline size-md">{stats.upcoming}</div>
+            <div className="bento-eyebrow">🛠️ Geplant</div>
+            <div className="bento-headline size-md">{stats.upcoming > 0 ? stats.upcoming : "–"}</div>
             <div className="bento-sub">in Vorbereitung</div>
           </div>
           <div className="bento-tile span-3">
             <div className="bento-eyebrow">
-              <span className="badge badge-success badge-live" style={{ padding: "2px 8px" }}>
+              <span
+                className={`badge ${stats.live > 0 ? "badge-success badge-live" : "badge-muted"}`}
+                style={{ padding: "2px 8px" }}
+              >
                 Live
               </span>
             </div>
             <div
               className="bento-headline size-md"
-              style={{ color: "var(--brand-lime)", marginTop: "var(--space-4)" }}
+              style={{
+                color: stats.live > 0 ? "var(--brand-lime)" : "var(--fg-muted)",
+                marginTop: "var(--space-4)",
+              }}
             >
-              {stats.live}
+              {stats.live > 0 ? stats.live : "–"}
             </div>
-            <div className="bento-sub muted">Events laufen jetzt</div>
+            <div className="bento-sub muted">
+              {stats.live > 0 ? "Events laufen jetzt" : "Nichts läuft gerade"}
+            </div>
           </div>
         </section>
       )}

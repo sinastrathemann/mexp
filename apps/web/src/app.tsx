@@ -1,9 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useTranslation } from "react-i18next";
-import { BrowserRouter, NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import logoUrl from "./assets/logo-mindsquare.png";
-import { AuthProvider, useAuth } from "./auth/auth-context";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { AuthProvider } from "./auth/auth-context";
 import { ProtectedRoute } from "./auth/protected-route";
+import { Sidebar } from "./components/sidebar";
 import AdminUsersPage from "./pages/admin-users";
 import BlueprintsPage from "./pages/blueprints";
 import DashboardPage from "./pages/dashboard";
@@ -18,160 +17,95 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
 });
 
-function TopBar() {
-  const { t, i18n } = useTranslation();
-  const { user, hasRole } = useAuth();
-  const location = useLocation();
-  const isVendor = location.pathname === "/vendor";
-
-  if (isVendor) return null;
-
+function AppRoutes() {
   return (
-    <div className="ms-topbar-wrap">
-      <div className="ms-topbar-utility">
-        <span className="text-bold">mindsquare AG</span>
-        <span>mEXP · Experience</span>
-      </div>
-      <div className="ms-topbar">
-        <NavLink to="/" className="ms-logo">
-          <img src={logoUrl} alt="mindsquare" />
-        </NavLink>
-        <nav className="ms-nav-links">
-          {user && (
-            <NavLink
-              to="/dashboard"
-              className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
-            >
-              {t("dashboard.navLink")}
-            </NavLink>
-          )}
-          {user && (
-            <NavLink
-              to="/events"
-              className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
-            >
-              {t("events.navLink")}
-            </NavLink>
-          )}
-          {hasRole("admin", "manager", "event_office") && (
-            <NavLink
-              to="/reports"
-              className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
-            >
-              Reports
-            </NavLink>
-          )}
-          {hasRole("admin", "manager", "event_office", "werkstudent") && (
-            <NavLink
-              to="/blueprints"
-              className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
-            >
-              {t("blueprints.navLink")}
-            </NavLink>
-          )}
-          {hasRole("admin") && (
-            <NavLink
-              to="/admin/users"
-              className={({ isActive }) => `ms-nav-link${isActive ? " active" : ""}`}
-            >
-              {t("admin.usersLink")}
-            </NavLink>
-          )}
-        </nav>
-        <div className="ms-nav-actions">
-          {user && <span className="ms-nav-user">{user.name}</span>}
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            onClick={() => i18n.changeLanguage(i18n.language === "de" ? "en" : "de")}
-          >
-            {i18n.language === "de" ? "EN" : "DE"}
-          </button>
-          {user && (
-            <a href="/auth/logout" className="btn btn-outline btn-sm">
-              {t("auth.logout")}
-            </a>
-          )}
-        </div>
-      </div>
-    </div>
+    <Routes>
+      {/* Anbieter-Landingpage — öffentlich, Auth via Token in URL */}
+      <Route path="/vendor" element={<VendorPage />} />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <HomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/events"
+        element={
+          <ProtectedRoute>
+            <EventsListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/events/new"
+        element={
+          <ProtectedRoute roles={["admin", "manager", "event_office", "werkstudent"]}>
+            <EventCreatePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/events/:id"
+        element={
+          <ProtectedRoute>
+            <EventDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports"
+        element={
+          <ProtectedRoute roles={["admin", "manager", "event_office"]}>
+            <ReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/blueprints"
+        element={
+          <ProtectedRoute roles={["admin", "manager", "event_office", "werkstudent"]}>
+            <BlueprintsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <ProtectedRoute roles={["admin"]}>
+            <AdminUsersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
 function Shell() {
+  const location = useLocation();
+  const isVendor = location.pathname === "/vendor";
+
+  if (isVendor) {
+    return <AppRoutes />;
+  }
+
   return (
-    <>
-      <TopBar />
-      <Routes>
-        {/* Anbieter-Landingpage — öffentlich, Auth via Token in URL */}
-        <Route path="/vendor" element={<VendorPage />} />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <HomePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/events"
-          element={
-            <ProtectedRoute>
-              <EventsListPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/events/new"
-          element={
-            <ProtectedRoute roles={["admin", "manager", "event_office", "werkstudent"]}>
-              <EventCreatePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/events/:id"
-          element={
-            <ProtectedRoute>
-              <EventDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/reports"
-          element={
-            <ProtectedRoute roles={["admin", "manager", "event_office"]}>
-              <ReportsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/blueprints"
-          element={
-            <ProtectedRoute roles={["admin", "manager", "event_office", "werkstudent"]}>
-              <BlueprintsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/users"
-          element={
-            <ProtectedRoute roles={["admin"]}>
-              <AdminUsersPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </>
+    <div className="ms-app-layout">
+      <Sidebar />
+      <div className="ms-app-content">
+        <AppRoutes />
+      </div>
+    </div>
   );
 }
 
