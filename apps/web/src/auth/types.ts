@@ -28,6 +28,18 @@ export interface AuthUser {
   authTime: string | null;
 }
 
+/**
+ * Antwort von `GET /me/roles` (siehe apps/api/src/routes/auth.ts) — die mEMP-internen
+ * Rollen des aktuellen Hub-Users, getrennt von den rohen Hub-Rollen aus `/me`.
+ */
+export interface MeRoles {
+  userId: string;
+  isHubAdmin: boolean;
+  hubRoles: string[];
+  mempRoles: string[];
+  effectiveRoles: string[];
+}
+
 export interface AdminUserRow {
   id: string;
   email: string;

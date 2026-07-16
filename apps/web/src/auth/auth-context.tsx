@@ -1,13 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { createContext, useContext, useMemo } from "react";
 import type { ReactNode } from "react";
-import type { AuthUser, RoleName } from "./types";
+import { apiFetch } from "../api/client";
+import type { AuthUser, MeRoles, RoleName } from "./types";
 
 interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
   /** true wenn `/me` mit einem anderen Status als 200/401 fehlgeschlagen ist. */
   isError: boolean;
+  /** mEMP-interne Rollen aus `/me/roles` (ohne HubAdmin-Override). */
+  mempRoles: RoleName[];
+  /** mEMP-interne Rollen inkl. HubAdmin-Override — Basis für `hasRole`. */
+  effectiveRoles: RoleName[];
   hasRole: (...roles: RoleName[]) => boolean;
 }
 
@@ -40,18 +45,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     staleTime: 60_000,
   });
 
-  const value = useMemo<AuthContextValue>(
-    () => ({
+  // Zusätzlich zu `/me` (rohe Hub-Identität) holen wir die mEMP-internen Rollen aus
+  // `/me/roles` — das berücksichtigt sowohl den `_user-resolution.ts`-Rollen-Store
+  // als auch den HubAdmin-Override, und deckt damit auch Nicht-HubAdmin-Rollen ab,
+  // die `/me` (nur X-MSQ-Roles) nicht kennt.
+  const { data: rolesData } = useQuery({
+    queryKey: ["me", "roles"],
+    queryFn: () => apiFetch<MeRoles>("/me/roles"),
+    enabled: !!data,
+    retry: false,
+    staleTime: 60_000,
+  });
+
+  const value = useMemo<AuthContextValue>(() => {
+    const mempRoles = (rolesData?.mempRoles ?? []) as RoleName[];
+    const effectiveRoles = (rolesData?.effectiveRoles ?? mempRoles) as RoleName[];
+    return {
       user: data ?? null,
       isLoading,
       isError,
-      // Hub-Admins besitzen serverseitig immer mEMP-"admin" (requireMempRole) —
-      // das spiegeln wir hier, damit UI-Gating und Backend-Enforcement übereinstimmen.
+      mempRoles,
+      effectiveRoles,
+      // effectiveRoles enthält den HubAdmin-Override bereits (siehe /me/roles) —
+      // zusätzlich prüfen wir data.isHubAdmin direkt, solange /me/roles noch lädt.
       hasRole: (...roles) =>
-        data ? data.isHubAdmin || roles.some((r) => data.roles.includes(r)) : false,
-    }),
-    [data, isLoading, isError],
-  );
+        data ? data.isHubAdmin || roles.some((r) => effectiveRoles.includes(r)) : false,
+    };
+  }, [data, isLoading, isError, rolesData]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
