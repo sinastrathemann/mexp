@@ -8,10 +8,13 @@ import { z } from "zod";
 
 const attrString = z.object({ value: z.string().nullable() }).transform((v) => v.value);
 
-// Nested-Attribute (department, office): { value: { attributes: { name: { value: "IT" } } } | null }
+// Nested-Attribute (department, team, office): { value: { attributes: { id, name: "HR" } } | null }
+// WICHTIG: `name` ist bei Personio hier ein PLAIN STRING (nicht `{value: string}`).
 const attrNested = z
   .object({
-    value: z.object({ attributes: z.object({ name: attrString }) }).nullable(),
+    value: z
+      .object({ attributes: z.object({ name: z.string().nullable() }) })
+      .nullable(),
   })
   .transform((v) => (v.value ? v.value.attributes.name : null));
 
@@ -34,10 +37,12 @@ export const PersonioEmployeeAttributes = z.object({
   id: z.object({ value: z.number() }).transform((v) => String(v.value)),
   first_name: attrString,
   last_name: attrString,
+  preferred_name: optionalOrNull(attrString),
   email: attrString,
   status: attrString,
   employment_type: optionalOrNull(attrString),
   department: optionalOrNull(attrNested),
+  team: optionalOrNull(attrNested),
   position: optionalOrNull(attrString),
   office: optionalOrNull(attrNested),
   hire_date: optionalOrNull(z.object({ value: z.string().nullable() }).transform((v) => v.value)),

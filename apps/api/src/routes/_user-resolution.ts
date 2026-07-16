@@ -21,6 +21,7 @@ export interface MexpUser {
   // Bestehende User ohne Personio-Bezug bleiben unangetastet: alle Felder optional. ---
   personioId?: string;
   department?: string | null;
+  team?: string | null;
   position?: string | null;
   office?: string | null;
   /** Rohstatus aus Personio: "active" | "inactive" | "onboarding" | "leave" | "removed" (Reverse-Sync). */
