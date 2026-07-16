@@ -4,7 +4,7 @@ import type {
   BudgetItemCreateInput,
   BudgetItemStatus,
   BudgetItemUpdateInput,
-} from "@memp/domain";
+} from "@mexp/domain";
 import { desc, eq } from "drizzle-orm";
 import type { DbClient } from "../db/client.js";
 import type { BudgetItemRow } from "../db/schema/tables.js";

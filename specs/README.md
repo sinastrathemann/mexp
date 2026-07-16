@@ -24,4 +24,4 @@ Alle Diagramme als Mermaid (`.mmd`) neben dem Code im Git versioniert.
 - Max. 30 Knoten pro Diagramm — sonst aufteilen
 - Komplexe Gesamtarchitektur: draw.io/Excalidraw → SVG-Export
 
-Die Diagramme werden aus `mEMP-Doku.md` und `docs/architecture.md` referenziert, nicht eingebettet.
+Die Diagramme werden aus `mEXP-Doku.md` und `docs/architecture.md` referenziert, nicht eingebettet.

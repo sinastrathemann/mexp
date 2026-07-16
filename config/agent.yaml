@@ -1,11 +1,11 @@
 # ============================================================
-# mEMP Agent/Plattform-Konfiguration
+# mEXP Agent/Plattform-Konfiguration
 # Domaenenspezifische Parameter. Überschreibbar via agent.<env>.yaml + ENV.
 # ============================================================
 
 app:
-  name: "memp"
-  display_name: "mindsquare Event Management Platform"
+  name: "mexp"
+  display_name: "mindsquare Experience Platform"
   default_locale: "de"
   supported_locales: ["de", "en"]
   timezone: "Europe/Berlin"
@@ -43,7 +43,7 @@ sla:
   escalation:
     type: "human"
     channel: "teams"
-    target: "#memp-escalations"
+    target: "#mexp-escalations"
 
 # --- Queue / Worker ---
 queue:
@@ -61,7 +61,7 @@ storage:
   provider: "sharepoint"            # "sharepoint" | "s3"
   sharepoint:
     site_id: ${SHAREPOINT_SITE_ID}
-    root_folder: "mEMP"
+    root_folder: "mEXP"
   s3:
     endpoint: ${S3_ENDPOINT}
     bucket: ${S3_BUCKET}

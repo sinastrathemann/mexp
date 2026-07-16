@@ -1,11 +1,11 @@
-import type { Participation } from "@memp/domain";
+import type { Participation } from "@mexp/domain";
 import {
   CheckInNotAllowedError,
   EventNotFoundError,
   ParticipationNotFoundError,
   ParticipationStatusInvalidError,
-} from "@memp/domain";
-import { rootLogger } from "@memp/shared";
+} from "@mexp/domain";
+import { rootLogger } from "@mexp/shared";
 import type { AuditPort, EventPort, ParticipationPort } from "../ports.js";
 
 export interface CheckInParticipantDeps {

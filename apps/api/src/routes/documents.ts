@@ -1,14 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { zValidator } from "@hono/zod-validator";
-import { deleteDocument, listDocuments, registerDocument } from "@memp/application";
-import { getHubUser } from "@memp/auth";
-import type { Document } from "@memp/domain";
-import { DOCUMENT_VISIBILITIES } from "@memp/domain";
+import { deleteDocument, listDocuments, registerDocument } from "@mexp/application";
+import { getHubUser } from "@mexp/auth";
+import type { Document } from "@mexp/domain";
+import { DOCUMENT_VISIBILITIES } from "@mexp/domain";
 import { Hono } from "hono";
 import { z } from "zod";
 import { events, audit, documents, env } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
-import { requireMempRole } from "./_user-resolution.js";
+import { requireMexpRole } from "./_user-resolution.js";
 
 const visibilitySchema = z.enum(DOCUMENT_VISIBILITIES);
 
@@ -46,7 +46,7 @@ documentRoutes.get("/events/:eventId/documents", async (c) => {
 
 documentRoutes.post(
   "/events/:eventId/documents",
-  requireMempRole(...WRITE_ROLES),
+  requireMexpRole(...WRITE_ROLES),
   zValidator("json", createSchema),
   async (c) => {
     const eventId = c.req.param("eventId");
@@ -86,7 +86,7 @@ documentRoutes.post(
   },
 );
 
-documentRoutes.delete("/documents/:id", requireMempRole(...DELETE_ROLES), async (c) => {
+documentRoutes.delete("/documents/:id", requireMexpRole(...DELETE_ROLES), async (c) => {
   const id = c.req.param("id");
   const actorId = getHubUser(c).id;
   if (!env.DATABASE_URL) {

@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
-    // Relative Asset-Pfade, damit der Build unter dem Hub-Sub-Path (/memp/) funktioniert.
+    // Relative Asset-Pfade, damit der Build unter dem Hub-Sub-Path (/mexp/) funktioniert.
     base: "./",
     resolve: {
       alias: { "@": path.resolve(__dirname, "./src") },

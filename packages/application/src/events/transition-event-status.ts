@@ -1,6 +1,6 @@
-import type { Event, EventStatus } from "@memp/domain";
-import { EventNotFoundError, InvalidEventStatusTransitionError, canTransition } from "@memp/domain";
-import { rootLogger } from "@memp/shared";
+import type { Event, EventStatus } from "@mexp/domain";
+import { EventNotFoundError, InvalidEventStatusTransitionError, canTransition } from "@mexp/domain";
+import { rootLogger } from "@mexp/shared";
 import type { AuditPort, EventPort } from "../ports.js";
 
 export interface TransitionEventStatusDeps {

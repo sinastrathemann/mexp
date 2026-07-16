@@ -1,10 +1,10 @@
-import type { BudgetItem, BudgetItemStatus } from "@memp/domain";
+import type { BudgetItem, BudgetItemStatus } from "@mexp/domain";
 import {
   BudgetItemNotFoundError,
   BudgetItemStatusTransitionInvalidError,
   canBudgetTransition,
-} from "@memp/domain";
-import { rootLogger } from "@memp/shared";
+} from "@mexp/domain";
+import { rootLogger } from "@mexp/shared";
 import type { AuditPort, BudgetPort } from "../ports.js";
 
 export interface TransitionBudgetItemDeps {

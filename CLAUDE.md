@@ -1,4 +1,4 @@
-# mEMP — mindsquare Event Management Platform
+# mEXP — mindsquare Experience Platform
 
 Interne HR-zentrierte Event-Plattform für mindsquare AG. Deckt den Lifecycle von internen Events (Schulungen, Workshops, Betriebsveranstaltungen) ab: Portfolio, Teilnehmerverwaltung, Budget/Tax, Dokumente, Check-in, Analytics. M365-first, Agent-Hub-Deployment, KI als späterer Zusatz.
 
@@ -11,10 +11,10 @@ Interne HR-zentrierte Event-Plattform für mindsquare AG. Deckt den Lifecycle vo
 - Observability: OpenTelemetry + pino; Langfuse erst mit AI-Modul (Phase 4)
 
 ## Deployment
-- **Target**: mindsquare Agent Hub (Managed) — hosted at `https://<hub-domain>/memp/`
-- **Container**: `ghcr.io/sinastrathemann/memp:latest` (auto-published via GH Actions on push to `main`)
+- **Target**: mindsquare Agent Hub (Managed) — hosted at `https://<hub-domain>/mexp/`
+- **Container**: `ghcr.io/sinastrathemann/mexp:latest` (auto-published via GH Actions on push to `main`)
 - **Auth**: SSO via Hub → Identity in `X-MSQ-*`-Headern; kein eigenes Login-Form
-- **State**: Docker-Volume `appdata-memp-data` → `/app/data`
+- **State**: Docker-Volume `appdata-mexp-data` → `/app/data`
 - **Local Dev**: `AUTH_MODE=dev-bypass` mit User aus `config/dev-user.yaml`
 - **Reference**: `docs/agent-hub-integration.md` und `docs/mindCoder/specs/2026-07-15-agent-hub-integration-design.md`
 
@@ -47,8 +47,8 @@ Interne HR-zentrierte Event-Plattform für mindsquare AG. Deckt den Lifecycle vo
 - **Config-driven**: Schwellenwerte, Fristen, Freigaberegeln, Templates nie hardcoden — immer `config/*.yaml`.
 - **Jede API-Grenze geht durch Zod**: Requests, Responses, ENV, YAML-Configs.
 - **Named Exports**. Kein `export default` (Ausnahme: React Pages in `apps/web/src/pages/`).
-- **Logging**: nur pino aus `@memp/shared`, nie `console.log`. PII-Redaction beachten.
-- **Fehler**: Custom Error Types aus `@memp/shared/errors`, nie rohe `throw new Error("...")`.
+- **Logging**: nur pino aus `@mexp/shared`, nie `console.log`. PII-Redaction beachten.
+- **Fehler**: Custom Error Types aus `@mexp/shared/errors`, nie rohe `throw new Error("...")`.
 - **Audit by design**: Jeder fachliche State-Wechsel (Event-Status, Freigabe, Budget, Teilnehmerstatus) schreibt einen Audit-Record.
 - **Domain nicht von Infrastructure abhängig**: `packages/domain` importiert NICHTS aus `packages/infrastructure`. Richtung ist domain → application → infrastructure.
 - **Use Cases command-orientiert**: `createEvent`, `approveBudget`, `openRegistration`, `checkInParticipant`, `closeEvent`.
@@ -65,7 +65,7 @@ Interne HR-zentrierte Event-Plattform für mindsquare AG. Deckt den Lifecycle vo
 - Dateien: `kebab-case.ts`
 - Funktionen: `camelCase`
 - Types/Interfaces: `PascalCase`
-- Packages: `@memp/<name>`
+- Packages: `@mexp/<name>`
 - Tests: `*.test.ts` neben Quelldatei ODER in `tests/`
 - Mermaid-Diagramme: `.mmd`, Top-Down Flowcharts, Kommentar-Header mit Zweck/Datum/Autor
 
@@ -77,17 +77,17 @@ Interne HR-zentrierte Event-Plattform für mindsquare AG. Deckt den Lifecycle vo
 - **Phase 4** (AI): Feedback-Summary, No-Show-Prognose — separates Modul
 
 ## Gotchas
-- DSGVO-Fachlogik wird bewusst nicht in mEMP verankert — aber PII-Redaction, Audit und Rollen sind Pflicht. Siehe `docs/data-classification.md`.
+- DSGVO-Fachlogik wird bewusst nicht in mEXP verankert — aber PII-Redaction, Audit und Rollen sind Pflicht. Siehe `docs/data-classification.md`.
 - Betriebsveranstaltungslogik (Tax-Risk) ist fachlich komplex — vor Phase 2 mit Controlling abstimmen.
 - M365-Integrationen sind Phase-0-Risiko: Test-Tenant + technischer Spike vor produktiver Nutzung.
 - `packages/llm/` und `packages/mcp/` sind bis Phase 4 nur Gerüst — nicht in Runtime einbinden.
 
 ## Referenzen
-- Implementierungsplan: `../mEMP_Implementierungsplan_Architektur.docx`
-- Anforderungsdokument: `../mEMP_Anforderungsdokument_final.docx`
+- Implementierungsplan: `../mEMP_Implementierungsplan_Architektur.docx` (historisches Dateiname, Dokument liegt noch unter altem Namen)
+- Anforderungsdokument: `../mEMP_Anforderungsdokument_final.docx` (historisches Dateiname, Dokument liegt noch unter altem Namen)
 - Agent Template: `../mindsquare_Agent_Template_2_1 1 1.md`
 - Architektur: `docs/architecture.md`
 - Datenklassifikation: `docs/data-classification.md`
 - Runbook: `docs/runbook.md`
 - Spezifikation: `specs/README.md`
-- Projektdoku: `mEMP-Doku.md`
+- Projektdoku: `mEXP-Doku.md`

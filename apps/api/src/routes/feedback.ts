@@ -4,13 +4,13 @@ import {
   listFeedback,
   submitFeedback,
   summarizeEventFeedback,
-} from "@memp/application";
-import { getHubUser } from "@memp/auth";
+} from "@mexp/application";
+import { getHubUser } from "@mexp/auth";
 import { Hono } from "hono";
 import { z } from "zod";
 import { events, audit, env, feedback, llm } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
-import { requireMempRole } from "./_user-resolution.js";
+import { requireMexpRole } from "./_user-resolution.js";
 
 const ratingSchema = z.number().int().min(1).max(5);
 
@@ -39,7 +39,7 @@ const devKey = (eventId: string, userId: string) => `${eventId}::${userId}`;
 
 export const feedbackRoutes = new Hono();
 
-feedbackRoutes.get("/events/:eventId/feedback", requireMempRole(...MANAGE_ROLES), async (c) => {
+feedbackRoutes.get("/events/:eventId/feedback", requireMexpRole(...MANAGE_ROLES), async (c) => {
   const eventId = c.req.param("eventId");
   if (!env.DATABASE_URL) {
     const items = Array.from(devFeedbackStore.values()).filter((f) => f.eventId === eventId);
@@ -70,7 +70,7 @@ feedbackRoutes.get("/events/:eventId/feedback/mine", async (c) => {
 
 feedbackRoutes.post(
   "/events/:eventId/feedback/summary",
-  requireMempRole(...MANAGE_ROLES),
+  requireMexpRole(...MANAGE_ROLES),
   async (c) => {
     if (!env.DATABASE_URL) {
       return c.json(

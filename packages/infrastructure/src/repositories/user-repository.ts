@@ -1,5 +1,5 @@
-import type { RoleName, User, UserWithPasswordHash } from "@memp/domain";
-import { isRoleName } from "@memp/domain";
+import type { RoleName, User, UserWithPasswordHash } from "@mexp/domain";
+import { isRoleName } from "@mexp/domain";
 import { and, eq } from "drizzle-orm";
 import type { DbClient } from "../db/client.js";
 import { roles, userRoles, users } from "../db/schema/tables.js";

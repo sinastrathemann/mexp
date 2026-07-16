@@ -8,12 +8,12 @@ import { randomUUID } from "node:crypto";
  * - Optional KI-Bewertung (Phase B)
  */
 import { zValidator } from "@hono/zod-validator";
-import { getHubUser } from "@memp/auth";
+import { getHubUser } from "@mexp/auth";
 import { Hono } from "hono";
 import { z } from "zod";
 import { env } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
-import { requireMempRole } from "./_user-resolution.js";
+import { requireMexpRole } from "./_user-resolution.js";
 
 const MANAGE_ROLES = ["admin", "manager", "event_office", "werkstudent"] as const;
 
@@ -60,7 +60,7 @@ export const devTenderStore = persistentMap<DevTender>("tenders");
 export const tenderRoutes = new Hono();
 
 // Liste aller Ausschreibungen — Filter nach eventId optional
-tenderRoutes.get("/", requireMempRole(...MANAGE_ROLES), (c) => {
+tenderRoutes.get("/", requireMexpRole(...MANAGE_ROLES), (c) => {
   const eventId = c.req.query("eventId");
   const all = Array.from(devTenderStore.values());
   const filtered = eventId ? all.filter((t) => t.eventId === eventId) : all;
@@ -72,7 +72,7 @@ tenderRoutes.get("/", requireMempRole(...MANAGE_ROLES), (c) => {
 });
 
 // Ausschreibung lesen (Admin-Sicht)
-tenderRoutes.get("/:id", requireMempRole(...MANAGE_ROLES), (c) => {
+tenderRoutes.get("/:id", requireMexpRole(...MANAGE_ROLES), (c) => {
   const id = c.req.param("id");
   const t = devTenderStore.get(id);
   if (!t)
@@ -83,7 +83,7 @@ tenderRoutes.get("/:id", requireMempRole(...MANAGE_ROLES), (c) => {
 // Ausschreibung anlegen
 tenderRoutes.post(
   "/",
-  requireMempRole(...MANAGE_ROLES),
+  requireMexpRole(...MANAGE_ROLES),
   zValidator("json", createTenderSchema),
   (c) => {
     if (env.DATABASE_URL) {
@@ -112,7 +112,7 @@ tenderRoutes.post(
 // Ausschreibung bearbeiten
 tenderRoutes.patch(
   "/:id",
-  requireMempRole(...MANAGE_ROLES),
+  requireMexpRole(...MANAGE_ROLES),
   zValidator("json", updateTenderSchema),
   (c) => {
     const id = c.req.param("id");
@@ -136,7 +136,7 @@ tenderRoutes.patch(
 );
 
 // Ausschreibung löschen — nur Admin
-tenderRoutes.delete("/:id", requireMempRole("admin"), (c) => {
+tenderRoutes.delete("/:id", requireMexpRole("admin"), (c) => {
   const id = c.req.param("id");
   if (!devTenderStore.has(id)) {
     return c.json({ error: { code: "NOT_FOUND", message: "Nicht gefunden" } }, 404);

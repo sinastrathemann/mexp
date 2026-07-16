@@ -1,6 +1,6 @@
 # Runbook
 
-Betriebshandbuch für mEMP. Zielgruppe: DevOps / On-Call.
+Betriebshandbuch für mEXP. Zielgruppe: DevOps / On-Call.
 
 ## Deploy
 
@@ -8,17 +8,17 @@ Betriebshandbuch für mEMP. Zielgruppe: DevOps / On-Call.
 
 Der Deploy erfolgt via GitHub-Actions automatisch:
 
-1. Push auf `main` → Workflow `Publish Container` baut `ghcr.io/sinastrathemann/memp:latest`
+1. Push auf `main` → Workflow `Publish Container` baut `ghcr.io/sinastrathemann/mexp:latest`
 2. Hub-Admin: **App-Detailseite → Neue Version** → Tag wählen oder `latest` re-pullen
 3. Hub startet Container neu. Alter Container läuft bis neuer healthy ist.
 
-**Rollback:** Hub-Admin-UI → "Vorherige Version". Achtung: Nur das Image wird zurückgerollt, nicht das Volume (`appdata-memp-data`). Wenn eine Schema-Migration passiert ist, muss sie idempotent + additiv sein.
+**Rollback:** Hub-Admin-UI → "Vorherige Version". Achtung: Nur das Image wird zurückgerollt, nicht das Volume (`appdata-mexp-data`). Wenn eine Schema-Migration passiert ist, muss sie idempotent + additiv sein.
 
 **Manueller Trigger:** In GitHub → Actions → `Publish Container` → `Run workflow`.
 
 ## Health Checks
 - API: `GET http://<host>:3000/health`
-- Postgres: `pg_isready -U memp -d memp`
+- Postgres: `pg_isready -U mexp -d mexp`
 - Redis: `redis-cli ping`
 - Queue-Backlog: `redis-cli LLEN bull:reminders:wait` (und analog für weitere Queues)
 

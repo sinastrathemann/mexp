@@ -17,7 +17,7 @@ auth:
     jwks_uri: "https://login.microsoftonline.com/${ENTRA_TENANT_ID}/discovery/v2.0/keys"
     algorithms: ["RS256"]
   session:
-    cookie_name: "memp_session"
+    cookie_name: "mexp_session"
     secure: true
     same_site: "lax"
     max_age_seconds: 28800           # 8 Stunden

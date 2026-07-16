@@ -1,6 +1,6 @@
-import { getHubUser } from "@memp/auth";
+import { getHubUser } from "@mexp/auth";
 import { Hono } from "hono";
-import { resolveMempRoles } from "./_user-resolution.js";
+import { resolveMexpRoles } from "./_user-resolution.js";
 
 export const authRoutes = new Hono();
 
@@ -18,17 +18,17 @@ authRoutes.get("/me", (c) => {
   });
 });
 
-// mEMP-interne Rollen des aktuell eingeloggten Hub-Users — getrennt von `/me`, das nur
+// mEXP-interne Rollen des aktuell eingeloggten Hub-Users — getrennt von `/me`, das nur
 // die rohe Hub-Identität (X-MSQ-*-Header) liefert. `hasRole` im Frontend braucht die
-// effektiven mEMP-Rollen (inkl. HubAdmin-Override), nicht die rohen Hub-Rollen.
+// effektiven mEXP-Rollen (inkl. HubAdmin-Override), nicht die rohen Hub-Rollen.
 authRoutes.get("/me/roles", (c) => {
   const hub = getHubUser(c);
-  const mempRoles = resolveMempRoles(c);
+  const mexpRoles = resolveMexpRoles(c);
   return c.json({
     userId: hub.id,
     isHubAdmin: hub.isHubAdmin,
     hubRoles: hub.roles,
-    mempRoles,
-    effectiveRoles: hub.isHubAdmin ? [...new Set([...mempRoles, "admin"])] : mempRoles,
+    mexpRoles,
+    effectiveRoles: hub.isHubAdmin ? [...new Set([...mexpRoles, "admin"])] : mexpRoles,
   });
 });

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { env } from "../deps.js";
-import { requireMempRole } from "./_user-resolution.js";
+import { requireMexpRole } from "./_user-resolution.js";
 import { devBudgetStore } from "./budget.js";
 import { devLiveParticipantsStore } from "./registration-form.js";
 
@@ -213,7 +213,7 @@ function bucketFor(year: number, month: number): MonthBucket {
 export const reportRoutes = new Hono();
 
 // JSON-Report
-reportRoutes.get("/monthly", requireMempRole(...MANAGE_ROLES), (c) => {
+reportRoutes.get("/monthly", requireMexpRole(...MANAGE_ROLES), (c) => {
   const year = Number.parseInt(c.req.query("year") ?? "", 10);
   const month = Number.parseInt(c.req.query("month") ?? "", 10);
   if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) {
@@ -241,7 +241,7 @@ reportRoutes.get("/monthly", requireMempRole(...MANAGE_ROLES), (c) => {
 });
 
 // CSV-Export
-reportRoutes.get("/monthly.csv", requireMempRole(...MANAGE_ROLES), (c) => {
+reportRoutes.get("/monthly.csv", requireMexpRole(...MANAGE_ROLES), (c) => {
   const year = Number.parseInt(c.req.query("year") ?? "", 10);
   const month = Number.parseInt(c.req.query("month") ?? "", 10);
   if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) {
@@ -316,7 +316,7 @@ reportRoutes.get("/monthly.csv", requireMempRole(...MANAGE_ROLES), (c) => {
   c.header("Content-Type", "text/csv; charset=utf-8");
   c.header(
     "Content-Disposition",
-    `attachment; filename=memp-report-${year}-${String(month).padStart(2, "0")}.csv`,
+    `attachment; filename=mexp-report-${year}-${String(month).padStart(2, "0")}.csv`,
   );
   return c.body(csv);
 });

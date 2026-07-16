@@ -1,9 +1,9 @@
 /**
  * Persistente Map-Stores als JSON auf Disk — die MVP-Persistenz-Schicht
  * (Design-Spec §3.4: Postgres ist Follow-up).
- * Pfad: $MEMP_DATA_DIR/<name>.json, falls gesetzt (Container: benanntes Volume,
- * siehe `docker/Dockerfile` `ENV MEMP_DATA_DIR=/app/data` + `VOLUME /app/data`).
- * Fällt lokal (Dev, kein MEMP_DATA_DIR gesetzt) zurück auf <api>/data/<name>.json,
+ * Pfad: $MEXP_DATA_DIR/<name>.json, falls gesetzt (Container: benanntes Volume,
+ * siehe `docker/Dockerfile` `ENV MEXP_DATA_DIR=/app/data` + `VOLUME /app/data`).
+ * Fällt lokal (Dev, kein MEXP_DATA_DIR gesetzt) zurück auf <api>/data/<name>.json,
  * damit Daten bei tsx-watch-Neustarts erhalten bleiben.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -11,7 +11,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const dirRoot = dirname(fileURLToPath(import.meta.url));
-const dataDir = process.env["MEMP_DATA_DIR"] || join(dirRoot, "..", "data");
+const dataDir = process.env["MEXP_DATA_DIR"] || join(dirRoot, "..", "data");
 
 function ensureDir() {
   if (!existsSync(dataDir)) {

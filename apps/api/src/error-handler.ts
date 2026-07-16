@@ -1,11 +1,11 @@
-import { MempError, rootLogger } from "@memp/shared";
+import { MexpError, rootLogger } from "@mexp/shared";
 import type { ErrorHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
 
 const log = rootLogger.child({ module: "api-error-handler" });
 
 export const errorHandler: ErrorHandler = (err, c) => {
-  if (err instanceof MempError) {
+  if (err instanceof MexpError) {
     return c.json(
       { error: { code: err.code, message: err.message } },
       // biome-ignore lint/suspicious/noExplicitAny: Hono's ContentfulStatusCode union is over-strict for runtime values

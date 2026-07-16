@@ -13,9 +13,9 @@ export type RoleName = (typeof ROLE_NAMES)[number];
 /**
  * Hub-Identität, wie sie `GET /me` liefert (siehe apps/api/src/routes/auth.ts).
  * `roles`/`groups` sind Rohwerte aus den X-MSQ-*-Headern (Entra/AppHub-Rollen) —
- * NICHT dieselben Werte wie `RoleName` (mEMP-interne Rollen, verwaltet über
+ * NICHT dieselben Werte wie `RoleName` (mEXP-interne Rollen, verwaltet über
  * /admin/users). Hub-Admins (`isHubAdmin`) werden serverseitig überall als
- * mEMP-"admin" behandelt (siehe requireMempRole) — das spiegelt `hasRole` unten.
+ * mEXP-"admin" behandelt (siehe requireMexpRole) — das spiegelt `hasRole` unten.
  */
 export interface AuthUser {
   id: string;
@@ -29,14 +29,14 @@ export interface AuthUser {
 }
 
 /**
- * Antwort von `GET /me/roles` (siehe apps/api/src/routes/auth.ts) — die mEMP-internen
+ * Antwort von `GET /me/roles` (siehe apps/api/src/routes/auth.ts) — die mEXP-internen
  * Rollen des aktuellen Hub-Users, getrennt von den rohen Hub-Rollen aus `/me`.
  */
 export interface MeRoles {
   userId: string;
   isHubAdmin: boolean;
   hubRoles: string[];
-  mempRoles: string[];
+  mexpRoles: string[];
   effectiveRoles: string[];
 }
 

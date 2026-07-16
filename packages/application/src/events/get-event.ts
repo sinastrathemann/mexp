@@ -1,5 +1,5 @@
-import type { Event } from "@memp/domain";
-import { EventNotFoundError } from "@memp/domain";
+import type { Event } from "@mexp/domain";
+import { EventNotFoundError } from "@mexp/domain";
 import type { EventPort } from "../ports.js";
 
 export async function getEvent(id: string, deps: { events: EventPort }): Promise<Event> {

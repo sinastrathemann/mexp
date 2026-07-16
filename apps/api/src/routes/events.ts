@@ -14,19 +14,19 @@ import {
   transitionEventStatus,
   updateEvent,
   withdrawFromEvent,
-} from "@memp/application";
-import { getHubUser } from "@memp/auth";
+} from "@mexp/application";
+import { getHubUser } from "@mexp/auth";
 import {
   EVENT_STATUSES,
   EVENT_TYPES,
   EVENT_VISIBILITIES,
   InvalidEventDatesError,
-} from "@memp/domain";
+} from "@mexp/domain";
 import { Hono } from "hono";
 import { z } from "zod";
 import { events, audit, env, participations } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
-import { requireMempRole, resolveMempRoles } from "./_user-resolution.js";
+import { requireMexpRole, resolveMexpRoles } from "./_user-resolution.js";
 import {
   devAnswerStore,
   devFormStore,
@@ -266,7 +266,7 @@ eventRoutes.get("/", zValidator("query", listQuerySchema), async (c) => {
   if (!env.DATABASE_URL) {
     const baseEvents = listDevBaseEvents();
     const user = getHubUser(c);
-    const userRoles = resolveMempRoles(c);
+    const userRoles = resolveMexpRoles(c);
     const userEmail = (user.email ?? "").toLowerCase();
     // Rollen, die Events managen (alle Status sehen): admin, manager, event_office, budget_owner, werkstudent
     const isPrivilegedRole = userRoles.some((r) =>
@@ -315,7 +315,7 @@ eventRoutes.get("/", zValidator("query", listQuerySchema), async (c) => {
 
 eventRoutes.post(
   "/",
-  requireMempRole(...WRITE_ROLES),
+  requireMexpRole(...WRITE_ROLES),
   zValidator("json", createEventSchema),
   async (c) => {
     const input = c.req.valid("json");
@@ -489,7 +489,7 @@ eventRoutes.get("/:id", async (c) => {
 
 eventRoutes.patch(
   "/:id",
-  requireMempRole(...WRITE_ROLES),
+  requireMexpRole(...WRITE_ROLES),
   zValidator("json", updateEventSchema),
   async (c) => {
     const id = c.req.param("id");
@@ -564,7 +564,7 @@ eventRoutes.get("/:id/calendar.ics", async (c) => {
 
   const ics = buildIcs({
     id: String(evt.id),
-    title: String(evt.title ?? "mEMP Event"),
+    title: String(evt.title ?? "mEXP Event"),
     description: String(evt.description ?? ""),
     location:
       String(evt.location ?? "") +
@@ -574,7 +574,7 @@ eventRoutes.get("/:id/calendar.ics", async (c) => {
   });
 
   c.header("Content-Type", "text/calendar; charset=utf-8");
-  c.header("Content-Disposition", `attachment; filename="memp-${id}.ics"`);
+  c.header("Content-Disposition", `attachment; filename="mexp-${id}.ics"`);
   return c.body(ics);
 });
 
@@ -608,11 +608,11 @@ function buildIcs(input: {
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//mindsquare AG//mEMP//DE",
+    "PRODID:-//mindsquare AG//mEXP//DE",
     "METHOD:PUBLISH",
     "CALSCALE:GREGORIAN",
     "BEGIN:VEVENT",
-    `UID:${input.id}@memp.mindsquare.de`,
+    `UID:${input.id}@mexp.mindsquare.de`,
     `DTSTAMP:${now}`,
     `DTSTART:${icsDate(input.startAt)}`,
     `DTEND:${icsDate(input.endAt)}`,
@@ -627,7 +627,7 @@ function buildIcs(input: {
 }
 
 // Event "löschen" — nur Admin. Dev-Mode: in Override-Store als hidden markieren.
-eventRoutes.delete("/:id", requireMempRole("admin"), async (c) => {
+eventRoutes.delete("/:id", requireMexpRole("admin"), async (c) => {
   const id = c.req.param("id");
   if (!env.DATABASE_URL) {
     const current = devEventOverrideStore.get(id) ?? {};
@@ -643,7 +643,7 @@ eventRoutes.delete("/:id", requireMempRole("admin"), async (c) => {
 
 eventRoutes.patch(
   "/:id/status",
-  requireMempRole(...WRITE_ROLES),
+  requireMexpRole(...WRITE_ROLES),
   zValidator("json", transitionSchema),
   async (c) => {
     const id = c.req.param("id");
@@ -802,7 +802,7 @@ function getDevParticipants(eventId: string): DevParticipantRecord[] {
   return merged.map(applyParticipationOverride);
 }
 
-eventRoutes.get("/:id/participants", requireMempRole(...WRITE_ROLES), async (c) => {
+eventRoutes.get("/:id/participants", requireMexpRole(...WRITE_ROLES), async (c) => {
   const id = c.req.param("id");
   if (!env.DATABASE_URL) {
     const merged = getDevParticipants(id);
@@ -817,7 +817,7 @@ eventRoutes.get("/:id/participants", requireMempRole(...WRITE_ROLES), async (c) 
   return c.json({ participants: list });
 });
 
-eventRoutes.get("/:id/participants.csv", requireMempRole(...WRITE_ROLES), async (c) => {
+eventRoutes.get("/:id/participants.csv", requireMexpRole(...WRITE_ROLES), async (c) => {
   const id = c.req.param("id");
   const list = await listParticipants(id, { events, participations });
   const header = [
@@ -852,7 +852,7 @@ eventRoutes.get("/:id/participants.csv", requireMempRole(...WRITE_ROLES), async 
   });
 });
 
-eventRoutes.get("/:id/emergency-list", requireMempRole(...WRITE_ROLES), async (c) => {
+eventRoutes.get("/:id/emergency-list", requireMexpRole(...WRITE_ROLES), async (c) => {
   const id = c.req.param("id");
   const event = await getEvent(id, { events });
   const list = await listParticipants(id, { events, participations });
@@ -1027,7 +1027,7 @@ eventRoutes.post("/:id/withdraw", async (c) => {
 
 eventRoutes.post(
   "/:id/participants/promote-waitlist",
-  requireMempRole(...WRITE_ROLES),
+  requireMexpRole(...WRITE_ROLES),
   async (c) => {
     const id = c.req.param("id");
     const actorId = getHubUser(c).id;
@@ -1080,7 +1080,7 @@ eventRoutes.post(
 
 eventRoutes.post(
   "/:eventId/participants/:participationId/check-in",
-  requireMempRole(...WRITE_ROLES),
+  requireMexpRole(...WRITE_ROLES),
   async (c) => {
     const eventId = c.req.param("eventId");
     const participationId = c.req.param("participationId");
@@ -1124,7 +1124,7 @@ eventRoutes.post(
 
 eventRoutes.post(
   "/:eventId/participants/:participationId/no-show",
-  requireMempRole(...WRITE_ROLES),
+  requireMexpRole(...WRITE_ROLES),
   async (c) => {
     const eventId = c.req.param("eventId");
     const participationId = c.req.param("participationId");

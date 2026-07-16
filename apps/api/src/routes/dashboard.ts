@@ -1,4 +1,4 @@
-import { getPortfolioStats } from "@memp/application";
+import { getPortfolioStats } from "@mexp/application";
 import { Hono } from "hono";
 import { dashboard, env } from "../deps.js";
 

@@ -6,14 +6,14 @@ import {
   deleteBlueprint,
   listBlueprints,
   updateBlueprint,
-} from "@memp/application";
-import { getHubUser } from "@memp/auth";
-import { EVENT_TYPES, EVENT_VISIBILITIES } from "@memp/domain";
+} from "@mexp/application";
+import { getHubUser } from "@mexp/auth";
+import { EVENT_TYPES, EVENT_VISIBILITIES } from "@mexp/domain";
 import { Hono } from "hono";
 import { z } from "zod";
 import { events, audit, blueprints, env } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
-import { requireMempRole } from "./_user-resolution.js";
+import { requireMexpRole } from "./_user-resolution.js";
 import { createDevEvent } from "./events.js";
 
 const eventTypeSchema = z.enum(EVENT_TYPES);
@@ -93,7 +93,7 @@ blueprintRoutes.get("/", async (c) => {
 
 blueprintRoutes.post(
   "/",
-  requireMempRole(...WRITE_ROLES),
+  requireMexpRole(...WRITE_ROLES),
   zValidator("json", createSchema),
   async (c) => {
     const input = c.req.valid("json");
@@ -126,7 +126,7 @@ blueprintRoutes.post(
 
 blueprintRoutes.patch(
   "/:id",
-  requireMempRole(...WRITE_ROLES),
+  requireMexpRole(...WRITE_ROLES),
   zValidator("json", updateSchema),
   async (c) => {
     const id = c.req.param("id");
@@ -173,7 +173,7 @@ blueprintRoutes.patch(
   },
 );
 
-blueprintRoutes.delete("/:id", requireMempRole(...WRITE_ROLES), async (c) => {
+blueprintRoutes.delete("/:id", requireMexpRole(...WRITE_ROLES), async (c) => {
   const id = c.req.param("id");
   const actorId = getHubUser(c).id;
 
@@ -191,7 +191,7 @@ blueprintRoutes.delete("/:id", requireMempRole(...WRITE_ROLES), async (c) => {
 
 blueprintRoutes.post(
   "/:id/apply",
-  requireMempRole(...WRITE_ROLES),
+  requireMexpRole(...WRITE_ROLES),
   zValidator("json", applySchema),
   async (c) => {
     const id = c.req.param("id");

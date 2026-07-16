@@ -1,5 +1,5 @@
 -- Dev-User für lokale Entwicklung
--- Run with: psql -U memp -d memp -f seed-dev-user.sql
+-- Run with: psql -U mexp -d mexp -f seed-dev-user.sql
 
 INSERT INTO public.users (id, email, display_name, password_hash, is_active, created_at)
 VALUES (

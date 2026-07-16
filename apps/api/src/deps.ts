@@ -1,4 +1,4 @@
-import type { LlmPort, LlmSummaryInput } from "@memp/application";
+import type { LlmPort, LlmSummaryInput } from "@mexp/application";
 import {
   AuditRepository,
   BlueprintRepository,
@@ -10,9 +10,9 @@ import {
   FeedbackRepository,
   ParticipationRepository,
   createDbClient,
-} from "@memp/infrastructure";
-import { type LlmProvider, createLlmProvider, loadLlmConfig } from "@memp/llm";
-import { NoDatabaseError, loadEnv } from "@memp/shared";
+} from "@mexp/infrastructure";
+import { type LlmProvider, createLlmProvider, loadLlmConfig } from "@mexp/llm";
+import { NoDatabaseError, loadEnv } from "@mexp/shared";
 
 const env = loadEnv();
 
@@ -55,7 +55,7 @@ function lazyRepo<T extends object>(create: (db: DbClient) => T): T {
 }
 
 // `users`/`roles`-Repositories wurden entfernt: seit Task 3 läuft die User-/Rollen-
-// Verwaltung über den Datei-basierten `mempUserStore` (routes/_user-resolution.ts).
+// Verwaltung über den Datei-basierten `mexpUserStore` (routes/_user-resolution.ts).
 // Kein Call-Site importiert `users`/`roles` mehr aus diesem Modul (verifiziert per grep).
 export const events = lazyRepo((db) => new EventRepository(db));
 export const participations = lazyRepo((db) => new ParticipationRepository(db));

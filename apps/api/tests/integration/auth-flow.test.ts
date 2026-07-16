@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 // Requires the API to be running (`pnpm dev:api`) with AUTH_MODE=hub against
 // http://localhost:3000. Not part of the default `pnpm test` run — set
 // RUN_INTEGRATION=1 to opt in, e.g.:
-//   RUN_INTEGRATION=1 pnpm --filter @memp/api exec vitest run tests/integration/auth-flow.test.ts
+//   RUN_INTEGRATION=1 pnpm --filter @mexp/api exec vitest run tests/integration/auth-flow.test.ts
 describe.skipIf(!process.env.RUN_INTEGRATION)("API auth flow (integration)", () => {
   it("health returns 200 without auth headers", async () => {
     const res = await fetch("http://localhost:3000/health");

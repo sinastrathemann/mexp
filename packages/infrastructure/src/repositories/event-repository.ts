@@ -5,7 +5,7 @@ import type {
   EventType,
   EventUpdateInput,
   EventVisibility,
-} from "@memp/domain";
+} from "@mexp/domain";
 import { and, desc, eq } from "drizzle-orm";
 import type { DbClient } from "../db/client.js";
 import type { EventRow } from "../db/schema/tables.js";

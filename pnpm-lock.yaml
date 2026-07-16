@@ -29,22 +29,22 @@ importers:
       '@hono/zod-validator':
         specifier: ^0.4.1
         version: 0.4.3(hono@4.12.14)(zod@3.25.76)
-      '@memp/application':
+      '@mexp/application':
         specifier: workspace:*
         version: link:../../packages/application
-      '@memp/auth':
+      '@mexp/auth':
         specifier: workspace:*
         version: link:../../packages/auth
-      '@memp/domain':
+      '@mexp/domain':
         specifier: workspace:*
         version: link:../../packages/domain
-      '@memp/infrastructure':
+      '@mexp/infrastructure':
         specifier: workspace:*
         version: link:../../packages/infrastructure
-      '@memp/llm':
+      '@mexp/llm':
         specifier: workspace:*
         version: link:../../packages/llm
-      '@memp/shared':
+      '@mexp/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       hono:
@@ -112,10 +112,10 @@ importers:
 
   packages/application:
     dependencies:
-      '@memp/domain':
+      '@mexp/domain':
         specifier: workspace:*
         version: link:../domain
-      '@memp/shared':
+      '@mexp/shared':
         specifier: workspace:*
         version: link:../shared
       zod:
@@ -124,7 +124,7 @@ importers:
 
   packages/auth:
     dependencies:
-      '@memp/shared':
+      '@mexp/shared':
         specifier: workspace:*
         version: link:../shared
       hono:
@@ -139,7 +139,7 @@ importers:
 
   packages/domain:
     dependencies:
-      '@memp/shared':
+      '@mexp/shared':
         specifier: workspace:*
         version: link:../shared
       zod:
@@ -148,16 +148,16 @@ importers:
 
   packages/infrastructure:
     dependencies:
-      '@memp/application':
+      '@mexp/application':
         specifier: workspace:*
         version: link:../application
-      '@memp/auth':
+      '@mexp/auth':
         specifier: workspace:*
         version: link:../auth
-      '@memp/domain':
+      '@mexp/domain':
         specifier: workspace:*
         version: link:../domain
-      '@memp/shared':
+      '@mexp/shared':
         specifier: workspace:*
         version: link:../shared
       argon2:
@@ -188,7 +188,7 @@ importers:
 
   packages/llm:
     dependencies:
-      '@memp/shared':
+      '@mexp/shared':
         specifier: workspace:*
         version: link:../shared
       yaml:
@@ -200,7 +200,7 @@ importers:
 
   packages/mcp:
     dependencies:
-      '@memp/shared':
+      '@mexp/shared':
         specifier: workspace:*
         version: link:../shared
       zod:

@@ -1,21 +1,21 @@
-# mEMP — mindsquare Event Management Platform
+# mEXP — mindsquare Experience Platform
 
 Interne HR-zentrierte Event-Plattform für mindsquare AG. Deckt den Lifecycle interner Events (Schulungen, Workshops, Feelgood-Events, Bereichsevents, mindsquare-Events, …) ab: Portfolio, Teilnehmerverwaltung, Budget, Dokumente, Check-in, Reporting.
 
 ## Container
 
-- 📦 **Package**: https://github.com/sinastrathemann/memp/pkgs/container/memp
+- 📦 **Package**: https://github.com/sinastrathemann/mexp/pkgs/container/mexp
 - Image-Ref zum Einhängen in den Agent Hub:
 
   ```
-  ghcr.io/sinastrathemann/memp:latest
+  ghcr.io/sinastrathemann/mexp:latest
   ```
 
 Für eine pinned Version einen Release-Tag verwenden (z. B. `:v1.0.0`).
 
 ## Deployment
 
-mEMP läuft als **Managed Agent** im mindsquare Agent Hub — SSO über Entra ID, Container-Lifecycle managed vom Hub. Onboarding-Details siehe [`docs/agent-hub-integration.md`](docs/agent-hub-integration.md).
+mEXP läuft als **Managed Agent** im mindsquare Agent Hub — SSO über Entra ID, Container-Lifecycle managed vom Hub. Onboarding-Details siehe [`docs/agent-hub-integration.md`](docs/agent-hub-integration.md).
 
 ## Lokale Entwicklung
 
@@ -52,7 +52,7 @@ Standardmäßig läuft die App lokal mit `AUTH_MODE=dev-bypass` — der User aus
 - `pnpm build` — Packages + Apps bauen
 - `pnpm lint` / `pnpm -r typecheck` — Qualitäts-Checks
 - `pnpm -r test` — Vitest
-- `docker build -f docker/Dockerfile -t memp:local .` — lokales Container-Image
+- `docker build -f docker/Dockerfile -t mexp:local .` — lokales Container-Image
 
 ## Referenzen
 

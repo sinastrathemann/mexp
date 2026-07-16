@@ -28,5 +28,5 @@ export function createLogger(name: string): Logger {
   });
 }
 
-export const rootLogger = createLogger("memp");
+export const rootLogger = createLogger("mexp");
 export type { Logger };

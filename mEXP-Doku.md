@@ -1,4 +1,4 @@
-# mEMP — Projektdokumentation
+# mEXP — Projektdokumentation
 
 > Letzte Aktualisierung: 2026-04-21
 > Verantwortlich: mindsquare AG — HR + IT
@@ -81,7 +81,7 @@ Formales Modell: `specs/domain/`.
 - Für nicht-kritische Pfade: Fallback auf manuelle Aktionen (z. B. Einladung manuell versenden)
 
 ### 4.4 Datenklassifikation
-Bis auf Feedback (potenziell anonym) verarbeitet mEMP vertrauliche personenbezogene Mitarbeiterdaten. Details: `docs/data-classification.md`.
+Bis auf Feedback (potenziell anonym) verarbeitet mEXP vertrauliche personenbezogene Mitarbeiterdaten. Details: `docs/data-classification.md`.
 
 ## 5. LLM-Nutzung
 

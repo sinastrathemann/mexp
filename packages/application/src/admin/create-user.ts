@@ -1,6 +1,6 @@
-import type { RoleName, User } from "@memp/domain";
-import { UserAlreadyExistsError } from "@memp/domain";
-import { rootLogger } from "@memp/shared";
+import type { RoleName, User } from "@mexp/domain";
+import { UserAlreadyExistsError } from "@mexp/domain";
+import { rootLogger } from "@mexp/shared";
 import type { PasswordHasherPort, RolePort, UserPort } from "../ports.js";
 
 const log = rootLogger.child({ module: "create-user" });

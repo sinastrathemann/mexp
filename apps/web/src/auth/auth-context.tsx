@@ -9,9 +9,9 @@ interface AuthContextValue {
   isLoading: boolean;
   /** true wenn `/me` mit einem anderen Status als 200/401 fehlgeschlagen ist. */
   isError: boolean;
-  /** mEMP-interne Rollen aus `/me/roles` (ohne HubAdmin-Override). */
-  mempRoles: RoleName[];
-  /** mEMP-interne Rollen inkl. HubAdmin-Override — Basis für `hasRole`. */
+  /** mEXP-interne Rollen aus `/me/roles` (ohne HubAdmin-Override). */
+  mexpRoles: RoleName[];
+  /** mEXP-interne Rollen inkl. HubAdmin-Override — Basis für `hasRole`. */
   effectiveRoles: RoleName[];
   hasRole: (...roles: RoleName[]) => boolean;
 }
@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     staleTime: 60_000,
   });
 
-  // Zusätzlich zu `/me` (rohe Hub-Identität) holen wir die mEMP-internen Rollen aus
+  // Zusätzlich zu `/me` (rohe Hub-Identität) holen wir die mEXP-internen Rollen aus
   // `/me/roles` — das berücksichtigt sowohl den `_user-resolution.ts`-Rollen-Store
   // als auch den HubAdmin-Override, und deckt damit auch Nicht-HubAdmin-Rollen ab,
   // die `/me` (nur X-MSQ-Roles) nicht kennt.
@@ -58,13 +58,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const value = useMemo<AuthContextValue>(() => {
-    const mempRoles = (rolesData?.mempRoles ?? []) as RoleName[];
-    const effectiveRoles = (rolesData?.effectiveRoles ?? mempRoles) as RoleName[];
+    const mexpRoles = (rolesData?.mexpRoles ?? []) as RoleName[];
+    const effectiveRoles = (rolesData?.effectiveRoles ?? mexpRoles) as RoleName[];
     return {
       user: data ?? null,
       isLoading,
       isError,
-      mempRoles,
+      mexpRoles,
       effectiveRoles,
       // effectiveRoles enthält den HubAdmin-Override bereits (siehe /me/roles) —
       // zusätzlich prüfen wir data.isHubAdmin direkt, solange /me/roles noch lädt.

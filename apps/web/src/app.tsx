@@ -30,7 +30,7 @@ function TopBar() {
     <div className="ms-topbar-wrap">
       <div className="ms-topbar-utility">
         <span className="text-bold">mindsquare AG</span>
-        <span>mEMP · Event Management</span>
+        <span>mEXP · Experience</span>
       </div>
       <div className="ms-topbar">
         <NavLink to="/" className="ms-logo">

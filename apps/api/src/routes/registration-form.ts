@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { env } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
-import { requireMempRole } from "./_user-resolution.js";
+import { requireMexpRole } from "./_user-resolution.js";
 
 // ─── Schemas ─────────────────────────────────────────────────────
 const questionTypeSchema = z.enum(["yes_no", "single_choice", "multi_choice", "date_pick"]);
@@ -145,7 +145,7 @@ registrationFormRoutes.get("/events/:eventId/registration-form", async (c) => {
 // PUT: Nur Admins/Manager/Event-Office dürfen das Formular bearbeiten
 registrationFormRoutes.put(
   "/events/:eventId/registration-form",
-  requireMempRole(...MANAGE_ROLES),
+  requireMexpRole(...MANAGE_ROLES),
   zValidator("json", formSchema),
   async (c) => {
     const eventId = c.req.param("eventId");

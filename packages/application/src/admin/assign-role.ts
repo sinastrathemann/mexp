@@ -1,6 +1,6 @@
-import type { RoleName } from "@memp/domain";
-import { UserNotFoundError } from "@memp/domain";
-import { NotFoundError, rootLogger } from "@memp/shared";
+import type { RoleName } from "@mexp/domain";
+import { UserNotFoundError } from "@mexp/domain";
+import { NotFoundError, rootLogger } from "@mexp/shared";
 import type { RolePort, UserPort } from "../ports.js";
 
 const log = rootLogger.child({ module: "assign-role" });

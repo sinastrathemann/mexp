@@ -1,5 +1,5 @@
-import { DocumentNotFoundError } from "@memp/domain";
-import { rootLogger } from "@memp/shared";
+import { DocumentNotFoundError } from "@mexp/domain";
+import { rootLogger } from "@mexp/shared";
 import type { AuditPort, DocumentPort } from "../ports.js";
 
 export interface DeleteDocumentDeps {

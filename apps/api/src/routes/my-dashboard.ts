@@ -1,4 +1,4 @@
-import { getHubUser } from "@memp/auth";
+import { getHubUser } from "@mexp/auth";
 import { Hono } from "hono";
 import { env } from "../deps.js";
 import { devBudgetStore } from "./budget.js";

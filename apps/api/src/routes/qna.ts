@@ -7,11 +7,11 @@ import { randomUUID } from "node:crypto";
  * - Asker wird anonymisiert dargestellt ("Anbieter A", "Anbieter B" …) — Faire Bedingungen
  */
 import { zValidator } from "@hono/zod-validator";
-import { getHubUser } from "@memp/auth";
+import { getHubUser } from "@mexp/auth";
 import { Hono } from "hono";
 import { z } from "zod";
 import { persistentMap } from "../dev-persistence.js";
-import { requireMempRole } from "./_user-resolution.js";
+import { requireMexpRole } from "./_user-resolution.js";
 import { devTenderStore } from "./tenders.js";
 import { devVendorStore, vendorByToken } from "./vendors.js";
 
@@ -89,7 +89,7 @@ qnaRoutes.get("/tenders/:tenderId/qna", (c) => {
 /**
  * Admin-Sicht: voller Firmenname + Vendor-ID
  */
-qnaRoutes.get("/tenders/:tenderId/qna/admin", requireMempRole(...MANAGE_ROLES), (c) => {
+qnaRoutes.get("/tenders/:tenderId/qna/admin", requireMexpRole(...MANAGE_ROLES), (c) => {
   const tenderId = c.req.param("tenderId");
   const tender = devTenderStore.get(tenderId);
   if (!tender) {
@@ -159,7 +159,7 @@ qnaRoutes.post("/tenders/:tenderId/qna", zValidator("json", askSchema), (c) => {
  */
 qnaRoutes.post(
   "/tenders/:tenderId/qna/:qnaId/answer",
-  requireMempRole(...MANAGE_ROLES),
+  requireMexpRole(...MANAGE_ROLES),
   zValidator("json", answerSchema),
   (c) => {
     const qnaId = c.req.param("qnaId");
@@ -182,7 +182,7 @@ qnaRoutes.post(
 /**
  * Antwort wieder zurücknehmen / löschen
  */
-qnaRoutes.delete("/tenders/:tenderId/qna/:qnaId/answer", requireMempRole(...MANAGE_ROLES), (c) => {
+qnaRoutes.delete("/tenders/:tenderId/qna/:qnaId/answer", requireMexpRole(...MANAGE_ROLES), (c) => {
   const qnaId = c.req.param("qnaId");
   const existing = devQnaStore.get(qnaId);
   if (!existing) {

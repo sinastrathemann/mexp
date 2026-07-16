@@ -3,7 +3,7 @@ import {
   type EventStatus,
   PARTICIPATION_STATUSES,
   type ParticipationStatus,
-} from "@memp/domain";
+} from "@mexp/domain";
 import { gte, sql } from "drizzle-orm";
 import type { DbClient } from "../db/client.js";
 import { events, eventParticipations } from "../db/schema/tables.js";

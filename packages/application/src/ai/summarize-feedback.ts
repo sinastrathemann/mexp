@@ -1,4 +1,4 @@
-import { EventNotFoundError } from "@memp/domain";
+import { EventNotFoundError } from "@mexp/domain";
 import type { EventPort, FeedbackPort, LlmPort } from "../ports.js";
 
 export interface SummarizeFeedbackDeps {

@@ -1,6 +1,6 @@
-import type { BudgetCategory, BudgetItem } from "@memp/domain";
-import { BudgetItemAmountInvalidError, EventNotFoundError } from "@memp/domain";
-import { rootLogger } from "@memp/shared";
+import type { BudgetCategory, BudgetItem } from "@mexp/domain";
+import { BudgetItemAmountInvalidError, EventNotFoundError } from "@mexp/domain";
+import { rootLogger } from "@mexp/shared";
 import type { AuditPort, BudgetPort, EventPort } from "../ports.js";
 
 export interface CreateBudgetItemDeps {

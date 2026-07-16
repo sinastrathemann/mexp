@@ -1,5 +1,7 @@
 # DoD-Ergebnis: Agent-Hub-Integration
 
+> **Historisches Dokument.** Verwendet noch die alte Bezeichnung "mEMP". Aktueller Projektname: mEXP.
+
 **Datum:** 2026-07-15
 **Getestetes Image:** `memp:local` (ID: `sha256:d55964a353b7a2ded1f90a3e66b41eaf66815bd261cc0e3f7304a49b61dcc5e4`), gebaut aus `docker/Dockerfile` mit `--build-arg APP_VERSION=dev` (Task 5).
 

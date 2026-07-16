@@ -1,6 +1,6 @@
 # Datenklassifikation & DSGVO
 
-> DSGVO-*Fachlogik* (Retention, Consent-Management, Löschfristen) wird bewusst nicht in mEMP verankert — das übernimmt das zentrale Datenschutzsystem. mEMP stellt die *technischen* Grundlagen: Rollen, PII-Redaction, Audit-Trail.
+> DSGVO-*Fachlogik* (Retention, Consent-Management, Löschfristen) wird bewusst nicht in mEXP verankert — das übernimmt das zentrale Datenschutzsystem. mEXP stellt die *technischen* Grundlagen: Rollen, PII-Redaction, Audit-Trail.
 
 ## Verarbeitete Datenklassen
 

@@ -1,4 +1,4 @@
-import type { Event, EventStatus } from "@memp/domain";
+import type { Event, EventStatus } from "@mexp/domain";
 import type { EventPort } from "../ports.js";
 
 export async function listEvents(

@@ -1,13 +1,13 @@
-import { MempError } from "@memp/shared";
+import { MexpError } from "@mexp/shared";
 import type { BudgetItemStatus } from "./budget.js";
 
-export class BudgetItemNotFoundError extends MempError {
+export class BudgetItemNotFoundError extends MexpError {
   constructor(id: string) {
     super("BUDGET_ITEM_NOT_FOUND", "Budget-Position nicht gefunden", 404, { id });
   }
 }
 
-export class BudgetItemStatusTransitionInvalidError extends MempError {
+export class BudgetItemStatusTransitionInvalidError extends MexpError {
   constructor(from: BudgetItemStatus, to: BudgetItemStatus) {
     super(
       "BUDGET_ITEM_STATUS_TRANSITION_INVALID",
@@ -18,7 +18,7 @@ export class BudgetItemStatusTransitionInvalidError extends MempError {
   }
 }
 
-export class BudgetItemAmountInvalidError extends MempError {
+export class BudgetItemAmountInvalidError extends MexpError {
   constructor() {
     super("BUDGET_ITEM_AMOUNT_INVALID", "Betrag muss ≥ 0 sein", 400);
   }

@@ -1,6 +1,6 @@
 # Changelog
 
-Alle nennenswerten Änderungen an mEMP. Format: [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), SemVer.
+Alle nennenswerten Änderungen an mEXP. Format: [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), SemVer.
 
 ## [Unreleased]
 

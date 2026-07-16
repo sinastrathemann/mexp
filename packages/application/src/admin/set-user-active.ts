@@ -1,5 +1,5 @@
-import { UserNotFoundError } from "@memp/domain";
-import { rootLogger } from "@memp/shared";
+import { UserNotFoundError } from "@mexp/domain";
+import { rootLogger } from "@mexp/shared";
 import type { UserPort } from "../ports.js";
 
 const log = rootLogger.child({ module: "set-user-active" });

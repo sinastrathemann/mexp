@@ -1,4 +1,4 @@
-import type { Participation, ParticipationStatus, ParticipationWithUser } from "@memp/domain";
+import type { Participation, ParticipationStatus, ParticipationWithUser } from "@mexp/domain";
 import { and, asc, eq, sql } from "drizzle-orm";
 import type { DbClient } from "../db/client.js";
 import type { EventParticipationRow } from "../db/schema/tables.js";

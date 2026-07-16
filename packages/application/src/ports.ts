@@ -25,7 +25,7 @@ import type {
   RoleName,
   User,
   UserWithPasswordHash,
-} from "@memp/domain";
+} from "@mexp/domain";
 
 export interface PortfolioStats {
   eventsByStatus: Record<EventStatus, number>;

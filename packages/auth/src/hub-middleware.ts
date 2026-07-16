@@ -1,4 +1,4 @@
-import { rootLogger } from "@memp/shared";
+import { rootLogger } from "@mexp/shared";
 import type { Context, MiddlewareHandler } from "hono";
 import { loadDevUser } from "./dev-user-config.js";
 

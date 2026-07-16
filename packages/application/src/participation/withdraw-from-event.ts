@@ -1,6 +1,6 @@
-import type { Participation } from "@memp/domain";
-import { EventNotFoundError, ParticipationNotFoundError } from "@memp/domain";
-import { rootLogger } from "@memp/shared";
+import type { Participation } from "@mexp/domain";
+import { EventNotFoundError, ParticipationNotFoundError } from "@mexp/domain";
+import { rootLogger } from "@mexp/shared";
 import type { AuditPort, EventPort, ParticipationPort } from "../ports.js";
 
 export interface WithdrawFromEventDeps {

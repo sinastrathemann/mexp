@@ -1,5 +1,5 @@
-import type { EventBlueprint, EventType, EventVisibility } from "@memp/domain";
-import { rootLogger } from "@memp/shared";
+import type { EventBlueprint, EventType, EventVisibility } from "@mexp/domain";
+import { rootLogger } from "@mexp/shared";
 import type { AuditPort, BlueprintPort } from "../ports.js";
 
 export interface CreateBlueprintDeps {

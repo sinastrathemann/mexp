@@ -2,8 +2,8 @@ import "./bootstrap.js";
 
 import { resolve } from "node:path";
 import { serve } from "@hono/node-server";
-import { hubAuthMiddleware } from "@memp/auth";
-import { rootLogger } from "@memp/shared";
+import { hubAuthMiddleware } from "@mexp/auth";
+import { rootLogger } from "@mexp/shared";
 import { Hono } from "hono";
 import { env } from "./deps.js";
 import { errorHandler } from "./error-handler.js";
@@ -33,7 +33,7 @@ app.onError(errorHandler);
 app.get("/health", (c) =>
   c.json({
     status: "ok",
-    service: "memp",
+    service: "mexp",
     version: process.env.APP_VERSION ?? "dev",
     timestamp: new Date().toISOString(),
   }),
@@ -72,12 +72,12 @@ app.route("/api", qnaRoutes);
 app.route("/api/blueprints", blueprintRoutes);
 
 // Serve SPA (last so API routes win on their prefixes)
-const webRoot = process.env.MEMP_WEB_DIST ?? resolve(process.cwd(), "web-dist");
+const webRoot = process.env.MEXP_WEB_DIST ?? resolve(process.cwd(), "web-dist");
 mountStatic(app, webRoot);
 
 const port = Number(process.env.PORT ?? env.API_PORT ?? 3000);
 const host = process.env.HOST ?? env.API_HOST ?? "0.0.0.0";
 
 serve({ fetch: app.fetch, port, hostname: host }, (info) => {
-  log.info({ port: info.port, host, webRoot }, "mEMP started");
+  log.info({ port: info.port, host, webRoot }, "mEXP started");
 });

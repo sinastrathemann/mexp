@@ -1,5 +1,5 @@
-import type { EventFeedback, EventFeedbackStats } from "@memp/domain";
-import { EventNotFoundError } from "@memp/domain";
+import type { EventFeedback, EventFeedbackStats } from "@mexp/domain";
+import { EventNotFoundError } from "@mexp/domain";
 import type { EventPort, FeedbackPort } from "../ports.js";
 
 export interface GetFeedbackDeps {

@@ -1,6 +1,6 @@
-import type { Event } from "@memp/domain";
-import { BlueprintNotFoundError } from "@memp/domain";
-import { rootLogger } from "@memp/shared";
+import type { Event } from "@mexp/domain";
+import { BlueprintNotFoundError } from "@mexp/domain";
+import { rootLogger } from "@mexp/shared";
 import type { AuditPort, BlueprintPort, EventPort } from "../ports.js";
 
 export interface ApplyBlueprintDeps {

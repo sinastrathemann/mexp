@@ -10,7 +10,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { env } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
-import { requireMempRole } from "./_user-resolution.js";
+import { requireMexpRole } from "./_user-resolution.js";
 import { devTenderStore } from "./tenders.js";
 
 const MANAGE_ROLES = ["admin", "manager", "event_office", "werkstudent"] as const;
@@ -54,7 +54,7 @@ const adminRoutes = new Hono();
 // Anbieter einladen
 adminRoutes.post(
   "/invite",
-  requireMempRole(...MANAGE_ROLES),
+  requireMexpRole(...MANAGE_ROLES),
   zValidator("json", inviteSchema),
   (c) => {
     if (env.DATABASE_URL) {
@@ -109,7 +109,7 @@ adminRoutes.post(
 );
 
 // Liste Anbieter pro Tender
-adminRoutes.get("/", requireMempRole(...MANAGE_ROLES), (c) => {
+adminRoutes.get("/", requireMexpRole(...MANAGE_ROLES), (c) => {
   const tenderId = c.req.query("tenderId");
   if (!tenderId) {
     return c.json({ error: { code: "MISSING_PARAM", message: "tenderId erforderlich" } }, 400);
@@ -121,7 +121,7 @@ adminRoutes.get("/", requireMempRole(...MANAGE_ROLES), (c) => {
 });
 
 // Anbieter widerrufen (Token ungültig machen)
-adminRoutes.post("/:id/revoke", requireMempRole(...MANAGE_ROLES), (c) => {
+adminRoutes.post("/:id/revoke", requireMexpRole(...MANAGE_ROLES), (c) => {
   const id = c.req.param("id");
   const v = devVendorStore.get(id);
   if (!v) return c.json({ error: { code: "NOT_FOUND", message: "Nicht gefunden" } }, 404);

@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve, sep } from "node:path";
 import { serveStatic } from "@hono/node-server/serve-static";
-import { rootLogger } from "@memp/shared";
+import { rootLogger } from "@mexp/shared";
 import type { Hono } from "hono";
 
 const log = rootLogger.child({ module: "api/static-serve" });

@@ -1,11 +1,11 @@
-import type { EventFeedback } from "@memp/domain";
+import type { EventFeedback } from "@mexp/domain";
 import {
   EventNotFoundError,
   FeedbackAlreadySubmittedError,
   FeedbackNotAvailableError,
   FeedbackRatingInvalidError,
-} from "@memp/domain";
-import { rootLogger } from "@memp/shared";
+} from "@mexp/domain";
+import { rootLogger } from "@mexp/shared";
 import type { AuditPort, EventPort, FeedbackPort } from "../ports.js";
 
 export interface SubmitFeedbackDeps {

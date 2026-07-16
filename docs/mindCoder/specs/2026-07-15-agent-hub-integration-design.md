@@ -1,5 +1,7 @@
 # Design: mEMP → Agent-Hub-Integration + Container-Autopublish
 
+> **Historisches Dokument.** Verwendet noch die alte Bezeichnung "mEMP". Aktueller Projektname: mEXP.
+
 - **Datum:** 2026-07-15
 - **Autor:** Sina Strathemann (mit mindCoder)
 - **Status:** Draft — wartet auf User-Approval

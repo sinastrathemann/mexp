@@ -7,15 +7,15 @@ import {
   reopenBudgetItem,
   submitBudgetItem,
   updateBudgetItem,
-} from "@memp/application";
-import { getHubUser } from "@memp/auth";
-import { BUDGET_CATEGORIES } from "@memp/domain";
+} from "@mexp/application";
+import { getHubUser } from "@mexp/auth";
+import { BUDGET_CATEGORIES } from "@mexp/domain";
 import { Hono } from "hono";
 import { extractText, getDocumentProxy } from "unpdf";
 import { z } from "zod";
 import { events, audit, budgets, env } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
-import { requireMempRole } from "./_user-resolution.js";
+import { requireMexpRole } from "./_user-resolution.js";
 
 const categorySchema = z.enum(BUDGET_CATEGORIES);
 
@@ -82,7 +82,7 @@ export type { DevBudgetItem };
 
 export const budgetRoutes = new Hono();
 
-budgetRoutes.get("/events/:eventId/budget", requireMempRole(...OWNER_ROLES), async (c) => {
+budgetRoutes.get("/events/:eventId/budget", requireMexpRole(...OWNER_ROLES), async (c) => {
   const eventId = c.req.param("eventId");
   if (!env.DATABASE_URL) {
     const items = Array.from(devBudgetStore.values()).filter((b) => b.eventId === eventId);
@@ -94,7 +94,7 @@ budgetRoutes.get("/events/:eventId/budget", requireMempRole(...OWNER_ROLES), asy
 
 budgetRoutes.post(
   "/events/:eventId/budget",
-  requireMempRole(...OWNER_ROLES),
+  requireMexpRole(...OWNER_ROLES),
   zValidator("json", createSchema),
   async (c) => {
     const eventId = c.req.param("eventId");
@@ -144,7 +144,7 @@ budgetRoutes.post(
 
 budgetRoutes.patch(
   "/budget/:id",
-  requireMempRole(...OWNER_ROLES),
+  requireMexpRole(...OWNER_ROLES),
   zValidator("json", updateSchema),
   async (c) => {
     const id = c.req.param("id");
@@ -178,7 +178,7 @@ budgetRoutes.patch(
 );
 
 // NEW: PDF hochladen + Netto automatisch extrahieren (Yokoy-light)
-budgetRoutes.post("/budget/:id/invoice/upload", requireMempRole(...OWNER_ROLES), async (c) => {
+budgetRoutes.post("/budget/:id/invoice/upload", requireMexpRole(...OWNER_ROLES), async (c) => {
   const id = c.req.param("id");
   if (env.DATABASE_URL) {
     return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Dev-only" } }, 501);
@@ -358,7 +358,7 @@ function extractInvoiceData(text: string): ExtractionResult {
 // NEW: Rechnung & Netto-Ist eintragen
 budgetRoutes.post(
   "/budget/:id/invoice",
-  requireMempRole(...OWNER_ROLES),
+  requireMexpRole(...OWNER_ROLES),
   zValidator("json", invoiceSchema),
   async (c) => {
     const id = c.req.param("id");
@@ -381,7 +381,7 @@ budgetRoutes.post(
   },
 );
 
-budgetRoutes.delete("/budget/:id/invoice", requireMempRole(...OWNER_ROLES), async (c) => {
+budgetRoutes.delete("/budget/:id/invoice", requireMexpRole(...OWNER_ROLES), async (c) => {
   const id = c.req.param("id");
   if (!env.DATABASE_URL) {
     const item = devBudgetStore.get(id);
@@ -397,7 +397,7 @@ budgetRoutes.delete("/budget/:id/invoice", requireMempRole(...OWNER_ROLES), asyn
   return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Dev-only" } }, 501);
 });
 
-budgetRoutes.post("/budget/:id/submit", requireMempRole(...OWNER_ROLES), async (c) => {
+budgetRoutes.post("/budget/:id/submit", requireMexpRole(...OWNER_ROLES), async (c) => {
   const id = c.req.param("id");
   const actorId = getHubUser(c).id;
   if (!env.DATABASE_URL) {
@@ -412,7 +412,7 @@ budgetRoutes.post("/budget/:id/submit", requireMempRole(...OWNER_ROLES), async (
   return c.json({ item });
 });
 
-budgetRoutes.post("/budget/:id/approve", requireMempRole(...APPROVER_ROLES), async (c) => {
+budgetRoutes.post("/budget/:id/approve", requireMexpRole(...APPROVER_ROLES), async (c) => {
   const id = c.req.param("id");
   const actorId = getHubUser(c).id;
   if (!env.DATABASE_URL) {
@@ -432,7 +432,7 @@ budgetRoutes.post("/budget/:id/approve", requireMempRole(...APPROVER_ROLES), asy
 
 budgetRoutes.post(
   "/budget/:id/reject",
-  requireMempRole(...APPROVER_ROLES),
+  requireMexpRole(...APPROVER_ROLES),
   zValidator("json", rejectSchema),
   async (c) => {
     const id = c.req.param("id");
@@ -453,7 +453,7 @@ budgetRoutes.post(
   },
 );
 
-budgetRoutes.post("/budget/:id/reopen", requireMempRole(...OWNER_ROLES), async (c) => {
+budgetRoutes.post("/budget/:id/reopen", requireMexpRole(...OWNER_ROLES), async (c) => {
   const id = c.req.param("id");
   const actorId = getHubUser(c).id;
   if (!env.DATABASE_URL) {
