@@ -1,6 +1,6 @@
-import type { Document, DocumentVisibility } from "@memp/domain";
-import { DocumentFileTooLargeError, EventNotFoundError } from "@memp/domain";
-import { rootLogger } from "@memp/shared";
+import type { Document, DocumentVisibility } from "@mexp/domain";
+import { DocumentFileTooLargeError, EventNotFoundError } from "@mexp/domain";
+import { rootLogger } from "@mexp/shared";
 import type { AuditPort, DocumentPort, EventPort } from "../ports.js";
 
 const MAX_DOCUMENT_BYTES = 50 * 1024 * 1024;

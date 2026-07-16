@@ -19,7 +19,13 @@ const TYPE_LABEL: Record<QuestionType, string> = {
 const QUESTION_TEMPLATES: { label: string; build: () => Omit<RegistrationQuestion, "id"> }[] = [
   {
     label: "+ Bist du dabei?",
-    build: () => ({ order: 0, type: "yes_no", label: "Bist du dabei?", required: true, options: [] }),
+    build: () => ({
+      order: 0,
+      type: "yes_no",
+      label: "Bist du dabei?",
+      required: true,
+      options: [],
+    }),
   },
   {
     label: "+ Verpflegung",
@@ -77,13 +83,10 @@ export function RegistrationFormPanel({ event }: Props) {
 
   const saveMut = useMutation({
     mutationFn: (qs: RegistrationQuestion[]) =>
-      apiFetch<{ questions: RegistrationQuestion[] }>(
-        `/events/${event.id}/registration-form`,
-        {
-          method: "PUT",
-          body: JSON.stringify({ questions: qs }),
-        },
-      ),
+      apiFetch<{ questions: RegistrationQuestion[] }>(`/events/${event.id}/registration-form`, {
+        method: "PUT",
+        body: JSON.stringify({ questions: qs }),
+      }),
     onSuccess: () => {
       setDirty(false);
       qc.invalidateQueries({ queryKey: ["events", event.id, "registration-form"] });
@@ -95,7 +98,7 @@ export function RegistrationFormPanel({ event }: Props) {
   // Client-seitige Vorab-Validierung — verhindert hängende Saves
   const clientValidationError = (() => {
     for (const q of questions) {
-      if (!q.label.trim()) return `Eine Frage hat keinen Text.`;
+      if (!q.label.trim()) return "Eine Frage hat keinen Text.";
       if (
         (q.type === "single_choice" || q.type === "multi_choice" || q.type === "date_pick") &&
         q.options.length === 0
@@ -140,7 +143,10 @@ export function RegistrationFormPanel({ event }: Props) {
       const target = idx + dir;
       if (target < 0 || target >= qs.length) return qs;
       const next = [...qs];
-      [next[idx], next[target]] = [next[target] as RegistrationQuestion, next[idx] as RegistrationQuestion];
+      [next[idx], next[target]] = [
+        next[target] as RegistrationQuestion,
+        next[idx] as RegistrationQuestion,
+      ];
       return next.map((q, i) => ({ ...q, order: i }));
     });
     setDirty(true);
@@ -167,8 +173,7 @@ export function RegistrationFormPanel({ event }: Props) {
             disabled={questions.length === 0 || clientValidationError !== null}
             onClick={() => setPreviewOpen(true)}
             title={
-              clientValidationError ??
-              (questions.length === 0 ? "Zuerst Fragen hinzufügen" : "")
+              clientValidationError ?? (questions.length === 0 ? "Zuerst Fragen hinzufügen" : "")
             }
           >
             👁 Vorschau
@@ -321,7 +326,7 @@ function QuestionEditor({ question, onChange, onRemove, onMoveUp, onMoveDown }: 
           {(isChoice || isDate) && (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {question.options.map((opt, idx) => (
-                <div key={idx} className="row" style={{ gap: 6 }}>
+                <div key={`option-${idx}-${opt}`} className="row" style={{ gap: 6 }}>
                   <input
                     className="input"
                     type={isDate ? "datetime-local" : "text"}
@@ -355,7 +360,12 @@ function QuestionEditor({ question, onChange, onRemove, onMoveUp, onMoveDown }: 
 
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {onMoveUp && (
-            <button type="button" className="btn btn-ghost btn-sm" onClick={onMoveUp} title="Nach oben">
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={onMoveUp}
+              title="Nach oben"
+            >
               ↑
             </button>
           )}

@@ -57,7 +57,10 @@ export default function DashboardPage() {
   const fmtPct = (v: number | null) => (v === null ? "—" : `${Math.round(v * 100)}%`);
 
   const eventMax = Math.max(1, ...EVENT_STATUSES.map((es) => s.eventsByStatus[es] ?? 0));
-  const partMax = Math.max(1, ...PARTICIPATION_STATUSES.map((ps) => s.participationByStatus[ps] ?? 0));
+  const partMax = Math.max(
+    1,
+    ...PARTICIPATION_STATUSES.map((ps) => s.participationByStatus[ps] ?? 0),
+  );
 
   return (
     <div className="page">
@@ -75,10 +78,7 @@ export default function DashboardPage() {
           <div className="bento-decorative" />
           <div className="bento-decorative-2" />
           <div className="bento-eyebrow">{t("dashboard.totalEvents")}</div>
-          <div
-            className="bento-headline"
-            style={{ fontSize: "clamp(4rem, 10vw, 8rem)" }}
-          >
+          <div className="bento-headline" style={{ fontSize: "clamp(4rem, 10vw, 8rem)" }}>
             {s.totalEvents}
           </div>
           <div className="bento-sub" style={{ marginTop: "var(--space-4)" }}>

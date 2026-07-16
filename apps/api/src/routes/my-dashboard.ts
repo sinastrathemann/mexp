@@ -1,11 +1,10 @@
-import { type AuthVariables, requireAuth } from "@memp/auth";
+import { getHubUser } from "@mexp/auth";
 import { Hono } from "hono";
 import { env } from "../deps.js";
 import { devBudgetStore } from "./budget.js";
 import { devLiveParticipantsStore } from "./registration-form.js";
 
-export const myDashboardRoutes = new Hono<{ Variables: AuthVariables }>();
-myDashboardRoutes.use("*", requireAuth());
+export const myDashboardRoutes = new Hono();
 
 /**
  * Liefert für den eingeloggten User:
@@ -15,9 +14,9 @@ myDashboardRoutes.use("*", requireAuth());
  *  - registeredCount, attendedCount
  */
 myDashboardRoutes.get("/dashboard", (c) => {
-  const userId = c.get("auth").sub;
+  const userId = getHubUser(c).id;
 
-  if (env.NODE_ENV !== "development") {
+  if (env.DATABASE_URL) {
     return c.json({
       upcoming: [],
       past: [],
@@ -118,7 +117,8 @@ myDashboardRoutes.get("/dashboard", (c) => {
 
   // Kosten für mich: für jedes Event meiner past+upcoming-Liste den Netto-Anteil berechnen
   let totalCostCents = 0;
-  const costByEvent: { eventId: string; title: string; eventType: string; shareCents: number }[] = [];
+  const costByEvent: { eventId: string; title: string; eventType: string; shareCents: number }[] =
+    [];
   for (const e of [...upcoming, ...past]) {
     let totalNet = 0;
     for (const item of devBudgetStore.values()) {

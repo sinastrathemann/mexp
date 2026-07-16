@@ -1,3 +1,4 @@
+import { randomBytes, randomUUID } from "node:crypto";
 /**
  * Anbieter-Verwaltung für Ausschreibungen (Vendor / Magic-Link)
  * - Admin lädt einen Anbieter ein → Magic-Token wird erzeugt
@@ -5,12 +6,11 @@
  * - Kein Account nötig — Token validiert die Identität
  */
 import { zValidator } from "@hono/zod-validator";
-import { type AuthVariables, requireAuth, requireRole } from "@memp/auth";
 import { Hono } from "hono";
 import { z } from "zod";
-import { randomBytes, randomUUID } from "node:crypto";
 import { env } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
+import { requireMexpRole } from "./_user-resolution.js";
 import { devTenderStore } from "./tenders.js";
 
 const MANAGE_ROLES = ["admin", "manager", "event_office", "werkstudent"] as const;
@@ -46,19 +46,18 @@ export function vendorByToken(token: string): DevVendor | null {
   return null;
 }
 
-export const vendorRoutes = new Hono<{ Variables: AuthVariables }>();
+export const vendorRoutes = new Hono();
 
 // ─── Admin-Endpoints (auth required) ─────────────────────────────
-const adminRoutes = new Hono<{ Variables: AuthVariables }>();
-adminRoutes.use("*", requireAuth());
+const adminRoutes = new Hono();
 
 // Anbieter einladen
 adminRoutes.post(
   "/invite",
-  requireRole(...MANAGE_ROLES),
+  requireMexpRole(...MANAGE_ROLES),
   zValidator("json", inviteSchema),
   (c) => {
-    if (env.NODE_ENV !== "development") {
+    if (env.DATABASE_URL) {
       return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Dev-only" } }, 501);
     }
     const input = c.req.valid("json");
@@ -71,7 +70,11 @@ adminRoutes.post(
     }
     // Duplikat-Check: gleiche Email + Tender
     for (const v of devVendorStore.values()) {
-      if (v.tenderId === input.tenderId && v.email.toLowerCase() === input.email.toLowerCase() && !v.revoked) {
+      if (
+        v.tenderId === input.tenderId &&
+        v.email.toLowerCase() === input.email.toLowerCase() &&
+        !v.revoked
+      ) {
         return c.json(
           {
             error: {
@@ -106,7 +109,7 @@ adminRoutes.post(
 );
 
 // Liste Anbieter pro Tender
-adminRoutes.get("/", requireRole(...MANAGE_ROLES), (c) => {
+adminRoutes.get("/", requireMexpRole(...MANAGE_ROLES), (c) => {
   const tenderId = c.req.query("tenderId");
   if (!tenderId) {
     return c.json({ error: { code: "MISSING_PARAM", message: "tenderId erforderlich" } }, 400);
@@ -118,7 +121,7 @@ adminRoutes.get("/", requireRole(...MANAGE_ROLES), (c) => {
 });
 
 // Anbieter widerrufen (Token ungültig machen)
-adminRoutes.post("/:id/revoke", requireRole(...MANAGE_ROLES), (c) => {
+adminRoutes.post("/:id/revoke", requireMexpRole(...MANAGE_ROLES), (c) => {
   const id = c.req.param("id");
   const v = devVendorStore.get(id);
   if (!v) return c.json({ error: { code: "NOT_FOUND", message: "Nicht gefunden" } }, 404);
@@ -129,7 +132,8 @@ adminRoutes.post("/:id/revoke", requireRole(...MANAGE_ROLES), (c) => {
 vendorRoutes.route("/admin", adminRoutes);
 
 // ─── Public Vendor-Access via Token ──────────────────────────────
-// Kein requireAuth — der Token IST die Authentifizierung
+// Public: no Hub-auth required — the vendor-token IS the authentication.
+// Bypass configured via hubAuthMiddleware({publicPathPatterns:[...]}) in apps/api/src/index.ts.
 vendorRoutes.get("/session", (c) => {
   const token = c.req.query("token");
   if (!token) {

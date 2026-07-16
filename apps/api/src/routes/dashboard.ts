@@ -1,15 +1,12 @@
-import { getPortfolioStats } from "@memp/application";
-import { type AuthVariables, requireAuth } from "@memp/auth";
+import { getPortfolioStats } from "@mexp/application";
 import { Hono } from "hono";
-import { env, dashboard } from "../deps.js";
+import { dashboard, env } from "../deps.js";
 
-export const dashboardRoutes = new Hono<{ Variables: AuthVariables }>();
-
-dashboardRoutes.use("*", requireAuth());
+export const dashboardRoutes = new Hono();
 
 dashboardRoutes.get("/portfolio", async (c) => {
   // Dev-Mode: Return mock stats
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     return c.json({
       stats: {
         eventsByStatus: {

@@ -1,5 +1,7 @@
 # Agent-Hub-Integration Implementation Plan
 
+> **Historisches Dokument.** Verwendet noch die alte Bezeichnung "mEMP". Aktueller Projektname: mEXP.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use mindCoder:subagent-driven-development (recommended) or mindCoder:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** mEMP als Managed Agent im mindsquare Agent Hub deploybar machen — inklusive automatischem Container-Publish nach GHCR bei jedem Push auf `main`.

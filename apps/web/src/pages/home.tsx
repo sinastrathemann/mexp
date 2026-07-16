@@ -140,9 +140,7 @@ export default function HomePage() {
               {live.length > 0 ? `${live.length} Event live` : "Alle ruhig"}
             </span>
           </div>
-          <h1 className="page-title">
-            Hallo {user?.displayName.split(" ")[0] ?? "👋"}.
-          </h1>
+          <h1 className="page-title">Hallo {user?.name?.split(" ")[0] ?? "👋"}.</h1>
           <p className="page-subtitle">
             {isAdmin
               ? "Dein Portfolio auf einen Blick — was läuft, was offen ist, was kommt."
@@ -361,7 +359,11 @@ export default function HomePage() {
           <div className="bento-eyebrow">Nichts in Sicht</div>
           <h3 style={{ marginTop: "var(--space-3)" }}>Keine Events im Portfolio</h3>
           {isAdmin && (
-            <Link to="/events/new" className="btn btn-primary" style={{ marginTop: "var(--space-4)" }}>
+            <Link
+              to="/events/new"
+              className="btn btn-primary"
+              style={{ marginTop: "var(--space-4)" }}
+            >
               + Erstes Event anlegen
             </Link>
           )}
@@ -506,7 +508,11 @@ function MyEventCard({ event, compact }: { event: MyEventShort; compact?: boolea
     minute: "2-digit",
   });
   return (
-    <div className="event-card" data-status={event.status} style={compact ? { opacity: 0.85 } : undefined}>
+    <div
+      className="event-card"
+      data-status={event.status}
+      style={compact ? { opacity: 0.85 } : undefined}
+    >
       <div className="event-card-head">
         <span className="event-card-type">
           {dateStr} · {timeStr}
@@ -519,10 +525,7 @@ function MyEventCard({ event, compact }: { event: MyEventShort; compact?: boolea
         </span>
         <EventStatusBadge status={event.status} />
       </div>
-      <Link
-        to={`/events/${event.id}`}
-        style={{ color: "inherit", textDecoration: "none" }}
-      >
+      <Link to={`/events/${event.id}`} style={{ color: "inherit", textDecoration: "none" }}>
         <h2 className="event-card-title" style={{ marginBottom: 0 }}>
           {event.title}
         </h2>

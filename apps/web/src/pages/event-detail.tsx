@@ -53,8 +53,7 @@ export default function EventDetailPage() {
   });
 
   const deleteMut = useMutation({
-    mutationFn: () =>
-      apiFetch<{ ok: true }>(`/events/${id}`, { method: "DELETE" }),
+    mutationFn: () => apiFetch<{ ok: true }>(`/events/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["events"] });
       // zurück zur Liste
@@ -102,11 +101,7 @@ export default function EventDetailPage() {
             📅 In Kalender speichern
           </a>
           {canManage && (
-            <button
-              type="button"
-              className="btn btn-outline"
-              onClick={() => setEditOpen(true)}
-            >
+            <button type="button" className="btn btn-outline" onClick={() => setEditOpen(true)}>
               ✎ Bearbeiten
             </button>
           )}

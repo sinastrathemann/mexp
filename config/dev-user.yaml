@@ -1,0 +1,7 @@
+# Wird nur geladen wenn AUTH_MODE=dev-bypass (Default in NODE_ENV != production).
+# Simuliert einen vom Hub durchgereichten User. NIE in Produktion aktiv.
+id: dev-user-sina
+email: sina.strathemann@mindsquare.de
+name: Sina Strathemann
+roles:
+  - AppHub.Admin

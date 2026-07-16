@@ -1,5 +1,5 @@
-import type { BudgetItem } from "@memp/domain";
-import { EventNotFoundError } from "@memp/domain";
+import type { BudgetItem } from "@mexp/domain";
+import { EventNotFoundError } from "@mexp/domain";
 import type { BudgetPort, EventPort } from "../ports.js";
 
 export interface ListBudgetItemsDeps {

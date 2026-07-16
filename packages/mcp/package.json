@@ -1,5 +1,5 @@
 {
-  "name": "@memp/mcp",
+  "name": "@mexp/mcp",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@memp/shared": "workspace:*",
+    "@mexp/shared": "workspace:*",
     "zod": "^3.23.8"
   }
 }

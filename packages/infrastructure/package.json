@@ -1,5 +1,5 @@
 {
-  "name": "@memp/infrastructure",
+  "name": "@mexp/infrastructure",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -18,10 +18,10 @@
     "db:seed": "tsx src/db/seed.ts"
   },
   "dependencies": {
-    "@memp/auth": "workspace:*",
-    "@memp/shared": "workspace:*",
-    "@memp/domain": "workspace:*",
-    "@memp/application": "workspace:*",
+    "@mexp/auth": "workspace:*",
+    "@mexp/shared": "workspace:*",
+    "@mexp/domain": "workspace:*",
+    "@mexp/application": "workspace:*",
     "argon2": "^0.41.1",
     "bullmq": "^5.28.0",
     "drizzle-orm": "^0.36.4",

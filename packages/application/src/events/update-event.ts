@@ -1,6 +1,6 @@
-import type { Event, EventUpdateInput } from "@memp/domain";
-import { EventFinalizedError, EventNotFoundError, InvalidEventDatesError } from "@memp/domain";
-import { rootLogger } from "@memp/shared";
+import type { Event, EventUpdateInput } from "@mexp/domain";
+import { EventFinalizedError, EventNotFoundError, InvalidEventDatesError } from "@mexp/domain";
+import { rootLogger } from "@mexp/shared";
 import type { AuditPort, EventPort } from "../ports.js";
 
 export interface UpdateEventDeps {

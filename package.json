@@ -1,8 +1,8 @@
 {
-  "name": "memp",
+  "name": "mexp",
   "version": "0.1.0",
   "private": true,
-  "description": "mindsquare Event Management Platform — Modular Monolith",
+  "description": "mindsquare Experience Platform — Modular Monolith",
   "type": "module",
   "packageManager": "pnpm@9.12.0",
   "engines": {
@@ -11,8 +11,8 @@
   },
   "scripts": {
     "dev": "pnpm --parallel --filter \"./apps/*\" dev",
-    "dev:api": "pnpm --filter @memp/api dev",
-    "dev:web": "pnpm --filter @memp/web dev",
+    "dev:api": "pnpm --filter @mexp/api dev",
+    "dev:web": "pnpm --filter @mexp/web dev",
     "build": "pnpm -r --filter \"./packages/*\" build && pnpm -r --filter \"./apps/*\" build",
     "clean": "pnpm -r exec rm -rf dist node_modules/.cache",
     "lint": "biome check .",

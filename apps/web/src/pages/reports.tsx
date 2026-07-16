@@ -47,8 +47,7 @@ export default function ReportsPage() {
 
   const reportQ = useQuery({
     queryKey: ["reports", "monthly", year, month],
-    queryFn: () =>
-      apiFetch<MonthlyReport>(`/reports/monthly?year=${year}&month=${month}`),
+    queryFn: () => apiFetch<MonthlyReport>(`/reports/monthly?year=${year}&month=${month}`),
   });
 
   const data = reportQ.data;
@@ -181,9 +180,7 @@ export default function ReportsPage() {
             {data.current.biggestEvent && (
               <div className="bento-tile tone-paper span-12">
                 <div className="bento-eyebrow">Größtes Event</div>
-                <h3 style={{ marginTop: "var(--space-2)" }}>
-                  {data.current.biggestEvent.title}
-                </h3>
+                <h3 style={{ marginTop: "var(--space-2)" }}>{data.current.biggestEvent.title}</h3>
                 <p className="muted text-sm" style={{ margin: 0 }}>
                   {data.current.biggestEvent.count} Teilnehmer (registriert + anwesend)
                 </p>
@@ -192,7 +189,10 @@ export default function ReportsPage() {
           </section>
 
           {/* ─── Budget-Sektion ─────────────────────────────── */}
-          <div className="eyebrow" style={{ marginTop: "var(--space-10)", marginBottom: "var(--space-4)" }}>
+          <div
+            className="eyebrow"
+            style={{ marginTop: "var(--space-10)", marginBottom: "var(--space-4)" }}
+          >
             Budget · Ausgaben
           </div>
           <section className="bento">
@@ -297,10 +297,7 @@ function CostBars({ byTypeNetCents }: { byTypeNetCents: Record<string, number> }
           <div key={type} className="bar-row">
             <span className="bar-label">{TYPE_LABELS[type] ?? type}</span>
             <span className="bar-track">
-              <span
-                className="bar-fill fill-orange"
-                style={{ width: `${Math.max(pctVal, 2)}%` }}
-              />
+              <span className="bar-fill fill-orange" style={{ width: `${Math.max(pctVal, 2)}%` }} />
             </span>
             <span className="bar-value">{fmtMoney(cents)}</span>
           </div>
@@ -332,9 +329,7 @@ function Kpi({
   const toneClass = tone ? `tone-${tone}` : "";
   const rowClass = row === 2 ? "row-2" : "";
   const delta =
-    numeric && typeof value === "number" && typeof previous === "number"
-      ? value - previous
-      : null;
+    numeric && typeof value === "number" && typeof previous === "number" ? value - previous : null;
   return (
     <div className={`bento-tile ${toneClass} span-${span} ${rowClass}`}>
       {tone === "ink" && <div className="bento-decorative" />}
@@ -380,10 +375,7 @@ function TypeBars({ byType }: { byType: Record<string, number> }) {
           <div key={type} className="bar-row">
             <span className="bar-label">{TYPE_LABELS[type] ?? type}</span>
             <span className="bar-track">
-              <span
-                className="bar-fill fill-orange"
-                style={{ width: `${Math.max(pct, 2)}%` }}
-              />
+              <span className="bar-fill fill-orange" style={{ width: `${Math.max(pct, 2)}%` }} />
             </span>
             <span className="bar-value">{count}</span>
           </div>

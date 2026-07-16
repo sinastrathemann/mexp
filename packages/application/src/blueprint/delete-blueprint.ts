@@ -1,5 +1,5 @@
-import { BlueprintNotFoundError } from "@memp/domain";
-import { rootLogger } from "@memp/shared";
+import { BlueprintNotFoundError } from "@mexp/domain";
+import { rootLogger } from "@mexp/shared";
 import type { AuditPort, BlueprintPort } from "../ports.js";
 
 export interface DeleteBlueprintDeps {

@@ -1,4 +1,4 @@
-# mEMP Docker Compose — Entwicklungs- und Staging-Setup
+# mEXP Docker Compose — Entwicklungs- und Staging-Setup
 # Produktion: eigene Overrides via docker-compose.prod.yaml
 
 services:
@@ -6,12 +6,12 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    image: memp-api:${TAG:-latest}
+    image: mexp-api:${TAG:-latest}
     environment:
       NODE_ENV: production
       APP_ENV: ${APP_ENV:-prod}
       API_PORT: "3000"
-      DATABASE_URL: postgres://memp:${POSTGRES_PASSWORD}@postgres:5432/memp
+      DATABASE_URL: postgres://mexp:${POSTGRES_PASSWORD}@postgres:5432/mexp
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET}
       ENTRA_TENANT_ID: ${ENTRA_TENANT_ID}
@@ -26,7 +26,7 @@ services:
       redis:
         condition: service_started
     restart: unless-stopped
-    networks: [memp-net]
+    networks: [mexp-net]
 
   web:
     image: nginx:alpine
@@ -37,25 +37,25 @@ services:
       - "8080:8080"
     depends_on: [api]
     restart: unless-stopped
-    networks: [memp-net]
+    networks: [mexp-net]
 
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: memp
+      POSTGRES_USER: mexp
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: memp
+      POSTGRES_DB: mexp
     ports:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U memp -d memp"]
+      test: ["CMD-SHELL", "pg_isready -U mexp -d mexp"]
       interval: 5s
       timeout: 5s
       retries: 10
     restart: unless-stopped
-    networks: [memp-net]
+    networks: [mexp-net]
 
   redis:
     image: redis:7-alpine
@@ -65,10 +65,10 @@ services:
     volumes:
       - redis-data:/data
     restart: unless-stopped
-    networks: [memp-net]
+    networks: [mexp-net]
 
 networks:
-  memp-net:
+  mexp-net:
     driver: bridge
 
 volumes:

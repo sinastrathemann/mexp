@@ -1,4 +1,4 @@
-import type { EventBlueprint } from "@memp/domain";
+import type { EventBlueprint } from "@mexp/domain";
 import type { BlueprintPort } from "../ports.js";
 
 export interface ListBlueprintsDeps {

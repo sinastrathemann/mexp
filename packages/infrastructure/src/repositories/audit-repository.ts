@@ -1,4 +1,4 @@
-import type { AuditAction, AuditCreateInput, AuditEntityType, AuditRecord } from "@memp/domain";
+import type { AuditAction, AuditCreateInput, AuditEntityType, AuditRecord } from "@mexp/domain";
 import { desc, eq } from "drizzle-orm";
 import type { DbClient } from "../db/client.js";
 import type { AuditRow } from "../db/schema/tables.js";

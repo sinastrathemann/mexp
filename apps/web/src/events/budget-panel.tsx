@@ -128,7 +128,10 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
   });
 
   const invoiceMut = useMutation({
-    mutationFn: ({ id, body }: { id: string; body: { actualNetCents: number; invoiceFileName: string } }) =>
+    mutationFn: ({
+      id,
+      body,
+    }: { id: string; body: { actualNetCents: number; invoiceFileName: string } }) =>
       apiFetch<{ item: BudgetItemDto }>(`/budget/${id}/invoice`, {
         method: "POST",
         body: JSON.stringify(body),
@@ -158,8 +161,7 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
       const body = text ? JSON.parse(text) : null;
       if (!res.ok) {
         throw new Error(
-          (body as { error?: { message?: string } } | null)?.error?.message ??
-            `HTTP ${res.status}`,
+          (body as { error?: { message?: string } } | null)?.error?.message ?? `HTTP ${res.status}`,
         );
       }
       return body as {
@@ -255,11 +257,7 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
         const remaining = totalPlanned - totalNet;
         const overrun = remaining < 0;
         const hasNet = totalNet > 0;
-        const remainingTone = !hasNet
-          ? "stat"
-          : overrun
-            ? "stat stat-orange"
-            : "stat";
+        const remainingTone = !hasNet ? "stat" : overrun ? "stat stat-orange" : "stat";
         const remainingLabel = !hasNet
           ? "Restbudget"
           : overrun
@@ -440,9 +438,14 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
                       {item.invoiceFileName ? (
                         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                           <div className="row" style={{ gap: 6, alignItems: "center" }}>
-                            <span className="badge badge-success" style={{ maxWidth: 220 }} title={item.invoiceFileName}>
-                              📄 {item.invoiceFileName.length > 22
-                                ? item.invoiceFileName.slice(0, 20) + "…"
+                            <span
+                              className="badge badge-success"
+                              style={{ maxWidth: 220 }}
+                              title={item.invoiceFileName}
+                            >
+                              📄{" "}
+                              {item.invoiceFileName.length > 22
+                                ? `${item.invoiceFileName.slice(0, 20)}…`
                                 : item.invoiceFileName}
                             </span>
                             <button
@@ -469,7 +472,10 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
                         <div className="row" style={{ gap: 6 }}>
                           <label
                             className={`btn btn-primary btn-sm${uploadMut.isPending ? " disabled" : ""}`}
-                            style={{ cursor: uploadMut.isPending ? "not-allowed" : "pointer", margin: 0 }}
+                            style={{
+                              cursor: uploadMut.isPending ? "not-allowed" : "pointer",
+                              margin: 0,
+                            }}
                             title="PDF hochladen — Netto wird automatisch erkannt"
                           >
                             {uploadMut.isPending && uploadMut.variables?.id === item.id
@@ -490,9 +496,7 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
                           <button
                             type="button"
                             className="btn btn-outline-orange btn-sm"
-                            onClick={() =>
-                              setOpenInvoice((s) => ({ ...s, [item.id]: !isOpen }))
-                            }
+                            onClick={() => setOpenInvoice((s) => ({ ...s, [item.id]: !isOpen }))}
                           >
                             {isOpen ? "Abbrechen" : "manuell"}
                           </button>
@@ -572,7 +576,7 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
                     </td>
                   </tr>
                   {isOpen && !item.invoiceFileName && (
-                    <tr key={item.id + "-invoice"}>
+                    <tr key={`${item.id}-invoice`}>
                       <td colSpan={7} style={{ background: "var(--bg-subtle)" }}>
                         <div
                           style={{
@@ -584,8 +588,11 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
                           }}
                         >
                           <div className="field" style={{ margin: 0, flex: "1 1 240px" }}>
-                            <label className="label">Rechnungs-Datei</label>
+                            <label className="label" htmlFor="invoice-file">
+                              Rechnungs-Datei
+                            </label>
                             <input
+                              id="invoice-file"
                               type="file"
                               accept=".pdf,.png,.jpg,.jpeg"
                               className="input"
@@ -601,8 +608,11 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
                             />
                           </div>
                           <div className="field" style={{ margin: 0, flex: "0 1 180px" }}>
-                            <label className="label">Netto-Betrag (€)</label>
+                            <label className="label" htmlFor="net-amount">
+                              Netto-Betrag (€)
+                            </label>
                             <input
+                              id="net-amount"
                               className="input"
                               type="text"
                               inputMode="decimal"
@@ -620,9 +630,7 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
                             type="button"
                             className="btn btn-primary btn-sm"
                             onClick={() => handleInvoiceSubmit(item.id)}
-                            disabled={
-                              invoiceMut.isPending || !draft.fileName || !draft.netEuros
-                            }
+                            disabled={invoiceMut.isPending || !draft.fileName || !draft.netEuros}
                           >
                             Speichern
                           </button>

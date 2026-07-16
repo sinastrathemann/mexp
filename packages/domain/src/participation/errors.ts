@@ -1,13 +1,13 @@
-import { MempError } from "@memp/shared";
+import { MexpError } from "@mexp/shared";
 import type { EventStatus } from "../event/status.js";
 
-export class AlreadyRegisteredError extends MempError {
+export class AlreadyRegisteredError extends MexpError {
   constructor(eventId: string, userId: string) {
     super("ALREADY_REGISTERED", "Bereits für dieses Event angemeldet", 409, { eventId, userId });
   }
 }
 
-export class RegistrationNotOpenError extends MempError {
+export class RegistrationNotOpenError extends MexpError {
   constructor(eventStatus: EventStatus) {
     super(
       "REGISTRATION_NOT_OPEN",
@@ -18,19 +18,19 @@ export class RegistrationNotOpenError extends MempError {
   }
 }
 
-export class ParticipationNotFoundError extends MempError {
+export class ParticipationNotFoundError extends MexpError {
   constructor(eventId: string, userId: string) {
     super("PARTICIPATION_NOT_FOUND", "Keine Anmeldung gefunden", 404, { eventId, userId });
   }
 }
 
-export class NoWaitlistEntryError extends MempError {
+export class NoWaitlistEntryError extends MexpError {
   constructor(eventId: string) {
     super("NO_WAITLIST_ENTRY", "Keine Personen auf der Warteliste", 404, { eventId });
   }
 }
 
-export class CheckInNotAllowedError extends MempError {
+export class CheckInNotAllowedError extends MexpError {
   constructor(eventStatus: EventStatus) {
     super(
       "CHECKIN_NOT_ALLOWED",
@@ -41,7 +41,7 @@ export class CheckInNotAllowedError extends MempError {
   }
 }
 
-export class ParticipationStatusInvalidError extends MempError {
+export class ParticipationStatusInvalidError extends MexpError {
   constructor(currentStatus: string, requiredStatus: string) {
     super(
       "PARTICIPATION_STATUS_INVALID",

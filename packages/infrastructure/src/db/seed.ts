@@ -1,4 +1,4 @@
-import { rootLogger } from "@memp/shared";
+import { rootLogger } from "@mexp/shared";
 import argon2 from "argon2";
 import { eq } from "drizzle-orm";
 import { createDbClient } from "./client.js";

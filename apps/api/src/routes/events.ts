@@ -1,4 +1,5 @@
 // Dev-mode persistence enabled
+import { randomUUID } from "node:crypto";
 import { zValidator } from "@hono/zod-validator";
 import {
   checkInParticipant,
@@ -13,13 +14,19 @@ import {
   transitionEventStatus,
   updateEvent,
   withdrawFromEvent,
-} from "@memp/application";
-import { type AuthVariables, requireAuth, requireRole } from "@memp/auth";
-import { EVENT_STATUSES, EVENT_TYPES, EVENT_VISIBILITIES } from "@memp/domain";
+} from "@mexp/application";
+import { getHubUser } from "@mexp/auth";
+import {
+  EVENT_STATUSES,
+  EVENT_TYPES,
+  EVENT_VISIBILITIES,
+  InvalidEventDatesError,
+} from "@mexp/domain";
 import { Hono } from "hono";
 import { z } from "zod";
+import { events, audit, env, participations } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
-import { env, events, audit, participations } from "../deps.js";
+import { requireMexpRole, resolveMexpRoles } from "./_user-resolution.js";
 import {
   devAnswerStore,
   devFormStore,
@@ -79,6 +86,65 @@ function applyOverride<T extends { id: string }>(event: T): T {
   const ov = devEventOverrideStore.get(event.id);
   if (!ov) return event;
   return { ...event, ...ov };
+}
+
+// Dev-Mode (file-store — Design-Spec §3.4): Store für neu angelegte Events.
+// Persistiert in apps/api/data/created-events.json — bleibt bei Neustarts erhalten.
+// Ergänzt die statische Mock-Liste um "echte" per POST /api/events angelegte Events,
+// damit Create/Update/Delete/Status-Transition ohne DATABASE_URL vollständig funktionieren.
+export interface DevEventRecord {
+  id: string;
+  [key: string]: unknown;
+}
+
+const devCreatedEventsStore = persistentMap<DevEventRecord>("created-events");
+
+function listDevBaseEvents(): DevEventRecord[] {
+  return [
+    ...(buildMockEventList() as unknown as DevEventRecord[]),
+    ...Array.from(devCreatedEventsStore.values()),
+  ];
+}
+
+function findDevBaseEvent(id: string): DevEventRecord | undefined {
+  return devCreatedEventsStore.get(id) ?? listDevBaseEvents().find((e) => e.id === id);
+}
+
+export interface DevEventCreateInput {
+  title: string;
+  description: string;
+  eventType: string;
+  visibility: string;
+  startAt: string;
+  endAt: string;
+  location: string | null;
+  capacity: number | null;
+  ownerId: string;
+}
+
+// Exportiert für Wiederverwendung durch blueprints.ts (Blueprint → Event im Dev-Mode).
+export function createDevEvent(input: DevEventCreateInput): DevEventRecord {
+  if (new Date(input.endAt).getTime() <= new Date(input.startAt).getTime()) {
+    throw new InvalidEventDatesError();
+  }
+  const now = new Date().toISOString();
+  const event: DevEventRecord = {
+    id: randomUUID(),
+    title: input.title,
+    description: input.description,
+    eventType: input.eventType,
+    visibility: input.visibility,
+    status: "draft",
+    startAt: input.startAt,
+    endAt: input.endAt,
+    location: input.location,
+    capacity: input.capacity,
+    ownerId: input.ownerId,
+    createdAt: now,
+    updatedAt: now,
+  };
+  devCreatedEventsStore.set(event.id, event);
+  return event;
 }
 
 function buildMockEventList() {
@@ -194,26 +260,20 @@ function buildMockEventList() {
   ];
 }
 
-export const eventRoutes = new Hono<{ Variables: AuthVariables }>();
-
-eventRoutes.use("*", requireAuth());
+export const eventRoutes = new Hono();
 
 eventRoutes.get("/", zValidator("query", listQuerySchema), async (c) => {
-  if (env.NODE_ENV === "development") {
-    const baseEvents = buildMockEventList();
-    const session = c.get("auth");
-    const userRoles = session.roles;
-    const userEmail = session.email.toLowerCase();
+  if (!env.DATABASE_URL) {
+    const baseEvents = listDevBaseEvents();
+    const user = getHubUser(c);
+    const userRoles = resolveMexpRoles(c);
+    const userEmail = (user.email ?? "").toLowerCase();
     // Rollen, die Events managen (alle Status sehen): admin, manager, event_office, budget_owner, werkstudent
     const isPrivilegedRole = userRoles.some((r) =>
       ["admin", "manager", "event_office", "budget_owner", "werkstudent"].includes(r),
     );
     // Nicht-privilegierte User (Teilnehmer/Read-Only) sehen nur diese Status:
-    const VISIBLE_STATUSES_FOR_PARTICIPANT = new Set([
-      "planned",
-      "open",
-      "running",
-    ]);
+    const VISIBLE_STATUSES_FOR_PARTICIPANT = new Set(["planned", "open", "running"]);
 
     const events = baseEvents
       .map(applyOverride)
@@ -245,21 +305,37 @@ eventRoutes.get("/", zValidator("query", listQuerySchema), async (c) => {
   }
 
   const q = c.req.valid("query");
-  const session = c.get("auth");
+  const user = getHubUser(c);
   const filter: { status?: (typeof EVENT_STATUSES)[number]; ownerId?: string } = {};
   if (q.status) filter.status = q.status;
-  if (q.mine === "true") filter.ownerId = session.sub;
+  if (q.mine === "true") filter.ownerId = user.id;
   const list = await listEvents(filter, { events });
   return c.json({ events: list });
 });
 
 eventRoutes.post(
   "/",
-  requireRole(...WRITE_ROLES),
+  requireMexpRole(...WRITE_ROLES),
   zValidator("json", createEventSchema),
   async (c) => {
     const input = c.req.valid("json");
-    const actorId = c.get("auth").sub;
+    const actorId = getHubUser(c).id;
+
+    if (!env.DATABASE_URL) {
+      const event = createDevEvent({
+        title: input.title,
+        description: input.description,
+        eventType: input.eventType,
+        visibility: input.visibility,
+        startAt: new Date(input.startAt).toISOString(),
+        endAt: new Date(input.endAt).toISOString(),
+        location: input.location,
+        capacity: input.capacity,
+        ownerId: actorId,
+      });
+      return c.json({ event }, 201);
+    }
+
     const event = await createEvent(
       {
         title: input.title,
@@ -281,7 +357,7 @@ eventRoutes.post(
 
 eventRoutes.get("/:id", async (c) => {
   const id = c.req.param("id");
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     const now = new Date();
     const inDays = (d: number) => new Date(now.getTime() + d * 86400000).toISOString();
     const mock: Record<string, ReturnType<typeof JSON.parse>> = {
@@ -398,8 +474,9 @@ eventRoutes.get("/:id", async (c) => {
         updatedAt: inDays(-1),
       },
     };
-    const event = mock[id];
-    if (!event) return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
+    const event = mock[id] ?? devCreatedEventsStore.get(id);
+    if (!event)
+      return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
     const merged = applyOverride(event);
     if ((merged as { _deleted?: boolean })._deleted) {
       return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
@@ -412,14 +489,14 @@ eventRoutes.get("/:id", async (c) => {
 
 eventRoutes.patch(
   "/:id",
-  requireRole(...WRITE_ROLES),
+  requireMexpRole(...WRITE_ROLES),
   zValidator("json", updateEventSchema),
   async (c) => {
     const id = c.req.param("id");
     const input = c.req.valid("json");
-    const actorId = c.get("auth").sub;
+    const actorId = getHubUser(c).id;
 
-    if (env.NODE_ENV === "development") {
+    if (!env.DATABASE_URL) {
       // Dev-Mode: in den Override-Store schreiben
       const current = devEventOverrideStore.get(id) ?? {};
       const next: Record<string, unknown> = { ...current };
@@ -443,14 +520,10 @@ eventRoutes.patch(
       next.updatedAt = new Date().toISOString();
       devEventOverrideStore.set(id, next);
 
-      // Aktuellen Stand zurückgeben — Mock-Basis + Override mergen
-      const baseList = buildMockEventList();
-      const base = baseList.find((e) => e.id === id);
+      // Aktuellen Stand zurückgeben — Mock-/Created-Basis + Override mergen
+      const base = findDevBaseEvent(id);
       if (!base) {
-        return c.json(
-          { error: { code: "NOT_FOUND", message: "Event nicht gefunden" } },
-          404,
-        );
+        return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
       }
       return c.json({ event: applyOverride(base) });
     }
@@ -474,9 +547,8 @@ eventRoutes.get("/:id/calendar.ics", async (c) => {
   const id = c.req.param("id");
   let evt: Record<string, unknown> | null = null;
 
-  if (env.NODE_ENV === "development") {
-    const baseList = buildMockEventList();
-    const base = baseList.find((e) => e.id === id);
+  if (!env.DATABASE_URL) {
+    const base = findDevBaseEvent(id);
     if (!base) return c.text("Event nicht gefunden", 404);
     const merged = applyOverride(base) as Record<string, unknown>;
     if ((merged as { _deleted?: boolean })._deleted) {
@@ -492,7 +564,7 @@ eventRoutes.get("/:id/calendar.ics", async (c) => {
 
   const ics = buildIcs({
     id: String(evt.id),
-    title: String(evt.title ?? "mEMP Event"),
+    title: String(evt.title ?? "mEXP Event"),
     description: String(evt.description ?? ""),
     location:
       String(evt.location ?? "") +
@@ -502,7 +574,7 @@ eventRoutes.get("/:id/calendar.ics", async (c) => {
   });
 
   c.header("Content-Type", "text/calendar; charset=utf-8");
-  c.header("Content-Disposition", `attachment; filename="memp-${id}.ics"`);
+  c.header("Content-Disposition", `attachment; filename="mexp-${id}.ics"`);
   return c.body(ics);
 });
 
@@ -536,11 +608,11 @@ function buildIcs(input: {
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//mindsquare AG//mEMP//DE",
+    "PRODID:-//mindsquare AG//mEXP//DE",
     "METHOD:PUBLISH",
     "CALSCALE:GREGORIAN",
     "BEGIN:VEVENT",
-    `UID:${input.id}@memp.mindsquare.de`,
+    `UID:${input.id}@mexp.mindsquare.de`,
     `DTSTAMP:${now}`,
     `DTSTART:${icsDate(input.startAt)}`,
     `DTEND:${icsDate(input.endAt)}`,
@@ -555,9 +627,9 @@ function buildIcs(input: {
 }
 
 // Event "löschen" — nur Admin. Dev-Mode: in Override-Store als hidden markieren.
-eventRoutes.delete("/:id", requireRole("admin"), async (c) => {
+eventRoutes.delete("/:id", requireMexpRole("admin"), async (c) => {
   const id = c.req.param("id");
-  if (env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL) {
     const current = devEventOverrideStore.get(id) ?? {};
     devEventOverrideStore.set(id, {
       ...current,
@@ -571,14 +643,14 @@ eventRoutes.delete("/:id", requireRole("admin"), async (c) => {
 
 eventRoutes.patch(
   "/:id/status",
-  requireRole(...WRITE_ROLES),
+  requireMexpRole(...WRITE_ROLES),
   zValidator("json", transitionSchema),
   async (c) => {
     const id = c.req.param("id");
     const { status } = c.req.valid("json");
-    const actorId = c.get("auth").sub;
+    const actorId = getHubUser(c).id;
 
-    if (env.NODE_ENV === "development") {
+    if (!env.DATABASE_URL) {
       // Dev-Mode: Status im Override-Store ablegen
       const current = devEventOverrideStore.get(id) ?? {};
       devEventOverrideStore.set(id, {
@@ -586,13 +658,9 @@ eventRoutes.patch(
         status,
         updatedAt: new Date().toISOString(),
       });
-      const baseList = buildMockEventList();
-      const base = baseList.find((e) => e.id === id);
+      const base = findDevBaseEvent(id);
       if (!base) {
-        return c.json(
-          { error: { code: "NOT_FOUND", message: "Event nicht gefunden" } },
-          404,
-        );
+        return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
       }
       return c.json({ event: applyOverride(base) });
     }
@@ -604,8 +672,8 @@ eventRoutes.patch(
 
 eventRoutes.get("/:id/my-participation", async (c) => {
   const id = c.req.param("id");
-  const actorIdSession = c.get("auth").sub;
-  if (env.NODE_ENV === "development") {
+  const actorIdSession = getHubUser(c).id;
+  if (!env.DATABASE_URL) {
     const live = devLiveParticipantsStore.get(id) ?? [];
     const found = live.find((p) => p.userId === actorIdSession);
     return c.json({ participation: found ?? null });
@@ -618,8 +686,8 @@ eventRoutes.get("/:id/my-participation", async (c) => {
 // Notiz zur eigenen Anmeldung bearbeiten
 eventRoutes.patch("/:id/my-participation", async (c) => {
   const id = c.req.param("id");
-  const actorId = c.get("auth").sub;
-  if (env.NODE_ENV !== "development") {
+  const actorId = getHubUser(c).id;
+  if (env.DATABASE_URL) {
     return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Dev-only" } }, 501);
   }
   let personalNote: string | null = null;
@@ -656,51 +724,88 @@ eventRoutes.patch("/:id/my-participation", async (c) => {
   return c.json({ participation: updated });
 });
 
-eventRoutes.get("/:id/participants", requireRole(...WRITE_ROLES), async (c) => {
+// Dev-Mode (file-store — Design-Spec §3.4): Override-Store für Teilnahmen
+// (participationId → Patch: status, waitlistPosition, checkedInAt, ...). Analog zu
+// devEventOverrideStore — macht Check-in/No-Show/Warteliste-Beförderung persistent,
+// auch für die statischen Mock-Teilnehmer:innen (p-001..p-003).
+// Persistiert in apps/api/data/participation-overrides.json.
+const devParticipationOverrideStore =
+  persistentMap<Record<string, unknown>>("participation-overrides");
+
+interface DevParticipantRecord {
+  id: string;
+  eventId: string;
+  userId: string;
+  userDisplayName: string;
+  userEmail: string;
+  status: string;
+  waitlistPosition: number | null;
+  registeredAt: string;
+  checkedInAt: string | null;
+  cancelledAt: string | null;
+  personalNote?: string | null;
+}
+
+function applyParticipationOverride(p: DevParticipantRecord): DevParticipantRecord {
+  const ov = devParticipationOverrideStore.get(p.id);
+  if (!ov) return p;
+  return { ...p, ...ov };
+}
+
+function buildStaticParticipants(eventId: string): DevParticipantRecord[] {
+  const now = new Date();
+  return [
+    {
+      id: "p-001",
+      eventId,
+      userId: "u-001",
+      userDisplayName: "Anna Becker",
+      userEmail: "anna.becker@mindsquare.de",
+      status: "registered",
+      waitlistPosition: null,
+      registeredAt: new Date(now.getTime() - 3 * 86400000).toISOString(),
+      checkedInAt: null,
+      cancelledAt: null,
+    },
+    {
+      id: "p-002",
+      eventId,
+      userId: "u-002",
+      userDisplayName: "Tim Hartmann",
+      userEmail: "tim.hartmann@mindsquare.de",
+      status: "attended",
+      waitlistPosition: null,
+      registeredAt: new Date(now.getTime() - 5 * 86400000).toISOString(),
+      checkedInAt: new Date(now.getTime() - 1 * 3600000).toISOString(),
+      cancelledAt: null,
+    },
+    {
+      id: "p-003",
+      eventId,
+      userId: "u-003",
+      userDisplayName: "Lara Weber",
+      userEmail: "lara.weber@mindsquare.de",
+      status: "waitlisted",
+      waitlistPosition: 1,
+      registeredAt: new Date(now.getTime() - 1 * 86400000).toISOString(),
+      checkedInAt: null,
+      cancelledAt: null,
+    },
+  ];
+}
+
+// Statische Mock-Teilnehmer:innen + Live-Anmeldungen für ein Event, mit Overrides
+// (Check-in/No-Show/Warteliste-Beförderung) gemergt.
+function getDevParticipants(eventId: string): DevParticipantRecord[] {
+  const live = devLiveParticipantsStore.get(eventId) ?? [];
+  const merged: DevParticipantRecord[] = [...buildStaticParticipants(eventId), ...live];
+  return merged.map(applyParticipationOverride);
+}
+
+eventRoutes.get("/:id/participants", requireMexpRole(...WRITE_ROLES), async (c) => {
   const id = c.req.param("id");
-  if (env.NODE_ENV === "development") {
-    const now = new Date();
-    const staticParticipants = [
-      {
-        id: "p-001",
-        eventId: id,
-        userId: "u-001",
-        userDisplayName: "Anna Becker",
-        userEmail: "anna.becker@mindsquare.de",
-        status: "registered",
-        waitlistPosition: null,
-        registeredAt: new Date(now.getTime() - 3 * 86400000).toISOString(),
-        checkedInAt: null,
-        cancelledAt: null,
-      },
-      {
-        id: "p-002",
-        eventId: id,
-        userId: "u-002",
-        userDisplayName: "Tim Hartmann",
-        userEmail: "tim.hartmann@mindsquare.de",
-        status: "attended",
-        waitlistPosition: null,
-        registeredAt: new Date(now.getTime() - 5 * 86400000).toISOString(),
-        checkedInAt: new Date(now.getTime() - 1 * 3600000).toISOString(),
-        cancelledAt: null,
-      },
-      {
-        id: "p-003",
-        eventId: id,
-        userId: "u-003",
-        userDisplayName: "Lara Weber",
-        userEmail: "lara.weber@mindsquare.de",
-        status: "waitlisted",
-        waitlistPosition: 1,
-        registeredAt: new Date(now.getTime() - 1 * 86400000).toISOString(),
-        checkedInAt: null,
-        cancelledAt: null,
-      },
-    ];
-    // Live-Anmeldungen für dieses Event ergänzen
-    const live = devLiveParticipantsStore.get(id) ?? [];
-    const merged = [...staticParticipants, ...live];
+  if (!env.DATABASE_URL) {
+    const merged = getDevParticipants(id);
     // Antworten aus devAnswerStore nachladen
     const withAnswers = merged.map((p) => ({
       ...p,
@@ -712,7 +817,7 @@ eventRoutes.get("/:id/participants", requireRole(...WRITE_ROLES), async (c) => {
   return c.json({ participants: list });
 });
 
-eventRoutes.get("/:id/participants.csv", requireRole(...WRITE_ROLES), async (c) => {
+eventRoutes.get("/:id/participants.csv", requireMexpRole(...WRITE_ROLES), async (c) => {
   const id = c.req.param("id");
   const list = await listParticipants(id, { events, participations });
   const header = [
@@ -747,7 +852,7 @@ eventRoutes.get("/:id/participants.csv", requireRole(...WRITE_ROLES), async (c) 
   });
 });
 
-eventRoutes.get("/:id/emergency-list", requireRole(...WRITE_ROLES), async (c) => {
+eventRoutes.get("/:id/emergency-list", requireMexpRole(...WRITE_ROLES), async (c) => {
   const id = c.req.param("id");
   const event = await getEvent(id, { events });
   const list = await listParticipants(id, { events, participations });
@@ -780,12 +885,11 @@ function csvEscape(value: string): string {
 
 eventRoutes.post("/:id/register", async (c) => {
   const id = c.req.param("id");
-  const actorId = c.get("auth").sub;
-  if (env.NODE_ENV === "development") {
+  const actorId = getHubUser(c).id;
+  if (!env.DATABASE_URL) {
     // Anmeldefrist prüfen
     const override = devEventOverrideStore.get(id) ?? {};
-    const deadline = (override as { registrationDeadline?: string | null })
-      .registrationDeadline;
+    const deadline = (override as { registrationDeadline?: string | null }).registrationDeadline;
     if (deadline) {
       const deadlineMs = new Date(deadline).getTime();
       if (Number.isFinite(deadlineMs) && deadlineMs < Date.now()) {
@@ -824,10 +928,7 @@ eventRoutes.post("/:id/register", async (c) => {
     if (questions.length > 0) {
       const validation = validateAnswers(questions, answers);
       if (!validation.ok) {
-        return c.json(
-          { error: { code: "INVALID_ANSWERS", message: validation.message } },
-          400,
-        );
+        return c.json({ error: { code: "INVALID_ANSWERS", message: validation.message } }, 400);
       }
     }
 
@@ -893,8 +994,8 @@ eventRoutes.post("/:id/register", async (c) => {
 
 eventRoutes.post("/:id/withdraw", async (c) => {
   const id = c.req.param("id");
-  const actorId = c.get("auth").sub;
-  if (env.NODE_ENV === "development") {
+  const actorId = getHubUser(c).id;
+  if (!env.DATABASE_URL) {
     const participationId = `p-${actorId.slice(0, 8)}`;
     // Aus Live-Store + Answer-Store entfernen
     const existing = devLiveParticipantsStore.get(id) ?? [];
@@ -924,23 +1025,94 @@ eventRoutes.post("/:id/withdraw", async (c) => {
   return c.json({ participation });
 });
 
-eventRoutes.post("/:id/participants/promote-waitlist", requireRole(...WRITE_ROLES), async (c) => {
-  const id = c.req.param("id");
-  const actorId = c.get("auth").sub;
-  const participation = await promoteFromWaitlist(id, actorId, {
-    events,
-    participations,
-    audit,
-  });
-  return c.json({ participation });
-});
+eventRoutes.post(
+  "/:id/participants/promote-waitlist",
+  requireMexpRole(...WRITE_ROLES),
+  async (c) => {
+    const id = c.req.param("id");
+    const actorId = getHubUser(c).id;
+
+    if (!env.DATABASE_URL) {
+      const list = getDevParticipants(id);
+      const waitlisted = list
+        .filter((p) => p.status === "waitlisted")
+        .sort((a, b) => (a.waitlistPosition ?? 0) - (b.waitlistPosition ?? 0));
+      const next = waitlisted[0];
+      if (!next) {
+        return c.json(
+          { error: { code: "NO_WAITLIST_ENTRY", message: "Keine Personen auf der Warteliste" } },
+          404,
+        );
+      }
+      const previousPosition = next.waitlistPosition;
+      devParticipationOverrideStore.set(next.id, {
+        ...devParticipationOverrideStore.get(next.id),
+        status: "registered",
+        waitlistPosition: null,
+      });
+      // Nachrückende Wartelisten-Positionen verschieben
+      if (previousPosition !== null) {
+        for (const p of list) {
+          if (
+            p.id !== next.id &&
+            p.status === "waitlisted" &&
+            (p.waitlistPosition ?? 0) > previousPosition
+          ) {
+            devParticipationOverrideStore.set(p.id, {
+              ...devParticipationOverrideStore.get(p.id),
+              waitlistPosition: (p.waitlistPosition ?? 1) - 1,
+            });
+          }
+        }
+      }
+      const participation = { ...next, status: "registered", waitlistPosition: null };
+      return c.json({ participation });
+    }
+
+    const participation = await promoteFromWaitlist(id, actorId, {
+      events,
+      participations,
+      audit,
+    });
+    return c.json({ participation });
+  },
+);
 
 eventRoutes.post(
   "/:eventId/participants/:participationId/check-in",
-  requireRole(...WRITE_ROLES),
+  requireMexpRole(...WRITE_ROLES),
   async (c) => {
+    const eventId = c.req.param("eventId");
     const participationId = c.req.param("participationId");
-    const actorId = c.get("auth").sub;
+    const actorId = getHubUser(c).id;
+
+    if (!env.DATABASE_URL) {
+      const participation = getDevParticipants(eventId).find((p) => p.id === participationId);
+      if (!participation) {
+        return c.json(
+          { error: { code: "PARTICIPATION_NOT_FOUND", message: "Keine Anmeldung gefunden" } },
+          404,
+        );
+      }
+      if (participation.status !== "registered") {
+        return c.json(
+          {
+            error: {
+              code: "PARTICIPATION_STATUS_INVALID",
+              message: `Aktion benötigt Teilnehmer-Status 'registered', aktueller Status ist '${participation.status}'`,
+            },
+          },
+          409,
+        );
+      }
+      const patch = { status: "attended", checkedInAt: new Date().toISOString() };
+      devParticipationOverrideStore.set(participationId, {
+        ...devParticipationOverrideStore.get(participationId),
+        ...patch,
+      });
+      return c.json({ participation: { ...participation, ...patch } });
+    }
+
     const participation = await checkInParticipant(participationId, actorId, {
       events,
       participations,
@@ -952,10 +1124,39 @@ eventRoutes.post(
 
 eventRoutes.post(
   "/:eventId/participants/:participationId/no-show",
-  requireRole(...WRITE_ROLES),
+  requireMexpRole(...WRITE_ROLES),
   async (c) => {
+    const eventId = c.req.param("eventId");
     const participationId = c.req.param("participationId");
-    const actorId = c.get("auth").sub;
+    const actorId = getHubUser(c).id;
+
+    if (!env.DATABASE_URL) {
+      const participation = getDevParticipants(eventId).find((p) => p.id === participationId);
+      if (!participation) {
+        return c.json(
+          { error: { code: "PARTICIPATION_NOT_FOUND", message: "Keine Anmeldung gefunden" } },
+          404,
+        );
+      }
+      if (participation.status !== "registered") {
+        return c.json(
+          {
+            error: {
+              code: "PARTICIPATION_STATUS_INVALID",
+              message: `Aktion benötigt Teilnehmer-Status 'registered', aktueller Status ist '${participation.status}'`,
+            },
+          },
+          409,
+        );
+      }
+      const patch = { status: "no_show" };
+      devParticipationOverrideStore.set(participationId, {
+        ...devParticipationOverrideStore.get(participationId),
+        ...patch,
+      });
+      return c.json({ participation: { ...participation, ...patch } });
+    }
+
     const participation = await markNoShow(participationId, actorId, {
       events,
       participations,

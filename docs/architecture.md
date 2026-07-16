@@ -1,7 +1,7 @@
 # Architektur
 
 ## Überblick
-mEMP ist ein Modular Monolith mit vier Schichten: Präsentation (React/Vite), Anwendung (Hono API + Worker), Domäne (Packages) und Integration (M365 + Storage). Persistenz: PostgreSQL; Zustände/Queues: Redis.
+mEXP ist ein Modular Monolith mit vier Schichten: Präsentation (React/Vite), Anwendung (Hono API + Worker), Domäne (Packages) und Integration (M365 + Storage). Persistenz: PostgreSQL; Zustände/Queues: Redis.
 
 Die Package-Grenzen (`packages/domain`, `application`, `infrastructure`, `auth`) spiegeln die Bounded Contexts und bleiben spätere Service-Kandidaten.
 

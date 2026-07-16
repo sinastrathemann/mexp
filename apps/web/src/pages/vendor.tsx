@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { apiFetch, ApiRequestError } from "../api/client";
+import { ApiRequestError, apiFetch } from "../api/client";
 import type { TenderDto, VendorDto } from "../events/types";
 
 interface SessionResponse {
@@ -25,7 +25,8 @@ export default function VendorPage() {
 
   const sessionQ = useQuery({
     queryKey: ["vendor-session", token],
-    queryFn: () => apiFetch<SessionResponse>(`/vendors/session?token=${encodeURIComponent(token ?? "")}`),
+    queryFn: () =>
+      apiFetch<SessionResponse>(`/vendors/session?token=${encodeURIComponent(token ?? "")}`),
     enabled: Boolean(token),
     retry: false,
   });
@@ -85,7 +86,8 @@ export default function VendorPage() {
           Hallo {vendor.contactName || vendor.companyName}!
         </div>
         <div style={{ fontSize: "var(--text-sm)", opacity: 0.9, marginTop: 2 }}>
-          Du bist eingeladen, ein Angebot abzugeben. Diese Seite ist nur über deinen persönlichen Link erreichbar.
+          Du bist eingeladen, ein Angebot abzugeben. Diese Seite ist nur über deinen persönlichen
+          Link erreichbar.
         </div>
       </div>
 
@@ -104,9 +106,7 @@ export default function VendorPage() {
               >
                 {deadline.toLocaleString("de-DE", { dateStyle: "long", timeStyle: "short" })}
               </span>{" "}
-              {deadlineExpired && (
-                <span className="badge badge-orange">abgelaufen</span>
-              )}
+              {deadlineExpired && <span className="badge badge-orange">abgelaufen</span>}
             </p>
           )}
         </div>
@@ -138,7 +138,7 @@ export default function VendorPage() {
             </thead>
             <tbody>
               {tender.criteria.map((c, idx) => (
-                <tr key={idx}>
+                <tr key={`criterion-${idx}-${c.label}`}>
                   <td className="text-bold">{c.label}</td>
                   <td className="text-mono" style={{ textAlign: "right" }}>
                     {c.weight}%
@@ -154,9 +154,7 @@ export default function VendorPage() {
 
       <section className="card">
         <h2 className="card-title">Angebot einreichen</h2>
-        <p className="muted">
-          Angebots-Upload + KI-Bewertung kommen in den nächsten Phasen.
-        </p>
+        <p className="muted">Angebots-Upload + KI-Bewertung kommen in den nächsten Phasen.</p>
       </section>
 
       <div className="muted text-xs" style={{ marginTop: "var(--space-6)" }}>
@@ -182,14 +180,11 @@ function VendorQnaSection({ tenderId, token }: { tenderId: string; token: string
 
   const askMut = useMutation({
     mutationFn: async (question: string) => {
-      const res = await fetch(
-        `/api/tenders/${tenderId}/qna?token=${encodeURIComponent(token)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question }),
-        },
-      );
+      const res = await fetch(`/api/tenders/${tenderId}/qna?token=${encodeURIComponent(token)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question }),
+      });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(
@@ -215,9 +210,7 @@ function VendorQnaSection({ tenderId, token }: { tenderId: string; token: string
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {items.length === 0 && (
-          <p className="muted">Noch keine Fragen gestellt.</p>
-        )}
+        {items.length === 0 && <p className="muted">Noch keine Fragen gestellt.</p>}
         {items.map((q) => (
           <div
             key={q.id}
@@ -254,10 +247,7 @@ function VendorQnaSection({ tenderId, token }: { tenderId: string; token: string
                 <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{q.answer}</p>
               </div>
             ) : (
-              <div
-                className="muted text-xs"
-                style={{ marginTop: 6, fontStyle: "italic" }}
-              >
+              <div className="muted text-xs" style={{ marginTop: 6, fontStyle: "italic" }}>
                 Wird gerade beantwortet …
               </div>
             )}
@@ -283,7 +273,7 @@ function VendorQnaSection({ tenderId, token }: { tenderId: string; token: string
           rows={3}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder='z. B. Welche Personenzahl ist verbindlich? oder Gibt es Anforderungen an Halal/koscher?'
+          placeholder="z. B. Welche Personenzahl ist verbindlich? oder Gibt es Anforderungen an Halal/koscher?"
         />
         {askMut.error instanceof Error && (
           <div className="alert alert-error" style={{ marginTop: 6 }}>

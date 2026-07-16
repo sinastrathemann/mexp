@@ -1,5 +1,5 @@
-import type { Document } from "@memp/domain";
-import { EventNotFoundError } from "@memp/domain";
+import type { Document } from "@mexp/domain";
+import { EventNotFoundError } from "@mexp/domain";
 import type { DocumentPort, EventPort } from "../ports.js";
 
 export interface ListDocumentsDeps {

@@ -1,6 +1,6 @@
-import { InvalidCredentialsError, UserInactiveError } from "@memp/domain";
-import type { User } from "@memp/domain";
-import { rootLogger } from "@memp/shared";
+import { InvalidCredentialsError, UserInactiveError } from "@mexp/domain";
+import type { User } from "@mexp/domain";
+import { rootLogger } from "@mexp/shared";
 import type { PasswordHasherPort, UserPort } from "../ports.js";
 
 const log = rootLogger.child({ module: "login-user" });

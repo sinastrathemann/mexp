@@ -1,9 +1,9 @@
 import { zValidator } from "@hono/zod-validator";
-import { type AuthVariables, requireAuth, requireRole } from "@memp/auth";
 import { Hono } from "hono";
 import { z } from "zod";
 import { env } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
+import { requireMexpRole } from "./_user-resolution.js";
 
 // ─── Schemas ─────────────────────────────────────────────────────
 const questionTypeSchema = z.enum(["yes_no", "single_choice", "multi_choice", "date_pick"]);
@@ -66,11 +66,13 @@ export interface DevLiveParticipant {
   userId: string;
   userDisplayName: string;
   userEmail: string;
-  status: "registered";
-  waitlistPosition: null;
+  // Nach Anlage immer "registered" — check-in/no-show/promote-waitlist verändern den
+  // Status über den participation-override-Store (siehe events.ts), nicht hier direkt.
+  status: "registered" | "waitlisted" | "attended" | "no_show" | "cancelled";
+  waitlistPosition: number | null;
   registeredAt: string;
-  checkedInAt: null;
-  cancelledAt: null;
+  checkedInAt: string | null;
+  cancelledAt: string | null;
   // Freitext-Notiz vom User selbst (z.B. "komme mit Partner") — editierbar
   personalNote?: string | null;
 }
@@ -125,14 +127,12 @@ export function validateAnswers(
 // ─── Routes ─────────────────────────────────────────────────────
 const MANAGE_ROLES = ["admin", "manager", "event_office", "werkstudent"] as const;
 
-export const registrationFormRoutes = new Hono<{ Variables: AuthVariables }>();
-
-registrationFormRoutes.use("*", requireAuth());
+export const registrationFormRoutes = new Hono();
 
 // GET: Alle eingeloggten User dürfen das Formular sehen (sonst können sie nicht antworten)
 registrationFormRoutes.get("/events/:eventId/registration-form", async (c) => {
   const eventId = c.req.param("eventId");
-  if (env.NODE_ENV !== "development") {
+  if (env.DATABASE_URL) {
     return c.json({ questions: [] });
   }
   const questions = devFormStore.get(eventId) ?? [];
@@ -145,12 +145,12 @@ registrationFormRoutes.get("/events/:eventId/registration-form", async (c) => {
 // PUT: Nur Admins/Manager/Event-Office dürfen das Formular bearbeiten
 registrationFormRoutes.put(
   "/events/:eventId/registration-form",
-  requireRole(...MANAGE_ROLES),
+  requireMexpRole(...MANAGE_ROLES),
   zValidator("json", formSchema),
   async (c) => {
     const eventId = c.req.param("eventId");
     const { questions } = c.req.valid("json");
-    if (env.NODE_ENV !== "development") {
+    if (env.DATABASE_URL) {
       return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Dev-only" } }, 501);
     }
     // Validierung: bei choice/date_pick muss mind. eine Option vorhanden sein

@@ -1,6 +1,6 @@
-import type { Participation } from "@memp/domain";
-import { AlreadyRegisteredError, EventNotFoundError, RegistrationNotOpenError } from "@memp/domain";
-import { rootLogger } from "@memp/shared";
+import type { Participation } from "@mexp/domain";
+import { AlreadyRegisteredError, EventNotFoundError, RegistrationNotOpenError } from "@mexp/domain";
+import { rootLogger } from "@mexp/shared";
 import type { AuditPort, EventPort, ParticipationPort } from "../ports.js";
 
 export interface RegisterForEventDeps {

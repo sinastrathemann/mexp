@@ -1,5 +1,5 @@
-import type { Participation } from "@memp/domain";
-import { EventNotFoundError } from "@memp/domain";
+import type { Participation } from "@mexp/domain";
+import { EventNotFoundError } from "@mexp/domain";
 import type { EventPort, ParticipationPort } from "../ports.js";
 
 export interface GetOwnParticipationDeps {

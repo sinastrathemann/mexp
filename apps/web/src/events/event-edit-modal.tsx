@@ -323,9 +323,7 @@ export function EventEditModal({
                   key={key}
                   type="button"
                   className={
-                    audienceScope === key
-                      ? "btn btn-primary btn-sm"
-                      : "btn btn-outline btn-sm"
+                    audienceScope === key ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm"
                   }
                   onClick={() => setAudienceScope(key)}
                 >
@@ -336,8 +334,10 @@ export function EventEditModal({
 
             {audienceScope === "roles" && (
               <div className="field" style={{ margin: "var(--space-3) 0 0" }}>
-                <label className="label">Erlaubte Rollen</label>
-                <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+                <label className="label" htmlFor="allowed-roles">
+                  Erlaubte Rollen
+                </label>
+                <div id="allowed-roles" className="row" style={{ gap: 8, flexWrap: "wrap" }}>
                   {(
                     [
                       "participant",
@@ -353,9 +353,7 @@ export function EventEditModal({
                       <button
                         key={r}
                         type="button"
-                        className={
-                          checked ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm"
-                        }
+                        className={checked ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm"}
                         onClick={() =>
                           setAudienceRoles((cur) =>
                             checked ? cur.filter((x) => x !== r) : [...cur, r],

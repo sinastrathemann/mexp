@@ -1,4 +1,4 @@
-import type { Document, DocumentCreateInput, DocumentVisibility } from "@memp/domain";
+import type { Document, DocumentCreateInput, DocumentVisibility } from "@mexp/domain";
 import { desc, eq } from "drizzle-orm";
 import type { DbClient } from "../db/client.js";
 import type { DocumentRow } from "../db/schema/tables.js";

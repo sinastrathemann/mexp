@@ -1,4 +1,4 @@
-import type { EventFeedback, EventFeedbackCreateInput, EventFeedbackStats } from "@memp/domain";
+import type { EventFeedback, EventFeedbackCreateInput, EventFeedbackStats } from "@mexp/domain";
 import { and, avg, count, desc, eq } from "drizzle-orm";
 import type { DbClient } from "../db/client.js";
 import type { EventFeedbackRow } from "../db/schema/tables.js";

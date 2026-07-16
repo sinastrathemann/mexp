@@ -133,10 +133,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const filteredParticipants = searchTerm.trim()
     ? participants.filter((p) => {
         const q = searchTerm.toLowerCase();
-        return (
-          p.userDisplayName.toLowerCase().includes(q) ||
-          p.userEmail.toLowerCase().includes(q)
-        );
+        return p.userDisplayName.toLowerCase().includes(q) || p.userEmail.toLowerCase().includes(q);
       })
     : participants;
 
@@ -174,31 +171,23 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
         onWithdraw={() => withdrawMut.mutate()}
       />
 
-      {own &&
-        own.status !== "cancelled" &&
-        own.status !== "no_show" && (
-          <MyNoteBlock
-            note={own.personalNote ?? null}
-            pending={updateNoteMut.isPending}
-            onSave={(text) => updateNoteMut.mutate(text)}
-            error={
-              updateNoteMut.error instanceof Error ? updateNoteMut.error.message : null
-            }
-          />
-        )}
+      {own && own.status !== "cancelled" && own.status !== "no_show" && (
+        <MyNoteBlock
+          note={own.personalNote ?? null}
+          pending={updateNoteMut.isPending}
+          onSave={(text) => updateNoteMut.mutate(text)}
+          error={updateNoteMut.error instanceof Error ? updateNoteMut.error.message : null}
+        />
+      )}
 
       {modalOpen && (
         <RegistrationModal
           eventTitle={event.title}
           questions={questions}
           pending={registerMut.isPending}
-          error={
-            registerMut.error instanceof Error ? registerMut.error.message : null
-          }
+          error={registerMut.error instanceof Error ? registerMut.error.message : null}
           onCancel={() => setModalOpen(false)}
-          onSubmit={(answers, personalNote) =>
-            registerMut.mutate({ answers, personalNote })
-          }
+          onSubmit={(answers, personalNote) => registerMut.mutate({ answers, personalNote })}
         />
       )}
 
@@ -260,89 +249,89 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
                     </span>
                   )}
                 </div>
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>{t("participants.colName")}</th>
-                    <th>{t("participants.colEmail")}</th>
-                    <th>{t("participants.colStatus")}</th>
-                    <th>{t("participants.colPosition")}</th>
-                    <th>{t("participants.colRegisteredAt")}</th>
-                    {questions.length > 0 && <th>Antworten</th>}
-                    <th>Notiz</th>
-                    <th>{t("participants.colActions")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredParticipants.map((p) => (
-                    <tr key={p.id}>
-                      <td className="text-bold">
-                        {p.userDisplayName}
-                        {p.personalNote && (
-                          <span
-                            title={p.personalNote}
-                            style={{ marginLeft: 6, fontSize: "0.85em" }}
-                          >
-                            📝
-                          </span>
-                        )}
-                      </td>
-                      <td className="muted">{p.userEmail}</td>
-                      <td>
-                        <span className="badge badge-muted">
-                          {t(`participants.status.${p.status}`)}
-                        </span>
-                      </td>
-                      <td>{p.waitlistPosition ?? "—"}</td>
-                      <td className="text-sm muted">{fmtDate(p.registeredAt)}</td>
-                      {questions.length > 0 && (
-                        <td>
-                          <AnswerSummary questions={questions} answers={p.answers ?? []} />
-                        </td>
-                      )}
-                      <td style={{ maxWidth: 200 }}>
-                        {p.personalNote ? (
-                          <span
-                            style={{
-                              whiteSpace: "pre-wrap",
-                              fontSize: "var(--text-xs)",
-                              color: "var(--fg-strong)",
-                            }}
-                          >
-                            {p.personalNote}
-                          </span>
-                        ) : (
-                          <span className="muted text-xs">—</span>
-                        )}
-                      </td>
-                      <td>
-                        <div className="row" style={{ gap: "var(--space-2)" }}>
-                          {p.status === "registered" && checkInPhase && (
-                            <button
-                              type="button"
-                              disabled={checkInMut.isPending}
-                              onClick={() => checkInMut.mutate(p.id)}
-                              className="btn btn-outline-orange btn-sm"
-                            >
-                              {t("participants.checkIn")}
-                            </button>
-                          )}
-                          {p.status === "registered" && noShowPhase && (
-                            <button
-                              type="button"
-                              disabled={noShowMut.isPending}
-                              onClick={() => noShowMut.mutate(p.id)}
-                              className="btn btn-ghost btn-sm"
-                            >
-                              {t("participants.markNoShow")}
-                            </button>
-                          )}
-                        </div>
-                      </td>
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>{t("participants.colName")}</th>
+                      <th>{t("participants.colEmail")}</th>
+                      <th>{t("participants.colStatus")}</th>
+                      <th>{t("participants.colPosition")}</th>
+                      <th>{t("participants.colRegisteredAt")}</th>
+                      {questions.length > 0 && <th>Antworten</th>}
+                      <th>Notiz</th>
+                      <th>{t("participants.colActions")}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredParticipants.map((p) => (
+                      <tr key={p.id}>
+                        <td className="text-bold">
+                          {p.userDisplayName}
+                          {p.personalNote && (
+                            <span
+                              title={p.personalNote}
+                              style={{ marginLeft: 6, fontSize: "0.85em" }}
+                            >
+                              📝
+                            </span>
+                          )}
+                        </td>
+                        <td className="muted">{p.userEmail}</td>
+                        <td>
+                          <span className="badge badge-muted">
+                            {t(`participants.status.${p.status}`)}
+                          </span>
+                        </td>
+                        <td>{p.waitlistPosition ?? "—"}</td>
+                        <td className="text-sm muted">{fmtDate(p.registeredAt)}</td>
+                        {questions.length > 0 && (
+                          <td>
+                            <AnswerSummary questions={questions} answers={p.answers ?? []} />
+                          </td>
+                        )}
+                        <td style={{ maxWidth: 200 }}>
+                          {p.personalNote ? (
+                            <span
+                              style={{
+                                whiteSpace: "pre-wrap",
+                                fontSize: "var(--text-xs)",
+                                color: "var(--fg-strong)",
+                              }}
+                            >
+                              {p.personalNote}
+                            </span>
+                          ) : (
+                            <span className="muted text-xs">—</span>
+                          )}
+                        </td>
+                        <td>
+                          <div className="row" style={{ gap: "var(--space-2)" }}>
+                            {p.status === "registered" && checkInPhase && (
+                              <button
+                                type="button"
+                                disabled={checkInMut.isPending}
+                                onClick={() => checkInMut.mutate(p.id)}
+                                className="btn btn-outline-orange btn-sm"
+                              >
+                                {t("participants.checkIn")}
+                              </button>
+                            )}
+                            {p.status === "registered" && noShowPhase && (
+                              <button
+                                type="button"
+                                disabled={noShowMut.isPending}
+                                onClick={() => noShowMut.mutate(p.id)}
+                                className="btn btn-ghost btn-sm"
+                              >
+                                {t("participants.markNoShow")}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </>
             )}
           </div>
@@ -557,7 +546,6 @@ function MyNoteBlock({
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder='z. B. "komme mit Partner"'
-            autoFocus
           />
           <div className="row" style={{ gap: 8, marginTop: 8 }}>
             <button

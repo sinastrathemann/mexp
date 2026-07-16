@@ -8,22 +8,30 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    // Relative Asset-Pfade, damit der Build unter dem Hub-Sub-Path (/mexp/) funktioniert.
+    base: "./",
     resolve: {
       alias: { "@": path.resolve(__dirname, "./src") },
     },
     server: {
       port: Number(env["WEB_PORT"] ?? 8080),
       proxy: {
+        // Die API (apps/api/src/index.ts) mountet alle Routen unter /api/* —
+        // Hub und API laufen im selben Container/Origin, daher genügt ein
+        // einziger Proxy-Eintrag für den Dev-Server. /health bleibt bewusst
+        // außerhalb von /api (Hub-Smoke-Test), wird im Dev-Modus aber nicht
+        // separat benötigt.
         "/api": {
           target: apiBase,
-          changeOrigin: true,
-          rewrite: (p) => p.replace(/^\/api/, ""),
+          changeOrigin: false,
         },
+        "/health": apiBase,
       },
     },
     build: {
       outDir: "dist",
-      sourcemap: true,
+      assetsDir: "assets",
+      sourcemap: false,
     },
   };
 });

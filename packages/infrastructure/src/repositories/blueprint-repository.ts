@@ -4,7 +4,7 @@ import type {
   EventBlueprintUpdateInput,
   EventType,
   EventVisibility,
-} from "@memp/domain";
+} from "@mexp/domain";
 import { desc, eq } from "drizzle-orm";
 import type { DbClient } from "../db/client.js";
 import type { EventBlueprintRow } from "../db/schema/tables.js";
