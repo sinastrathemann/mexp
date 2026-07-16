@@ -57,4 +57,7 @@ export interface AdminUserRow {
   sharepointStudiId?: string;
   position?: string | null;
   team?: string | null;
+  // Optional: nur gesetzt für User, die per manuellem CSV-Upload angelegt/aktualisiert
+  // wurden (siehe apps/api/src/routes/admin-users-import.ts).
+  csvImportedAt?: string;
 }

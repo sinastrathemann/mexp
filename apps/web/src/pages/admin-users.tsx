@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../api/client";
@@ -26,6 +26,17 @@ interface SharepointSyncResult {
   syncedAt: string;
 }
 
+interface CsvImportResult {
+  ok: boolean;
+  total: number;
+  created: number;
+  updated: number;
+  skippedNoEmail: number;
+  errors: string[];
+  detectedHeaders: string[];
+  importedAt: string;
+}
+
 export default function AdminUsersPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
@@ -46,6 +57,32 @@ export default function AdminUsersPage() {
   const spSyncMut = useMutation({
     mutationFn: () =>
       apiFetch<SharepointSyncResult>("/admin/sharepoint/sync-studis", { method: "POST" }),
+    onSuccess: invalidate,
+  });
+
+  const csvFileRef = useRef<HTMLInputElement>(null);
+  const csvImportMut = useMutation({
+    // Kein apiFetch hier: apiFetch erzwingt immer "Content-Type: application/json",
+    // was den multipart/form-data-Boundary für den File-Upload kaputt machen würde.
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/users/import-csv", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      const text = await res.text();
+      const body = text ? (JSON.parse(text) as unknown) : null;
+      if (!res.ok) {
+        const message =
+          body && typeof body === "object" && "message" in body && typeof body.message === "string"
+            ? body.message
+            : `HTTP ${res.status}`;
+        throw new Error(message);
+      }
+      return body as CsvImportResult;
+    },
     onSuccess: invalidate,
   });
 
@@ -174,6 +211,61 @@ export default function AdminUsersPage() {
         </div>
       )}
 
+      {isAdmin && (
+        <div className="row" style={{ gap: 12, marginTop: "var(--space-2)", alignItems: "center" }}>
+          <input
+            ref={csvFileRef}
+            type="file"
+            accept=".csv,text/csv"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) csvImportMut.mutate(file);
+            }}
+          />
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={() => csvFileRef.current?.click()}
+            disabled={csvImportMut.isPending}
+          >
+            {csvImportMut.isPending ? t("admin.csvImporting") : t("admin.csvImport")}
+          </button>
+          {csvImportMut.data && (
+            <span className="badge badge-success">
+              {csvImportMut.data.skippedNoEmail > 0
+                ? t("admin.csvImportResultNoEmail", {
+                    total: csvImportMut.data.total,
+                    created: csvImportMut.data.created,
+                    updated: csvImportMut.data.updated,
+                    skippedNoEmail: csvImportMut.data.skippedNoEmail,
+                  })
+                : t("admin.csvImportResult", {
+                    total: csvImportMut.data.total,
+                    created: csvImportMut.data.created,
+                    updated: csvImportMut.data.updated,
+                  })}
+            </span>
+          )}
+          {csvImportMut.error instanceof Error && (
+            <span className="alert alert-error" style={{ padding: "4px 12px" }}>
+              {t("admin.csvImportError", { message: csvImportMut.error.message })}
+            </span>
+          )}
+        </div>
+      )}
+      {isAdmin && csvImportMut.data && csvImportMut.data.detectedHeaders.length > 0 && (
+        <details style={{ marginTop: "var(--space-2)" }}>
+          <summary>
+            {t("admin.csvDetectedHeaders", { count: csvImportMut.data.detectedHeaders.length })}
+          </summary>
+          <code style={{ fontSize: "0.85em" }}>
+            {csvImportMut.data.detectedHeaders.join(" · ")}
+          </code>
+        </details>
+      )}
+
       <h2 style={{ marginTop: "var(--space-4)" }}>{t("admin.usersListTitle")}</h2>
       {isLoading && <div className="card muted">{t("auth.loading")}</div>}
       {data && (
@@ -206,6 +298,11 @@ export default function AdminUsersPage() {
                       <div className="row" style={{ gap: 6, marginTop: 4 }}>
                         <span className="badge badge-cobalt">{t("admin.sharepointBadge")}</span>
                         {u.team && <span className="badge badge-outline">{u.team}</span>}
+                      </div>
+                    )}
+                    {u.csvImportedAt && (
+                      <div className="row" style={{ gap: 6, marginTop: 4 }}>
+                        <span className="badge badge-cobalt">{t("admin.csvBadge")}</span>
                       </div>
                     )}
                   </td>

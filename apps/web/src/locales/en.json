@@ -74,7 +74,14 @@
     "sharepointSyncResult": "✓ {{total}} students · {{created}} new · {{updated}} updated · {{deactivated}} deactivated",
     "sharepointSyncResultNoEmail": "✓ {{total}} students · {{created}} new · {{updated}} updated · {{deactivated}} deactivated · {{skippedNoEmail}} skipped (no email)",
     "sharepointSyncError": "Error: {{message}}",
-    "sharepointBadge": "Student/Intern"
+    "sharepointBadge": "Student/Intern",
+    "csvImport": "📄 Import student CSV",
+    "csvImporting": "⏳ Importing…",
+    "csvImportResult": "✓ {{total}} rows · {{created}} new · {{updated}} updated",
+    "csvImportResultNoEmail": "✓ {{total}} rows · {{created}} new · {{updated}} updated · {{skippedNoEmail}} skipped (no email)",
+    "csvImportError": "Error: {{message}}",
+    "csvDetectedHeaders": "Detected columns: {{count}}",
+    "csvBadge": "CSV import"
   },
   "events": {
     "navLink": "Events",

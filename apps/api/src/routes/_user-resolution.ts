@@ -33,6 +33,11 @@ export interface MexpUser {
   // zusätzlich in Personio geführt wird (E-Mail-Match findet dann denselben User). ---
   sharepointStudiId?: string;
   sharepointSyncedAt?: string;
+  // --- CSV-Import (optional; nur gesetzt für User, die per manuellem CSV-Upload
+  // angelegt/aktualisiert wurden — siehe admin-users-import.ts. Alternative zum
+  // SharePoint-Graph-Sync, solange keine Azure-App-Registrierung mit Admin-Freigabe
+  // verfügbar ist. Kann gemeinsam mit personioId/sharepointStudiId gesetzt sein. ---
+  csvImportedAt?: string;
 }
 
 // Persistiert in apps/api/data/memp-users.json — bleibt bei Neustarts erhalten
