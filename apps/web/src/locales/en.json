@@ -63,7 +63,12 @@
     "deactivate": "Deactivate",
     "activate": "Activate",
     "resetPassword": "Reset password",
-    "newPasswordPrompt": "New password (min. 8 characters)"
+    "newPasswordPrompt": "New password (min. 8 characters)",
+    "personioSync": "🔄 Sync Personio",
+    "personioSyncing": "⏳ Syncing…",
+    "personioSyncResult": "✓ {{total}} employees · {{created}} new · {{updated}} updated · {{deactivated}} deactivated",
+    "personioSyncError": "Error: {{message}}",
+    "personioBadge": "Personio"
   },
   "events": {
     "navLink": "Events",

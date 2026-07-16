@@ -7,6 +7,7 @@ import { rootLogger } from "@mexp/shared";
 import { Hono } from "hono";
 import { env } from "./deps.js";
 import { errorHandler } from "./error-handler.js";
+import { adminPersonioRoutes } from "./routes/admin-personio.js";
 import { adminUserRoutes } from "./routes/admin-users.js";
 import { authRoutes } from "./routes/auth.js";
 import { blueprintRoutes } from "./routes/blueprints.js";
@@ -58,6 +59,7 @@ app.use(
 
 app.route("/api", authRoutes);
 app.route("/api/admin/users", adminUserRoutes);
+app.route("/api/admin/personio", adminPersonioRoutes);
 app.route("/api/events", eventRoutes);
 app.route("/api/dashboard", dashboardRoutes);
 app.route("/api", budgetRoutes);

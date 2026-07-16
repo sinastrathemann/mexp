@@ -48,4 +48,8 @@ export interface AdminUserRow {
   roles: RoleName[];
   createdAt: string;
   lastLoginAt: string | null;
+  // Optional: nur gesetzt für User, die aus/mit Personio synchronisiert wurden
+  // (siehe apps/api/src/routes/admin-personio.ts).
+  personioId?: string;
+  department?: string | null;
 }

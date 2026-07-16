@@ -3,18 +3,35 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../api/client";
+import { useAuth } from "../auth/auth-context";
 import { ROLE_NAMES } from "../auth/types";
 import type { AdminUserRow, RoleName } from "../auth/types";
+
+interface PersonioSyncResult {
+  ok: boolean;
+  total: number;
+  created: number;
+  updated: number;
+  deactivated: number;
+  syncedAt: string;
+}
 
 export default function AdminUsersPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const { hasRole } = useAuth();
+  const isAdmin = hasRole("admin");
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "users"],
     queryFn: () => apiFetch<{ users: AdminUserRow[] }>("/admin/users"),
   });
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["admin", "users"] });
+
+  const syncMut = useMutation({
+    mutationFn: () => apiFetch<PersonioSyncResult>("/admin/personio/sync", { method: "POST" }),
+    onSuccess: invalidate,
+  });
 
   const createMut = useMutation({
     mutationFn: (input: {
@@ -77,7 +94,35 @@ export default function AdminUsersPage() {
         error={createMut.error}
       />
 
-      <h2 style={{ marginTop: "var(--space-8)" }}>{t("admin.usersListTitle")}</h2>
+      {isAdmin && (
+        <div className="row" style={{ gap: 12, marginTop: "var(--space-8)", alignItems: "center" }}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => syncMut.mutate()}
+            disabled={syncMut.isPending}
+          >
+            {syncMut.isPending ? t("admin.personioSyncing") : t("admin.personioSync")}
+          </button>
+          {syncMut.data && (
+            <span className="badge badge-success">
+              {t("admin.personioSyncResult", {
+                total: syncMut.data.total,
+                created: syncMut.data.created,
+                updated: syncMut.data.updated,
+                deactivated: syncMut.data.deactivated,
+              })}
+            </span>
+          )}
+          {syncMut.error instanceof Error && (
+            <span className="alert alert-error" style={{ padding: "4px 12px" }}>
+              {t("admin.personioSyncError", { message: syncMut.error.message })}
+            </span>
+          )}
+        </div>
+      )}
+
+      <h2 style={{ marginTop: "var(--space-4)" }}>{t("admin.usersListTitle")}</h2>
       {isLoading && <div className="card muted">{t("auth.loading")}</div>}
       {data && (
         <div className="card" style={{ padding: 0, overflow: "hidden" }}>
@@ -95,7 +140,17 @@ export default function AdminUsersPage() {
               {data.users.map((u) => (
                 <tr key={u.id}>
                   <td className="text-bold">{u.email}</td>
-                  <td>{u.displayName}</td>
+                  <td>
+                    {u.displayName}
+                    {u.personioId && (
+                      <div className="row" style={{ gap: 6, marginTop: 4 }}>
+                        <span className="badge badge-cobalt">{t("admin.personioBadge")}</span>
+                        {u.department && (
+                          <span className="badge badge-outline">{u.department}</span>
+                        )}
+                      </div>
+                    )}
+                  </td>
                   <td>
                     <RoleEditor
                       currentRoles={u.roles}

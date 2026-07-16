@@ -11,6 +11,11 @@ const envSchema = z.object({
   DATABASE_URL: z.string().url().optional(),
   LLM_CONFIG_PATH: z.string().default("../../config/llm.yaml"),
   LLM_PROVIDER: z.string().default("mock"),
+  // Personio HR-Sync ist optional (siehe docs/personio-integration.md) — die App muss
+  // ohne diese Werte booten; der Sync-Endpoint meldet 400, solange sie fehlen.
+  PERSONIO_CLIENT_ID: z.string().optional(),
+  PERSONIO_CLIENT_SECRET: z.string().optional(),
+  PERSONIO_API_URL: z.string().url().default("https://api.personio.de/v1"),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

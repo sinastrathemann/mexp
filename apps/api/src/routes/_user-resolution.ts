@@ -16,6 +16,16 @@ export interface MexpUser {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  // --- Personio-Sync (optional; nur gesetzt für User, die aus Personio stammen oder
+  // per Sync mit einem Personio-Employee verknüpft wurden — siehe admin-personio.ts).
+  // Bestehende User ohne Personio-Bezug bleiben unangetastet: alle Felder optional. ---
+  personioId?: string;
+  department?: string | null;
+  position?: string | null;
+  office?: string | null;
+  /** Rohstatus aus Personio: "active" | "inactive" | "onboarding" | "leave" | "removed" (Reverse-Sync). */
+  personioStatus?: string | null;
+  personioSyncedAt?: string;
 }
 
 // Persistiert in apps/api/data/memp-users.json — bleibt bei Neustarts erhalten
