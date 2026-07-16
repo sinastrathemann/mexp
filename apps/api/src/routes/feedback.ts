@@ -72,6 +72,18 @@ feedbackRoutes.post(
   "/events/:eventId/feedback/summary",
   requireMempRole(...MANAGE_ROLES),
   async (c) => {
+    if (!env.DATABASE_URL) {
+      return c.json(
+        {
+          error: {
+            code: "NO_DATABASE",
+            message:
+              "Feedback summarization requires DATABASE_URL and Phase-4 LLM module. Not available in Phase-1 file-store mode.",
+          },
+        },
+        503,
+      );
+    }
     const eventId = c.req.param("eventId");
     const result = await summarizeEventFeedback(eventId, { events, feedback, llm });
     return c.json(result);
