@@ -24,6 +24,8 @@ export interface Event {
   startAt: Date;
   endAt: Date;
   location: string | null;
+  // Zusatz-Infos zur Location: Adresse, Parkmöglichkeiten, Besonderheiten für die Planung
+  locationDetails: string | null;
   capacity: number | null;
   ownerId: string;
   createdAt: Date;
@@ -38,6 +40,7 @@ export interface EventCreateInput {
   startAt: Date;
   endAt: Date;
   location: string | null;
+  locationDetails: string | null;
   capacity: number | null;
   ownerId: string;
 }
@@ -50,5 +53,6 @@ export interface EventUpdateInput {
   startAt?: Date;
   endAt?: Date;
   location?: string | null;
+  locationDetails?: string | null;
   capacity?: number | null;
 }

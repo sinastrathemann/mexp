@@ -173,7 +173,8 @@ blueprintRoutes.patch(
   },
 );
 
-blueprintRoutes.delete("/:id", requireMexpRole(...WRITE_ROLES), async (c) => {
+// Löschen nur Admin (Sina's Regel: Anlegen/Bearbeiten/Anwenden dürfen mehr Rollen, Löschen nicht).
+blueprintRoutes.delete("/:id", requireMexpRole("admin"), async (c) => {
   const id = c.req.param("id");
   const actorId = getHubUser(c).id;
 

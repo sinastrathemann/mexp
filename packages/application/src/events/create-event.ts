@@ -43,6 +43,7 @@ function serializeEvent(event: Event): Record<string, unknown> {
     startAt: event.startAt.toISOString(),
     endAt: event.endAt.toISOString(),
     location: event.location,
+    locationDetails: event.locationDetails,
     capacity: event.capacity,
     ownerId: event.ownerId,
   };

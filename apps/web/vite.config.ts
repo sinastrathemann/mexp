@@ -14,6 +14,7 @@ export default defineConfig(({ mode }) => {
       alias: { "@": path.resolve(__dirname, "./src") },
     },
     server: {
+      host: "127.0.0.1",
       port: Number(env["WEB_PORT"] ?? 8080),
       proxy: {
         // Die API (apps/api/src/index.ts) mountet alle Routen unter /api/* —

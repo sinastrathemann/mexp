@@ -150,7 +150,7 @@ export default function EventDetailPage() {
           {event.locationDetails && (
             <>
               <div className="label" style={{ margin: 0 }}>
-                Location-Details
+                Weitere Informationen
               </div>
               <span style={{ whiteSpace: "pre-wrap" }}>{event.locationDetails}</span>
             </>
@@ -162,9 +162,15 @@ export default function EventDetailPage() {
           {event.registrationDeadline && (
             <>
               <div className="label" style={{ margin: 0 }}>
-                Anmeldefrist
+                Anmeldung
               </div>
-              <span>{fmtDate(event.registrationDeadline)}</span>
+              <span>
+                {new Date(event.registrationDeadline).getTime() < Date.now() ? (
+                  <span className="badge badge-muted">Anmeldung geschlossen</span>
+                ) : (
+                  <>Anmeldung noch möglich bis: {fmtDate(event.registrationDeadline)}</>
+                )}
+              </span>
             </>
           )}
           <div className="label" style={{ margin: 0 }}>

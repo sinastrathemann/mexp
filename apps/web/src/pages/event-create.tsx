@@ -24,7 +24,9 @@ export default function EventCreatePage() {
   const [startAt, setStartAt] = useState("");
   const [endAt, setEndAt] = useState("");
   const [location, setLocation] = useState("");
+  const [locationDetails, setLocationDetails] = useState("");
   const [capacity, setCapacity] = useState("");
+  const [registrationDeadline, setRegistrationDeadline] = useState("");
 
   const createMut = useMutation({
     mutationFn: (input: Record<string, unknown>) =>
@@ -48,7 +50,11 @@ export default function EventCreatePage() {
       startAt: new Date(startAt).toISOString(),
       endAt: new Date(endAt).toISOString(),
       location: location || null,
+      locationDetails: locationDetails.trim() === "" ? null : locationDetails.trim(),
       capacity: capacity ? Number.parseInt(capacity, 10) : null,
+      registrationDeadline: registrationDeadline
+        ? new Date(registrationDeadline).toISOString()
+        : null,
     });
   }
 
@@ -186,6 +192,37 @@ export default function EventCreatePage() {
               onChange={(e) => setCapacity(e.target.value)}
             />
           </div>
+        </div>
+
+        <div className="field">
+          <label className="label" htmlFor="ev-location-details">
+            Weitere Informationen / Besonderheiten (Parkplätze, Zugang, Ansprechpartner vor Ort
+            etc.)
+          </label>
+          <textarea
+            id="ev-location-details"
+            className="textarea"
+            rows={3}
+            value={locationDetails}
+            onChange={(e) => setLocationDetails(e.target.value)}
+            placeholder="z. B. Barrierefrei, Parkplätze begrenzt, Meetingraum im 2. OG"
+          />
+        </div>
+
+        <div className="field">
+          <label className="label" htmlFor="ev-reg-deadline">
+            Anmeldung schließt am
+          </label>
+          <input
+            id="ev-reg-deadline"
+            className="input"
+            type="datetime-local"
+            value={registrationDeadline}
+            onChange={(e) => setRegistrationDeadline(e.target.value)}
+          />
+          <p className="help-text">
+            Optional — nach diesem Datum können Mitarbeiter sich nicht mehr selbst anmelden.
+          </p>
         </div>
 
         {errMsg && <div className="alert alert-error">{errMsg}</div>}

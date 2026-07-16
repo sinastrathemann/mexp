@@ -90,6 +90,9 @@ function rowToEvent(row: EventRow): Event {
     startAt: row.startAt,
     endAt: row.endAt,
     location: row.location,
+    // Keine DB-Spalte (kein Migration nötig — file-store ist der aktive Pfad).
+    // Sobald locationDetails auch im DB-Schema landet, hier aus row lesen.
+    locationDetails: null,
     capacity: row.capacity,
     ownerId: row.ownerId,
     createdAt: row.createdAt,

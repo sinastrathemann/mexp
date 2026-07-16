@@ -39,6 +39,8 @@ export async function applyBlueprint(
     startAt: input.startAt,
     endAt,
     location: blueprint.defaultLocation,
+    // Blueprints kennen (noch) keine locationDetails — Event startet ohne, kann danach ergänzt werden.
+    locationDetails: null,
     capacity: blueprint.defaultCapacity,
     ownerId: actorId,
   });

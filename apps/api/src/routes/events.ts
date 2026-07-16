@@ -47,7 +47,9 @@ const createEventSchema = z.object({
   startAt: isoDateSchema,
   endAt: isoDateSchema,
   location: z.string().max(500).nullable().default(null),
+  locationDetails: z.string().max(5000).nullable().default(null),
   capacity: z.number().int().positive().nullable().default(null),
+  registrationDeadline: isoDateSchema.nullable().optional(),
 });
 
 const updateEventSchema = z
@@ -118,7 +120,9 @@ export interface DevEventCreateInput {
   startAt: string;
   endAt: string;
   location: string | null;
+  locationDetails?: string | null;
   capacity: number | null;
+  registrationDeadline?: string | null;
   ownerId: string;
 }
 
@@ -138,7 +142,9 @@ export function createDevEvent(input: DevEventCreateInput): DevEventRecord {
     startAt: input.startAt,
     endAt: input.endAt,
     location: input.location,
+    locationDetails: input.locationDetails ?? null,
     capacity: input.capacity,
+    registrationDeadline: input.registrationDeadline ?? null,
     ownerId: input.ownerId,
     createdAt: now,
     updatedAt: now,
@@ -150,6 +156,8 @@ export function createDevEvent(input: DevEventCreateInput): DevEventRecord {
 function buildMockEventList() {
   const now = new Date();
   const inDays = (d: number) => new Date(now.getTime() + d * 86400000).toISOString();
+  const addHours = (iso: string, h: number) =>
+    new Date(new Date(iso).getTime() + h * 3600000).toISOString();
   const ownerId = "550e8400-e29b-41d4-a716-446655440000";
   return [
     {
@@ -160,7 +168,7 @@ function buildMockEventList() {
       visibility: "internal",
       status: "open",
       startAt: inDays(7),
-      endAt: inDays(7),
+      endAt: addHours(inDays(7), 3),
       location: "Bielefeld HQ",
       capacity: 20,
       ownerId,
@@ -175,7 +183,7 @@ function buildMockEventList() {
       visibility: "internal",
       status: "planned",
       startAt: inDays(45),
-      endAt: inDays(45),
+      endAt: addHours(inDays(45), 6),
       location: "Heidewald",
       capacity: 150,
       ownerId,
@@ -205,7 +213,7 @@ function buildMockEventList() {
       visibility: "internal",
       status: "open",
       startAt: inDays(14),
-      endAt: inDays(14),
+      endAt: addHours(inDays(14), 8),
       location: "Bielefeld HQ",
       capacity: 12,
       ownerId,
@@ -220,7 +228,7 @@ function buildMockEventList() {
       visibility: "internal",
       status: "open",
       startAt: inDays(21),
-      endAt: inDays(21),
+      endAt: addHours(inDays(21), 3),
       location: "Padelhaus Bielefeld",
       capacity: 24,
       ownerId,
@@ -235,7 +243,7 @@ function buildMockEventList() {
       visibility: "internal",
       status: "planned",
       startAt: inDays(28),
-      endAt: inDays(28),
+      endAt: addHours(inDays(28), 2),
       location: "Online",
       capacity: 80,
       ownerId,
@@ -250,7 +258,7 @@ function buildMockEventList() {
       visibility: "internal",
       status: "draft",
       startAt: inDays(60),
-      endAt: inDays(60),
+      endAt: addHours(inDays(60), 4),
       location: "Brauerei Joh. Albrecht",
       capacity: 18,
       ownerId,
@@ -330,7 +338,11 @@ eventRoutes.post(
         startAt: new Date(input.startAt).toISOString(),
         endAt: new Date(input.endAt).toISOString(),
         location: input.location,
+        locationDetails: input.locationDetails,
         capacity: input.capacity,
+        registrationDeadline: input.registrationDeadline
+          ? new Date(input.registrationDeadline).toISOString()
+          : null,
         ownerId: actorId,
       });
       return c.json({ event }, 201);
@@ -345,6 +357,7 @@ eventRoutes.post(
         startAt: new Date(input.startAt),
         endAt: new Date(input.endAt),
         location: input.location,
+        locationDetails: input.locationDetails,
         capacity: input.capacity,
         ownerId: actorId,
       },
@@ -360,6 +373,8 @@ eventRoutes.get("/:id", async (c) => {
   if (!env.DATABASE_URL) {
     const now = new Date();
     const inDays = (d: number) => new Date(now.getTime() + d * 86400000).toISOString();
+    const addHours = (iso: string, h: number) =>
+      new Date(new Date(iso).getTime() + h * 3600000).toISOString();
     const mock: Record<string, ReturnType<typeof JSON.parse>> = {
       "evt-001": {
         id: "evt-001",
@@ -370,7 +385,7 @@ eventRoutes.get("/:id", async (c) => {
         visibility: "internal",
         status: "open",
         startAt: inDays(7),
-        endAt: inDays(7),
+        endAt: addHours(inDays(7), 3),
         location: "Bielefeld HQ",
         capacity: 20,
         ownerId: "550e8400-e29b-41d4-a716-446655440000",
@@ -386,7 +401,7 @@ eventRoutes.get("/:id", async (c) => {
         visibility: "internal",
         status: "planned",
         startAt: inDays(45),
-        endAt: inDays(45),
+        endAt: addHours(inDays(45), 6),
         location: "Heidewald",
         capacity: 150,
         ownerId: "550e8400-e29b-41d4-a716-446655440000",
@@ -418,7 +433,7 @@ eventRoutes.get("/:id", async (c) => {
         visibility: "internal",
         status: "open",
         startAt: inDays(14),
-        endAt: inDays(14),
+        endAt: addHours(inDays(14), 8),
         location: "Bielefeld HQ",
         capacity: 12,
         ownerId: "550e8400-e29b-41d4-a716-446655440000",
@@ -434,7 +449,7 @@ eventRoutes.get("/:id", async (c) => {
         visibility: "internal",
         status: "open",
         startAt: inDays(21),
-        endAt: inDays(21),
+        endAt: addHours(inDays(21), 3),
         location: "Padelhaus Bielefeld",
         capacity: 24,
         ownerId: "550e8400-e29b-41d4-a716-446655440000",
@@ -450,7 +465,7 @@ eventRoutes.get("/:id", async (c) => {
         visibility: "internal",
         status: "planned",
         startAt: inDays(28),
-        endAt: inDays(28),
+        endAt: addHours(inDays(28), 2),
         location: "Online",
         capacity: 80,
         ownerId: "550e8400-e29b-41d4-a716-446655440000",
@@ -466,7 +481,7 @@ eventRoutes.get("/:id", async (c) => {
         visibility: "internal",
         status: "draft",
         startAt: inDays(60),
-        endAt: inDays(60),
+        endAt: addHours(inDays(60), 4),
         location: "Brauerei Joh. Albrecht",
         capacity: 18,
         ownerId: "550e8400-e29b-41d4-a716-446655440000",

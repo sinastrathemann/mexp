@@ -31,8 +31,8 @@ export default function EventsListPage() {
           <div className="eyebrow">Events · {total.toString().padStart(2, "0")} aktiv</div>
           <h1 className="page-title">{t("events.listTitle")}</h1>
           <p className="page-subtitle">
-            mindsquare Events, Büro-, Feelgood-, Team-, Strategie-, Bereichsevents & Local
-            Experiences im Überblick
+            Alle Events im Überblick — Coworking, Bereichsevents, Teamevents, Feelgood-Formate und
+            mehr.
           </p>
         </div>
         {canCreate && (

@@ -257,7 +257,8 @@ export function EventEditModal({
 
           <div className="field">
             <label className="label" htmlFor="ee-loc-details">
-              Location-Details (Adresse, Parkmöglichkeiten, Besonderheiten)
+              Weitere Informationen / Besonderheiten (Parkplätze, Zugang, Ansprechpartner vor Ort
+              etc.)
             </label>
             <textarea
               id="ee-loc-details"
@@ -273,7 +274,7 @@ export function EventEditModal({
 
           <div className="field">
             <label className="label" htmlFor="ee-deadline">
-              Anmeldung schließen am (optional)
+              Anmeldung schließt am
             </label>
             <input
               id="ee-deadline"

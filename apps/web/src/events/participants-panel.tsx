@@ -162,6 +162,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
       <SelfActions
         registrationOpen={registrationOpen}
         eventStatus={event.status}
+        registrationDeadline={event.registrationDeadline ?? null}
         own={ownForSelfActions}
         registerPending={registerMut.isPending}
         withdrawPending={withdrawMut.isPending}
@@ -344,6 +345,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
 interface SelfActionsProps {
   registrationOpen: boolean;
   eventStatus: string;
+  registrationDeadline: string | null;
   own: ParticipationDto | undefined;
   registerPending: boolean;
   withdrawPending: boolean;
@@ -358,6 +360,7 @@ function SelfActions(props: SelfActionsProps) {
   const {
     registrationOpen,
     eventStatus,
+    registrationDeadline,
     own,
     registerPending,
     withdrawPending,
@@ -366,6 +369,10 @@ function SelfActions(props: SelfActionsProps) {
     onRegister,
     onWithdraw,
   } = props;
+
+  const deadlinePassed = registrationDeadline
+    ? new Date(registrationDeadline).getTime() < Date.now()
+    : false;
 
   const ownActive = own && (own.status === "registered" || own.status === "waitlisted");
 
@@ -406,6 +413,29 @@ function SelfActions(props: SelfActionsProps) {
       <p className="muted" style={{ marginTop: "var(--space-3)" }}>
         {t("participants.registrationClosed", { status: t(`events.status.${eventStatus}`) })}
       </p>
+    );
+  }
+
+  if (deadlinePassed) {
+    return (
+      <div style={{ marginTop: "var(--space-3)" }}>
+        <span className="badge badge-muted" style={{ marginBottom: 8, display: "inline-block" }}>
+          Anmeldung geschlossen
+        </span>
+        <div>
+          <button
+            type="button"
+            disabled
+            className="btn btn-primary"
+            title="Die Anmeldefrist für dieses Event ist abgelaufen."
+          >
+            {t("participants.register")}
+          </button>
+        </div>
+        <p className="muted" style={{ marginTop: 8 }}>
+          Die Anmeldefrist ist abgelaufen — eine Anmeldung ist nicht mehr möglich.
+        </p>
+      </div>
     );
   }
 

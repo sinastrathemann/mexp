@@ -33,7 +33,8 @@ export function DocumentsPanel({ event }: DocumentsPanelProps) {
   const { hasRole } = useAuth();
   const qc = useQueryClient();
   const canWrite = hasRole("admin", "manager", "event_office", "werkstudent");
-  const canDelete = hasRole("admin", "manager");
+  // Löschen nur Admin (Sina's Regel: Anlegen/Bearbeiten dürfen mehr Rollen, Löschen nicht).
+  const canDelete = hasRole("admin");
   const [form, setForm] = useState<FormState>(initialForm);
   const [showForm, setShowForm] = useState(false);
 

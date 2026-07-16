@@ -24,7 +24,8 @@ const createSchema = z.object({
 });
 
 const WRITE_ROLES = ["admin", "manager", "event_office", "werkstudent"] as const;
-const DELETE_ROLES = ["admin", "manager"] as const;
+// Löschen nur Admin (Sina's Regel: Anlegen/Bearbeiten dürfen mehr Rollen, Löschen nicht).
+const DELETE_ROLES = ["admin"] as const;
 
 // Dev-Mode (file-store — Design-Spec §3.4): Store für Dokumenten-Metadaten.
 // Persistiert in apps/api/data/documents.json — kein echter Datei-Upload im

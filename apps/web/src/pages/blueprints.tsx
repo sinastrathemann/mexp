@@ -41,6 +41,8 @@ export default function BlueprintsPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const canWrite = hasRole("admin", "manager", "event_office");
+  // Löschen nur Admin (Sina's Regel: Anlegen/Anwenden dürfen mehr Rollen, Löschen nicht).
+  const canDelete = hasRole("admin");
   const [form, setForm] = useState<CreateFormState>(initialCreate);
   const [showForm, setShowForm] = useState(false);
   const [applyFor, setApplyFor] = useState<string | null>(null);
@@ -296,30 +298,34 @@ export default function BlueprintsPage() {
                   <td>{bp.defaultCapacity ?? "—"}</td>
                   <td>{bp.defaultLocation ?? "—"}</td>
                   <td>
-                    {canWrite && (
+                    {(canWrite || canDelete) && (
                       <div className="row" style={{ gap: "var(--space-2)" }}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setApplyFor(bp.id);
-                            setApplyTitle(bp.name);
-                            setApplyStart("");
-                          }}
-                          className="btn btn-primary btn-sm"
-                        >
-                          {t("blueprints.apply")}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (window.confirm(t("blueprints.confirmDelete") ?? "Delete?")) {
-                              deleteMut.mutate(bp.id);
-                            }
-                          }}
-                          className="btn btn-ghost btn-sm"
-                        >
-                          {t("blueprints.delete")}
-                        </button>
+                        {canWrite && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setApplyFor(bp.id);
+                              setApplyTitle(bp.name);
+                              setApplyStart("");
+                            }}
+                            className="btn btn-primary btn-sm"
+                          >
+                            {t("blueprints.apply")}
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm(t("blueprints.confirmDelete") ?? "Delete?")) {
+                                deleteMut.mutate(bp.id);
+                              }
+                            }}
+                            className="btn btn-ghost btn-sm"
+                          >
+                            {t("blueprints.delete")}
+                          </button>
+                        )}
                       </div>
                     )}
                   </td>
