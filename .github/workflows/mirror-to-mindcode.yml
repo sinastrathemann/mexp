@@ -1,0 +1,30 @@
+name: Mirror to mindcode
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["**"]
+  workflow_dispatch:
+
+concurrency:
+  group: mirror-mindcode-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push refs to mindcode
+        env:
+          MINDCODE_USER: sina.strathemann
+          MINDCODE_TOKEN: ${{ secrets.MINDCODE_TOKEN }}
+        run: |
+          git remote add mindcode "https://${MINDCODE_USER}:${MINDCODE_TOKEN}@mindcode.mindsquare.de/sina.strathemann/mexp.git"
+          # Push all branches and tags; force-with-lease to avoid clobbering unknown remote updates
+          git push mindcode --all --force-with-lease
+          git push mindcode --tags --force
