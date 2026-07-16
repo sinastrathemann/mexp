@@ -12,9 +12,7 @@ const attrString = z.object({ value: z.string().nullable() }).transform((v) => v
 // WICHTIG: `name` ist bei Personio hier ein PLAIN STRING (nicht `{value: string}`).
 const attrNested = z
   .object({
-    value: z
-      .object({ attributes: z.object({ name: z.string().nullable() }) })
-      .nullable(),
+    value: z.object({ attributes: z.object({ name: z.string().nullable() }) }).nullable(),
   })
   .transform((v) => (v.value ? v.value.attributes.name : null));
 
