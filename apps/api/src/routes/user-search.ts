@@ -64,3 +64,20 @@ userSearchRoutes.get("/search", requireMexpRole(...WRITE_ROLES), (c) => {
 
   return c.json({ users: results.slice(0, limit) });
 });
+
+// GET /api/users/facets → eindeutige Teams + Departments aus mexpUserStore (Personio-Sync),
+// für die audienceScope-Dropdowns "Nur bestimmte Teams" / "Nur bestimmte Bereiche" bei
+// Event-Anlegen/-Bearbeiten (siehe events.ts). Deaktivierte User werden übersprungen.
+userSearchRoutes.get("/facets", requireMexpRole(...WRITE_ROLES), (c) => {
+  const teams = new Set<string>();
+  const departments = new Set<string>();
+  for (const u of mexpUserStore.values()) {
+    if (u.isActive === false) continue;
+    if (u.team) teams.add(u.team);
+    if (u.department) departments.add(u.department);
+  }
+  return c.json({
+    teams: [...teams].sort((a, b) => a.localeCompare(b, "de")),
+    departments: [...departments].sort((a, b) => a.localeCompare(b, "de")),
+  });
+});

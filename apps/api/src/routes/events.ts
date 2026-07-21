@@ -26,7 +26,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { events, audit, env, participations } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
-import { requireMexpRole, resolveMexpRoles } from "./_user-resolution.js";
+import { mexpUserStore, requireMexpRole, resolveMexpRoles } from "./_user-resolution.js";
 import {
   devAnswerStore,
   devFormStore,
@@ -50,6 +50,11 @@ const createEventSchema = z.object({
   locationDetails: z.string().max(5000).nullable().default(null),
   capacity: z.number().int().positive().nullable().default(null),
   registrationDeadline: isoDateSchema.nullable().optional(),
+  audienceScope: z.enum(["all", "roles", "emails", "teams", "departments"]).default("all"),
+  audienceRoles: z.array(z.string().max(64)).max(20).default([]),
+  audienceEmails: z.array(z.string().email()).max(200).default([]),
+  audienceTeams: z.array(z.string().max(200)).max(100).default([]),
+  audienceDepartments: z.array(z.string().max(200)).max(100).default([]),
 });
 
 const updateEventSchema = z
@@ -64,9 +69,11 @@ const updateEventSchema = z
     locationDetails: z.string().max(5000).nullable().optional(),
     capacity: z.number().int().positive().nullable().optional(),
     registrationDeadline: isoDateSchema.nullable().optional(),
-    audienceScope: z.enum(["all", "roles", "emails"]).optional(),
+    audienceScope: z.enum(["all", "roles", "emails", "teams", "departments"]).optional(),
     audienceRoles: z.array(z.string().max(64)).max(20).optional(),
     audienceEmails: z.array(z.string().email()).max(200).optional(),
+    audienceTeams: z.array(z.string().max(200)).max(100).optional(),
+    audienceDepartments: z.array(z.string().max(200)).max(100).optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "Mindestens ein Feld muss gesetzt sein" });
 
@@ -124,6 +131,11 @@ export interface DevEventCreateInput {
   capacity: number | null;
   registrationDeadline?: string | null;
   ownerId: string;
+  audienceScope?: string;
+  audienceRoles?: string[];
+  audienceEmails?: string[];
+  audienceTeams?: string[];
+  audienceDepartments?: string[];
 }
 
 // Exportiert für Wiederverwendung durch blueprints.ts (Blueprint → Event im Dev-Mode).
@@ -146,6 +158,11 @@ export function createDevEvent(input: DevEventCreateInput): DevEventRecord {
     capacity: input.capacity,
     registrationDeadline: input.registrationDeadline ?? null,
     ownerId: input.ownerId,
+    audienceScope: input.audienceScope ?? "all",
+    audienceRoles: input.audienceRoles ?? [],
+    audienceEmails: input.audienceEmails ?? [],
+    audienceTeams: input.audienceTeams ?? [],
+    audienceDepartments: input.audienceDepartments ?? [],
     createdAt: now,
     updatedAt: now,
   };
@@ -307,6 +324,19 @@ eventRoutes.get("/", zValidator("query", listQuerySchema), async (c) => {
           ).map((s) => s.toLowerCase());
           return allowed.includes(userEmail);
         }
+        if (scope === "teams") {
+          const allowed = (e as unknown as { audienceTeams?: string[] }).audienceTeams ?? [];
+          const currentUser = mexpUserStore.get(user.id);
+          const userTeam = currentUser?.team;
+          return userTeam !== undefined && userTeam !== null && allowed.includes(userTeam);
+        }
+        if (scope === "departments") {
+          const allowed =
+            (e as unknown as { audienceDepartments?: string[] }).audienceDepartments ?? [];
+          const currentUser = mexpUserStore.get(user.id);
+          const userDept = currentUser?.department;
+          return userDept !== undefined && userDept !== null && allowed.includes(userDept);
+        }
         return true;
       });
     return c.json({ events });
@@ -344,6 +374,11 @@ eventRoutes.post(
           ? new Date(input.registrationDeadline).toISOString()
           : null,
         ownerId: actorId,
+        audienceScope: input.audienceScope,
+        audienceRoles: input.audienceRoles,
+        audienceEmails: input.audienceEmails,
+        audienceTeams: input.audienceTeams,
+        audienceDepartments: input.audienceDepartments,
       });
       return c.json({ event }, 201);
     }
@@ -532,6 +567,9 @@ eventRoutes.patch(
       if (input.audienceScope !== undefined) next.audienceScope = input.audienceScope;
       if (input.audienceRoles !== undefined) next.audienceRoles = input.audienceRoles;
       if (input.audienceEmails !== undefined) next.audienceEmails = input.audienceEmails;
+      if (input.audienceTeams !== undefined) next.audienceTeams = input.audienceTeams;
+      if (input.audienceDepartments !== undefined)
+        next.audienceDepartments = input.audienceDepartments;
       next.updatedAt = new Date().toISOString();
       devEventOverrideStore.set(id, next);
 
@@ -767,46 +805,13 @@ function applyParticipationOverride(p: DevParticipantRecord): DevParticipantReco
   return { ...p, ...ov };
 }
 
-function buildStaticParticipants(eventId: string): DevParticipantRecord[] {
-  const now = new Date();
-  return [
-    {
-      id: "p-001",
-      eventId,
-      userId: "u-001",
-      userDisplayName: "Anna Becker",
-      userEmail: "anna.becker@mindsquare.de",
-      status: "registered",
-      waitlistPosition: null,
-      registeredAt: new Date(now.getTime() - 3 * 86400000).toISOString(),
-      checkedInAt: null,
-      cancelledAt: null,
-    },
-    {
-      id: "p-002",
-      eventId,
-      userId: "u-002",
-      userDisplayName: "Tim Hartmann",
-      userEmail: "tim.hartmann@mindsquare.de",
-      status: "attended",
-      waitlistPosition: null,
-      registeredAt: new Date(now.getTime() - 5 * 86400000).toISOString(),
-      checkedInAt: new Date(now.getTime() - 1 * 3600000).toISOString(),
-      cancelledAt: null,
-    },
-    {
-      id: "p-003",
-      eventId,
-      userId: "u-003",
-      userDisplayName: "Lara Weber",
-      userEmail: "lara.weber@mindsquare.de",
-      status: "waitlisted",
-      waitlistPosition: 1,
-      registeredAt: new Date(now.getTime() - 1 * 86400000).toISOString(),
-      checkedInAt: null,
-      cancelledAt: null,
-    },
-  ];
+function buildStaticParticipants(_eventId: string): DevParticipantRecord[] {
+  // Nicht mehr verwendet: Sina hat die statischen Testkandidaten (Anna Becker,
+  // Tim Hartmann, Lara Weber) für den Pilot entfernt — echte Teilnehmer werden
+  // per POST /api/events/:id/register aus dem Personio-synced User-Store
+  // angemeldet. Funktion bleibt leerer Platzhalter falls jemand außerhalb noch
+  // darauf verweist.
+  return [];
 }
 
 // Statische Mock-Teilnehmer:innen + Live-Anmeldungen für ein Event, mit Overrides
@@ -1009,7 +1014,10 @@ eventRoutes.post("/:id/register", async (c) => {
     const participationId = `p-${actorId.slice(0, 8)}`;
     devAnswerStore.set(participationId, answers);
 
-    // Display-Name aus bekannten Dev-Usern auflösen
+    // Display-Name aus Personio-synced User-Store auflösen (falls verfügbar),
+    // sonst aus dem Hub-User-Header, sonst Fallback auf hardcoded Dev-Users.
+    const hubUser = getHubUser(c);
+    const mexpUser = mexpUserStore.get(actorId);
     const DEV_NAMES: Record<string, { name: string; email: string }> = {
       "550e8400-e29b-41d4-a716-446655440000": {
         name: "Sina (Dev)",
@@ -1020,7 +1028,11 @@ eventRoutes.post("/:id/register", async (c) => {
         email: "max.mustermann@mindsquare.de",
       },
     };
-    const profile = DEV_NAMES[actorId] ?? { name: "Unbekannt", email: "—" };
+    const profile = mexpUser
+      ? { name: mexpUser.displayName ?? actorId, email: mexpUser.email ?? "—" }
+      : hubUser.name
+        ? { name: hubUser.name, email: hubUser.email ?? "—" }
+        : (DEV_NAMES[actorId] ?? { name: "Unbekannt", email: "—" });
     const registeredAt = new Date().toISOString();
 
     // Live-Eintrag in den Participant-Store (Duplikate vermeiden)

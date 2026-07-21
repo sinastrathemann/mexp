@@ -90,6 +90,17 @@ export default function EventDetailPage() {
           <div className="row" style={{ marginTop: "var(--space-2)" }}>
             <EventStatusBadge status={event.status} />
             <span className="badge badge-muted">{t(`events.visibility.${event.visibility}`)}</span>
+            {event.audienceScope === "teams" && (event.audienceTeams?.length ?? 0) > 0 && (
+              <span className="badge badge-muted">
+                Zielgruppe: {(event.audienceTeams ?? []).join(", ")}
+              </span>
+            )}
+            {event.audienceScope === "departments" &&
+              (event.audienceDepartments?.length ?? 0) > 0 && (
+                <span className="badge badge-muted">
+                  Zielgruppe: {(event.audienceDepartments ?? []).join(", ")}
+                </span>
+              )}
           </div>
         </div>
         <div className="row" style={{ gap: 8 }}>

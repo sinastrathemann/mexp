@@ -38,9 +38,11 @@ export interface EventDto {
   // Anmeldung wird automatisch geschlossen ab diesem Datum
   registrationDeadline?: string | null;
   // Sichtbarkeits-Filter
-  audienceScope?: "all" | "roles" | "emails";
+  audienceScope?: "all" | "roles" | "emails" | "teams" | "departments";
   audienceRoles?: string[];
   audienceEmails?: string[];
+  audienceTeams?: string[];
+  audienceDepartments?: string[];
   ownerId: string;
   createdAt: string;
   updatedAt: string;
@@ -87,6 +89,13 @@ export interface ParticipantDto extends ParticipationDto {
   userEmail: string;
   userDisplayName: string;
   answers?: RegistrationAnswer[];
+}
+
+// Antwort von GET /api/users/facets — eindeutige Teams + Departments für die
+// audienceScope-Auswahl "teams"/"departments" (siehe event-edit-modal.tsx, event-create.tsx).
+export interface UserFacetsDto {
+  teams: string[];
+  departments: string[];
 }
 
 // Ergebnis-Eintrag der Live-User-Suche (GET /api/users/search) — für den

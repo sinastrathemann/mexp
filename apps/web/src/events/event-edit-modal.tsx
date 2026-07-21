@@ -1,11 +1,15 @@
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { apiFetch } from "../api/client";
 import {
   EVENT_TYPES,
   EVENT_VISIBILITIES,
   type EventDto,
   type EventType,
   type EventVisibility,
+  type UserFacetsDto,
 } from "./types";
 
 interface Props {
@@ -26,9 +30,11 @@ interface Props {
     locationDetails?: string | null;
     capacity?: number | null;
     registrationDeadline?: string | null;
-    audienceScope?: "all" | "roles" | "emails";
+    audienceScope?: "all" | "roles" | "emails" | "teams" | "departments";
     audienceRoles?: string[];
     audienceEmails?: string[];
+    audienceTeams?: string[];
+    audienceDepartments?: string[];
   }) => void;
   onDelete?: () => void;
 }
@@ -69,13 +75,23 @@ export function EventEditModal({
   const [registrationDeadline, setRegistrationDeadline] = useState(
     event.registrationDeadline ? toLocalInput(event.registrationDeadline) : "",
   );
-  const [audienceScope, setAudienceScope] = useState<"all" | "roles" | "emails">(
-    event.audienceScope ?? "all",
-  );
+  const [audienceScope, setAudienceScope] = useState<
+    "all" | "roles" | "emails" | "teams" | "departments"
+  >(event.audienceScope ?? "all");
   const [audienceRoles, setAudienceRoles] = useState<string[]>(event.audienceRoles ?? []);
   const [audienceEmailsRaw, setAudienceEmailsRaw] = useState<string>(
     (event.audienceEmails ?? []).join(", "),
   );
+  const [audienceTeams, setAudienceTeams] = useState<string[]>(event.audienceTeams ?? []);
+  const [audienceDepartments, setAudienceDepartments] = useState<string[]>(
+    event.audienceDepartments ?? [],
+  );
+
+  const facets = useQuery({
+    queryKey: ["users", "facets"],
+    queryFn: () => apiFetch<UserFacetsDto>("/users/facets"),
+    enabled: audienceScope === "teams" || audienceScope === "departments",
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,12 +114,41 @@ export function EventEditModal({
       audienceScope,
       audienceRoles: audienceScope === "roles" ? audienceRoles : [],
       audienceEmails: audienceScope === "emails" ? emails : [],
+      audienceTeams: audienceScope === "teams" ? audienceTeams : [],
+      audienceDepartments: audienceScope === "departments" ? audienceDepartments : [],
     });
   };
 
-  return (
-    <div className="modal-backdrop">
-      <div className="modal" style={{ maxWidth: 640 }}>
+  return createPortal(
+    <div
+      className="modal-backdrop"
+      style={{
+        position: "fixed",
+        inset: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "rgba(10, 10, 10, 0.55)",
+        backdropFilter: "blur(4px)",
+        zIndex: 9999,
+        padding: 24,
+        overflow: "auto",
+      }}
+    >
+      <div
+        className="modal"
+        style={{
+          maxWidth: 640,
+          width: "100%",
+          maxHeight: "90vh",
+          overflow: "auto",
+          background: "#ffffff",
+          borderRadius: 12,
+          padding: 32,
+          boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
+          position: "relative",
+        }}
+      >
         <div className="card-header" style={{ marginBottom: "var(--space-2)" }}>
           <div>
             <div className="eyebrow">Bearbeiten</div>
@@ -318,6 +363,8 @@ export function EventEditModal({
                   ["all", "Alle Mitarbeiter"],
                   ["roles", "Nur bestimmte Rollen"],
                   ["emails", "Nur bestimmte Personen"],
+                  ["teams", "Nur bestimmte Teams"],
+                  ["departments", "Nur bestimmte Bereiche"],
                 ] as const
               ).map(([key, label]) => (
                 <button
@@ -388,6 +435,90 @@ export function EventEditModal({
                 </p>
               </div>
             )}
+
+            {audienceScope === "teams" && (
+              <div className="field" style={{ margin: "var(--space-3) 0 0" }}>
+                <label className="label" htmlFor="ee-aud-teams">
+                  Sichtbar für Teams
+                </label>
+                {facets.isLoading && <p className="muted text-sm">Lade Teams…</p>}
+                {facets.error instanceof Error && (
+                  <p className="help-text">{facets.error.message}</p>
+                )}
+                <div
+                  id="ee-aud-teams"
+                  style={{
+                    maxHeight: 220,
+                    overflow: "auto",
+                    border: "1px solid var(--border-default)",
+                    borderRadius: "var(--radius-md)",
+                    padding: "var(--space-2) var(--space-3)",
+                  }}
+                >
+                  {facets.data?.teams.map((team) => (
+                    <label key={team} style={{ display: "block", padding: "2px 0" }}>
+                      <input
+                        type="checkbox"
+                        checked={audienceTeams.includes(team)}
+                        onChange={(e) => {
+                          if (e.target.checked) setAudienceTeams((cur) => [...cur, team]);
+                          else setAudienceTeams((cur) => cur.filter((t) => t !== team));
+                        }}
+                      />{" "}
+                      {team}
+                    </label>
+                  ))}
+                  {facets.data && facets.data.teams.length === 0 && (
+                    <p className="muted text-sm">Keine Teams gefunden.</p>
+                  )}
+                </div>
+                <p className="help-text">
+                  Nur Mitglieder dieser Teams (aus dem Personio-Sync) sehen das Event.
+                </p>
+              </div>
+            )}
+
+            {audienceScope === "departments" && (
+              <div className="field" style={{ margin: "var(--space-3) 0 0" }}>
+                <label className="label" htmlFor="ee-aud-departments">
+                  Sichtbar für Bereiche
+                </label>
+                {facets.isLoading && <p className="muted text-sm">Lade Bereiche…</p>}
+                {facets.error instanceof Error && (
+                  <p className="help-text">{facets.error.message}</p>
+                )}
+                <div
+                  id="ee-aud-departments"
+                  style={{
+                    maxHeight: 220,
+                    overflow: "auto",
+                    border: "1px solid var(--border-default)",
+                    borderRadius: "var(--radius-md)",
+                    padding: "var(--space-2) var(--space-3)",
+                  }}
+                >
+                  {facets.data?.departments.map((dept) => (
+                    <label key={dept} style={{ display: "block", padding: "2px 0" }}>
+                      <input
+                        type="checkbox"
+                        checked={audienceDepartments.includes(dept)}
+                        onChange={(e) => {
+                          if (e.target.checked) setAudienceDepartments((cur) => [...cur, dept]);
+                          else setAudienceDepartments((cur) => cur.filter((d) => d !== dept));
+                        }}
+                      />{" "}
+                      {dept}
+                    </label>
+                  ))}
+                  {facets.data && facets.data.departments.length === 0 && (
+                    <p className="muted text-sm">Keine Bereiche gefunden.</p>
+                  )}
+                </div>
+                <p className="help-text">
+                  Nur Mitglieder dieser Bereiche (aus dem Personio-Sync) sehen das Event.
+                </p>
+              </div>
+            )}
           </fieldset>
 
           {error && (
@@ -436,6 +567,7 @@ export function EventEditModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
