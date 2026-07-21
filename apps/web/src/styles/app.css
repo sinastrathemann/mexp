@@ -1169,6 +1169,19 @@ legend {
   color: var(--fg-strong);
 }
 
+/* Zwei-Spalten-Variante für Bar-Listen mit vielen Einträgen (z.B. Reports:
+   Events nach Team, wenn >6 Teams) — vermeidet lange Einzel-Scroll-Listen. */
+.bento-bars.bar-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2) var(--space-6);
+}
+@media (max-width: 640px) {
+  .bento-bars.bar-grid-2col {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════
    EVENT CARD GRID
    ═══════════════════════════════════════════════════════════════ */

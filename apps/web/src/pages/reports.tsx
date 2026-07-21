@@ -1,33 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import { apiFetch } from "../api/client";
 
-interface MonthBucket {
+interface ReportSummary {
   totalEvents: number;
-  byType: Record<string, number>;
-  byLocation: Record<string, number>;
-  participantsRegistered: number;
-  participantsAttended: number;
-  participantsNoShow: number;
-  totalCapacity: number;
-  avgUtilization: number | null;
-  attendanceRate: number | null;
-  noShowRate: number | null;
-  biggestEvent: { id: string; title: string; count: number } | null;
-  topLocations: { location: string; count: number }[];
-  totalPlannedCents: number;
-  totalNetCents: number;
-  byTypeNetCents: Record<string, number>;
-  byTypePlannedCents: Record<string, number>;
-  costPerPersonCents: number | null;
-  topEventsByCost: { id: string; title: string; eventType: string; netCents: number }[];
-}
-
-interface MonthlyReport {
-  period: { year: number; month: number; label: string };
-  previousPeriod: { year: number; month: number; label: string };
-  current: MonthBucket;
-  previous: MonthBucket;
+  eventsByType: Record<string, number>;
+  eventsByStatus: Record<string, number>;
+  totalParticipations: number;
+  totalCheckedIn: number;
+  totalWaitlisted: number;
+  avgParticipantsPerEvent: number;
+  topEventTypes: Array<{ type: string; count: number }>;
+  eventsByDepartment: Record<string, number>;
+  eventsByTeam: Record<string, number>;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -40,20 +24,26 @@ const TYPE_LABELS: Record<string, string> = {
   local_experience: "Local Experience",
 };
 
-export default function ReportsPage() {
-  const today = new Date();
-  const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth() + 1);
+const TYPE_FILL: Record<string, string> = {
+  mindsquare: "fill-cobalt",
+  office: "fill-yellow",
+  feelgood: "fill-lime",
+  team: "fill-orange",
+  strategy: "fill-cobalt",
+  division: "fill-orange",
+  local_experience: "fill-yellow",
+};
 
+export default function ReportsPage() {
   const reportQ = useQuery({
-    queryKey: ["reports", "monthly", year, month],
-    queryFn: () => apiFetch<MonthlyReport>(`/reports/monthly?year=${year}&month=${month}`),
+    queryKey: ["reports", "summary"],
+    queryFn: () => apiFetch<ReportSummary>("/reports/summary"),
   });
 
   const data = reportQ.data;
 
-  const handleCsv = () => {
-    window.open(`/api/reports/monthly.csv?year=${year}&month=${month}`, "_blank");
+  const downloadCsv = (which: "events" | "participants") => {
+    window.open(`/api/reports/${which}.csv`, "_blank");
   };
 
   return (
@@ -61,32 +51,19 @@ export default function ReportsPage() {
       <div className="page-header">
         <div>
           <div className="eyebrow">Reports · Geschäftsführung</div>
-          <h1 className="page-title">Monats-Reporting</h1>
-          <p className="page-subtitle">
-            Kennzahlen pro Monat — Events, Teilnehmer, Auslastung. Vergleich zum Vormonat.
-          </p>
+          <h1 className="page-title">📊 Reports</h1>
+          <p className="page-subtitle">Portfolio, Teilnehmerentwicklung, KPIs</p>
         </div>
         <div className="row" style={{ gap: 8, alignItems: "flex-end" }}>
-          <div className="field" style={{ margin: 0 }}>
-            <label className="label" htmlFor="rep-month">
-              Monat
-            </label>
-            <input
-              id="rep-month"
-              className="input"
-              type="month"
-              value={`${year}-${String(month).padStart(2, "0")}`}
-              onChange={(e) => {
-                const [y, m] = e.target.value.split("-");
-                if (y && m) {
-                  setYear(Number.parseInt(y, 10));
-                  setMonth(Number.parseInt(m, 10));
-                }
-              }}
-            />
-          </div>
-          <button type="button" className="btn btn-outline" onClick={handleCsv}>
-            ⬇ CSV-Export
+          <button type="button" className="btn btn-outline" onClick={() => downloadCsv("events")}>
+            ⬇ Events (CSV)
+          </button>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={() => downloadCsv("participants")}
+          >
+            ⬇ Teilnahmen (CSV)
           </button>
         </div>
       </div>
@@ -96,286 +73,184 @@ export default function ReportsPage() {
         <div className="alert alert-error">{reportQ.error.message}</div>
       )}
 
-      {data && (
+      {data && data.totalEvents === 0 && (
+        <div className="card" style={{ textAlign: "center", padding: "var(--space-10)" }}>
+          <div style={{ fontSize: "2.5rem", marginBottom: "var(--space-3)" }}>🗒️</div>
+          <h3 style={{ margin: 0 }}>Noch keine Events erfasst</h3>
+          <p className="muted" style={{ marginTop: "var(--space-2)" }}>
+            Sobald Events angelegt und Teilnehmer registriert sind, erscheinen hier Kennzahlen und
+            Charts.
+          </p>
+        </div>
+      )}
+
+      {data && data.totalEvents > 0 && (
         <>
-          <div className="eyebrow" style={{ marginBottom: "var(--space-4)" }}>
-            {data.period.label} <span style={{ color: "var(--fg-subtle)" }}> · vs. </span>
-            {data.previousPeriod.label}
-          </div>
-
-          {/* KPI-Bento */}
-          <section className="bento">
-            <Kpi
-              tone="ink"
-              span={5}
-              row={2}
-              label="Events gesamt"
-              value={data.current.totalEvents}
-              previous={data.previous.totalEvents}
-              size="hero"
-            />
-            <Kpi
-              tone="orange"
-              span={4}
-              label="Anmeldungen"
-              value={data.current.participantsRegistered}
-              previous={data.previous.participantsRegistered}
-            />
-            <Kpi
-              tone="yellow"
-              span={3}
-              label="Anwesend"
-              value={data.current.participantsAttended}
-              previous={data.previous.participantsAttended}
-            />
-            <Kpi
-              span={4}
-              label="Auslastung"
-              value={pct(data.current.avgUtilization)}
-              previous={pct(data.previous.avgUtilization)}
-              numeric={false}
-            />
-            <Kpi
-              span={3}
-              label="Teilnahme-Quote"
-              value={pct(data.current.attendanceRate)}
-              previous={pct(data.previous.attendanceRate)}
-              numeric={false}
-            />
-
-            {/* Eventtyp-Verteilung */}
-            <div className="bento-tile span-7">
-              <div className="bento-eyebrow">Eventtypen im Monat</div>
-              <h3 style={{ marginTop: "var(--space-2)", marginBottom: "var(--space-4)" }}>
-                Format-Mix
-              </h3>
-              {Object.keys(data.current.byType).length === 0 ? (
-                <p className="muted">Keine Events in diesem Monat.</p>
-              ) : (
-                <TypeBars byType={data.current.byType} />
-              )}
-            </div>
-
-            {/* Top Locations */}
-            <div className="bento-tile span-5">
-              <div className="bento-eyebrow">Top-Locations</div>
-              <h3 style={{ marginTop: "var(--space-2)", marginBottom: "var(--space-4)" }}>
-                Wo gefeiert wurde
-              </h3>
-              {data.current.topLocations.length === 0 ? (
-                <p className="muted">Keine Locations.</p>
-              ) : (
-                <ol style={{ margin: 0, paddingLeft: 18 }}>
-                  {data.current.topLocations.map((l) => (
-                    <li key={l.location} style={{ marginBottom: 6 }}>
-                      <span className="text-bold">{l.location}</span>{" "}
-                      <span className="muted text-sm">· {l.count}×</span>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </div>
-
-            {/* Biggest event */}
-            {data.current.biggestEvent && (
-              <div className="bento-tile tone-paper span-12">
-                <div className="bento-eyebrow">Größtes Event</div>
-                <h3 style={{ marginTop: "var(--space-2)" }}>{data.current.biggestEvent.title}</h3>
-                <p className="muted text-sm" style={{ margin: 0 }}>
-                  {data.current.biggestEvent.count} Teilnehmer (registriert + anwesend)
-                </p>
+          {/* ─── KPI-Kacheln ─────────────────────────────────── */}
+          <section className="bento" style={{ marginBottom: "var(--space-10)" }}>
+            <div className="bento-tile tone-ink span-3">
+              <div className="bento-decorative" />
+              <div className="bento-eyebrow">📅 Gesamt-Events</div>
+              <div className="bento-headline">{data.totalEvents}</div>
+              <div className="bento-sub">
+                Ø {data.avgParticipantsPerEvent.toFixed(1)} Teilnahmen / Event
               </div>
-            )}
+            </div>
+            <div className="bento-tile tone-orange span-3">
+              <div className="bento-eyebrow">👥 Registrierte Teilnahmen</div>
+              <div className="bento-headline">{data.totalParticipations}</div>
+              <div className="bento-sub">über alle Events</div>
+            </div>
+            <div className="bento-tile tone-yellow span-3">
+              <div className="bento-eyebrow">✓ Teilnahmen abgeschlossen</div>
+              <div className="bento-headline">{data.totalCheckedIn}</div>
+              <div className="bento-sub">eingecheckt</div>
+            </div>
+            <div className="bento-tile span-3">
+              <div className="bento-eyebrow">⏳ Wartelisten-Einträge</div>
+              <div className="bento-headline">{data.totalWaitlisted}</div>
+              <div className="bento-sub muted">wartend auf Nachrücken</div>
+            </div>
           </section>
 
-          {/* ─── Budget-Sektion ─────────────────────────────── */}
-          <div
-            className="eyebrow"
-            style={{ marginTop: "var(--space-10)", marginBottom: "var(--space-4)" }}
-          >
-            Budget · Ausgaben
+          {/* ─── Events nach Typ ─────────────────────────────── */}
+          <div className="card">
+            <div className="card-header">
+              <div>
+                <div className="eyebrow">Format-Mix</div>
+                <h3 className="card-title">Events nach Typ</h3>
+              </div>
+              <span className="badge badge-outline">
+                {Object.keys(data.eventsByType).length} Typen
+              </span>
+            </div>
+            <BarList entries={data.eventsByType} labels={TYPE_LABELS} fills={TYPE_FILL} />
           </div>
-          <section className="bento">
-            <Kpi
-              tone="orange"
-              span={4}
-              label="Σ Netto-Ist"
-              value={fmtMoney(data.current.totalNetCents)}
-              previous={fmtMoney(data.previous.totalNetCents)}
-              numeric={false}
-            />
-            <Kpi
-              tone="ink"
-              span={4}
-              label="Σ Geplant"
-              value={fmtMoney(data.current.totalPlannedCents)}
-              previous={fmtMoney(data.previous.totalPlannedCents)}
-              numeric={false}
-            />
-            <Kpi
-              tone="yellow"
-              span={4}
-              label="Netto / Person"
-              value={
-                data.current.costPerPersonCents !== null
-                  ? fmtMoney(data.current.costPerPersonCents)
-                  : "—"
-              }
-              previous={
-                data.previous.costPerPersonCents !== null
-                  ? fmtMoney(data.previous.costPerPersonCents)
-                  : "—"
-              }
-              numeric={false}
-            />
 
-            {/* Ausgaben pro Eventtyp */}
-            <div className="bento-tile span-7">
-              <div className="bento-eyebrow">Netto-Ausgaben nach Eventtyp</div>
-              <h3 style={{ marginTop: "var(--space-2)", marginBottom: "var(--space-4)" }}>
-                Wo geht das Geld hin
-              </h3>
-              {Object.keys(data.current.byTypeNetCents).length === 0 ||
-              Object.values(data.current.byTypeNetCents).every((v) => v === 0) ? (
-                <p className="muted">Noch keine Rechnungen erfasst.</p>
-              ) : (
-                <CostBars byTypeNetCents={data.current.byTypeNetCents} />
-              )}
+          {/* ─── Events nach Bereich ─────────────────────────── */}
+          <div className="card">
+            <div className="card-header">
+              <div>
+                <div className="eyebrow">Departments</div>
+                <h3 className="card-title">Events nach Bereich</h3>
+              </div>
+              <span className="badge badge-outline">
+                {Object.keys(data.eventsByDepartment).length} Bereiche
+              </span>
             </div>
+            <BarList
+              entries={data.eventsByDepartment}
+              fill="fill-cobalt"
+              twoCol={Object.keys(data.eventsByDepartment).length > 6}
+            />
+          </div>
 
-            {/* Top Events nach Kosten */}
-            <div className="bento-tile span-5">
-              <div className="bento-eyebrow">Teuerste Events</div>
-              <h3 style={{ marginTop: "var(--space-2)", marginBottom: "var(--space-4)" }}>
-                Top 5 nach Netto
-              </h3>
-              {data.current.topEventsByCost.length === 0 ? (
-                <p className="muted">Keine Daten.</p>
-              ) : (
-                <ol style={{ margin: 0, paddingLeft: 18 }}>
-                  {data.current.topEventsByCost.map((e) => (
-                    <li key={e.id} style={{ marginBottom: 8 }}>
-                      <div className="text-bold">{e.title}</div>
-                      <div className="muted text-xs">
-                        {TYPE_LABELS[e.eventType] ?? e.eventType} ·{" "}
-                        <span className="text-mono">{fmtMoney(e.netCents)}</span>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              )}
+          {/* ─── Events nach Team ────────────────────────────── */}
+          <div className="card">
+            <div className="card-header">
+              <div>
+                <div className="eyebrow">Teams</div>
+                <h3 className="card-title">Events nach Team</h3>
+              </div>
+              <span className="badge badge-outline">
+                {Object.keys(data.eventsByTeam).length} Teams
+              </span>
             </div>
-          </section>
+            <BarList
+              entries={data.eventsByTeam}
+              fill="fill-lime"
+              twoCol={Object.keys(data.eventsByTeam).length > 6}
+            />
+          </div>
+
+          {/* ─── Top-Event-Typen ─────────────────────────────── */}
+          <div className="card">
+            <div className="card-header">
+              <div>
+                <div className="eyebrow">Top 5</div>
+                <h3 className="card-title">Top-Event-Typen</h3>
+              </div>
+            </div>
+            {data.topEventTypes.length === 0 ? (
+              <p className="muted">Keine Daten.</p>
+            ) : (
+              <ol style={{ margin: 0, paddingLeft: 18 }}>
+                {data.topEventTypes.map((t) => (
+                  <li key={t.type} style={{ marginBottom: 8 }}>
+                    <span className="text-bold">{TYPE_LABELS[t.type] ?? t.type}</span>{" "}
+                    <span className="muted text-sm">
+                      · {t.count} Event{t.count === 1 ? "" : "s"}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+
+          {/* ─── CSV-Export ──────────────────────────────────── */}
+          <div className="card">
+            <div className="card-header">
+              <div>
+                <div className="eyebrow">Export</div>
+                <h3 className="card-title">CSV-Exporte</h3>
+              </div>
+            </div>
+            <p className="muted text-sm" style={{ marginTop: 0 }}>
+              Semikolon-getrennt, UTF-8 mit BOM — öffnet direkt korrekt in Excel (DE).
+            </p>
+            <div className="row" style={{ gap: 8, marginTop: "var(--space-4)" }}>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => downloadCsv("events")}
+              >
+                ⬇ events.csv — alle Events
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => downloadCsv("participants")}
+              >
+                ⬇ participants.csv — alle Teilnahmen
+              </button>
+            </div>
+          </div>
         </>
       )}
     </div>
   );
 }
 
-function pct(v: number | null): string {
-  return v === null ? "—" : `${Math.round(v * 100)}%`;
-}
-
-function fmtMoney(cents: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 0,
-  }).format(cents / 100);
-}
-
-function CostBars({ byTypeNetCents }: { byTypeNetCents: Record<string, number> }) {
-  const entries = Object.entries(byTypeNetCents)
-    .filter(([, v]) => v > 0)
-    .sort((a, b) => b[1] - a[1]);
-  const max = Math.max(1, ...entries.map(([, v]) => v));
-  return (
-    <div className="bento-bars">
-      {entries.map(([type, cents]) => {
-        const pctVal = (cents / max) * 100;
-        return (
-          <div key={type} className="bar-row">
-            <span className="bar-label">{TYPE_LABELS[type] ?? type}</span>
-            <span className="bar-track">
-              <span className="bar-fill fill-orange" style={{ width: `${Math.max(pctVal, 2)}%` }} />
-            </span>
-            <span className="bar-value">{fmtMoney(cents)}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function Kpi({
-  label,
-  value,
-  previous,
-  tone,
-  span = 3,
-  row,
-  size,
-  numeric = true,
+function BarList({
+  entries,
+  labels,
+  fills,
+  fill,
+  twoCol,
 }: {
-  label: string;
-  value: number | string;
-  previous: number | string;
-  tone?: "ink" | "orange" | "yellow";
-  span?: 3 | 4 | 5 | 6 | 7 | 8 | 12;
-  row?: 2;
-  size?: "hero";
-  numeric?: boolean;
+  entries: Record<string, number>;
+  labels?: Record<string, string>;
+  fills?: Record<string, string>;
+  fill?: string;
+  twoCol?: boolean;
 }) {
-  const toneClass = tone ? `tone-${tone}` : "";
-  const rowClass = row === 2 ? "row-2" : "";
-  const delta =
-    numeric && typeof value === "number" && typeof previous === "number" ? value - previous : null;
+  const list = Object.entries(entries).sort((a, b) => b[1] - a[1]);
+  if (list.length === 0) {
+    return <p className="muted">Keine Daten.</p>;
+  }
+  const max = Math.max(1, ...list.map(([, count]) => count));
   return (
-    <div className={`bento-tile ${toneClass} span-${span} ${rowClass}`}>
-      {tone === "ink" && <div className="bento-decorative" />}
-      <div className="bento-eyebrow">{label}</div>
-      <div
-        className={`bento-headline ${size === "hero" ? "" : "size-md"}`}
-        style={size === "hero" ? { fontSize: "clamp(4rem, 9vw, 7rem)" } : {}}
-      >
-        {value}
-      </div>
-      <div className="bento-sub" style={{ marginTop: "var(--space-3)" }}>
-        Vormonat: <span className="text-mono">{previous}</span>
-        {delta !== null && delta !== 0 && (
-          <span
-            style={{
-              marginLeft: 8,
-              fontFamily: "var(--font-mono)",
-              fontWeight: 700,
-              color:
-                tone === "ink" || tone === "orange"
-                  ? "var(--color-white)"
-                  : delta > 0
-                    ? "var(--brand-lime)"
-                    : "var(--brand-orange)",
-            }}
-          >
-            {delta > 0 ? "↑" : "↓"} {Math.abs(delta)}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function TypeBars({ byType }: { byType: Record<string, number> }) {
-  const max = Math.max(1, ...Object.values(byType));
-  const entries = Object.entries(byType).sort((a, b) => b[1] - a[1]);
-  return (
-    <div className="bento-bars">
-      {entries.map(([type, count]) => {
+    <div className={`bento-bars${twoCol ? " bar-grid-2col" : ""}`}>
+      {list.map(([key, count]) => {
         const pct = (count / max) * 100;
         return (
-          <div key={type} className="bar-row">
-            <span className="bar-label">{TYPE_LABELS[type] ?? type}</span>
+          <div key={key} className="bar-row">
+            <span className="bar-label">{labels?.[key] ?? key}</span>
             <span className="bar-track">
-              <span className="bar-fill fill-orange" style={{ width: `${Math.max(pct, 2)}%` }} />
+              <span
+                className={`bar-fill ${fills?.[key] ?? fill ?? "fill-orange"}`}
+                style={{ width: `${Math.max(pct, 2)}%` }}
+              />
             </span>
             <span className="bar-value">{count}</span>
           </div>
