@@ -403,6 +403,49 @@ eventRoutes.post(
   },
 );
 
+const bulkStatusSchema = z.object({
+  eventIds: z.array(z.string().min(1)).min(1).max(100),
+  status: eventStatusSchema,
+});
+
+// Portfolio-Verwaltung: mehrere Events auf einmal auf einen neuen Status setzen
+// (z.B. 18 OneNote-Import-Drafts gesammelt auf "planned"/"open" schalten).
+// Ändert ausschließlich den Status — keine Seiteneffekte auf andere Felder.
+eventRoutes.post(
+  "/bulk/status",
+  requireMexpRole(...WRITE_ROLES),
+  zValidator("json", bulkStatusSchema),
+  async (c) => {
+    const { eventIds, status } = c.req.valid("json");
+    const results: Array<{ id: string; ok: boolean; error?: string }> = [];
+
+    if (!env.DATABASE_URL) {
+      for (const id of eventIds) {
+        const evt = findDevBaseEvent(id);
+        if (!evt) {
+          results.push({ id, ok: false, error: "NOT_FOUND" });
+          continue;
+        }
+        const current = devEventOverrideStore.get(id) ?? {};
+        devEventOverrideStore.set(id, {
+          ...current,
+          status,
+          updatedAt: new Date().toISOString(),
+        });
+        results.push({ id, ok: true });
+      }
+      const ok = results.filter((r) => r.ok).length;
+      const failed = results.filter((r) => !r.ok).length;
+      return c.json({ ok: true, updated: ok, failed, results });
+    }
+
+    return c.json(
+      { error: { code: "NOT_IMPLEMENTED", message: "Bulk-Status nur im Dev-Mode verfügbar" } },
+      501,
+    );
+  },
+);
+
 eventRoutes.get("/:id", async (c) => {
   const id = c.req.param("id");
   if (!env.DATABASE_URL) {
@@ -592,6 +635,66 @@ eventRoutes.patch(
     if (input.capacity !== undefined) patch.capacity = input.capacity;
     const event = await updateEvent(id, patch, actorId, { events, audit });
     return c.json({ event });
+  },
+);
+
+const duplicateEventSchema = z.object({
+  // Optionale Overrides fürs Duplicate — meist nur Datum ändern
+  startAt: isoDateSchema.optional(),
+  endAt: isoDateSchema.optional(),
+  title: z.string().min(1).max(200).optional(),
+});
+
+// Event duplizieren — für wiederkehrende Coworking-Wochen, Bereichsevents etc.
+// Kopiert NICHT: Teilnehmer, Anmeldungen, Budget, Feedback, Deleted-Flag, ID, CreatedAt.
+// Neues Event startet immer als "draft" (macht createDevEvent automatisch).
+eventRoutes.post(
+  "/:id/duplicate",
+  requireMexpRole(...WRITE_ROLES),
+  zValidator("json", duplicateEventSchema),
+  async (c) => {
+    const sourceId = c.req.param("id");
+    const overrides = c.req.valid("json");
+    const actorId = getHubUser(c).id;
+
+    if (!env.DATABASE_URL) {
+      const source = findDevBaseEvent(sourceId);
+      if (!source) {
+        return c.json(
+          { error: { code: "NOT_FOUND", message: "Quell-Event nicht gefunden" } },
+          404,
+        );
+      }
+      // Quell-Event + Overrides mergen (kein Deleted-Flag/ID/CreatedAt übernehmen)
+      const merged = applyOverride(source) as Record<string, unknown>;
+      const startAt = overrides.startAt
+        ? new Date(overrides.startAt).toISOString()
+        : (merged.startAt as string);
+      const endAt = overrides.endAt
+        ? new Date(overrides.endAt).toISOString()
+        : (merged.endAt as string);
+      const title = overrides.title ?? `${merged.title as string} (Kopie)`;
+      const event = createDevEvent({
+        title,
+        description: (merged.description as string) ?? "",
+        eventType: (merged.eventType as string) ?? "team",
+        visibility: (merged.visibility as string) ?? "internal",
+        startAt,
+        endAt,
+        location: (merged.location as string | null) ?? null,
+        locationDetails: (merged.locationDetails as string | null | undefined) ?? null,
+        capacity: (merged.capacity as number | null) ?? null,
+        registrationDeadline: (merged.registrationDeadline as string | null | undefined) ?? null,
+        ownerId: actorId,
+      });
+      return c.json({ event }, 201);
+    }
+
+    // Postgres-Pfad: aus getEvent() + createEvent() zusammenbauen — im MVP nicht kritisch
+    return c.json(
+      { error: { code: "NOT_IMPLEMENTED", message: "Duplizieren nur im Dev-Mode verfügbar" } },
+      501,
+    );
   },
 );
 

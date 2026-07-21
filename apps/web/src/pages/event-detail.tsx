@@ -61,6 +61,19 @@ export default function EventDetailPage() {
     },
   });
 
+  const duplicateMut = useMutation({
+    mutationFn: (body: { title?: string; startAt?: string; endAt?: string }) =>
+      apiFetch<{ event: EventDto }>(`/events/${id}/duplicate`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["events"] });
+      // Zur neuen Event-Detail-Seite navigieren
+      window.location.href = `/events/${data.event.id}`;
+    },
+  });
+
   if (isLoading) return <div className="page">{t("auth.loading")}</div>;
   if (error instanceof Error)
     return (
@@ -116,8 +129,29 @@ export default function EventDetailPage() {
               ✎ Bearbeiten
             </button>
           )}
+          {canManage && (
+            <button
+              type="button"
+              className="btn btn-outline"
+              disabled={duplicateMut.isPending}
+              onClick={() => {
+                const newTitle = window.prompt(
+                  `Neues Event basiert auf "${event.title}". Titel für Kopie:`,
+                  `${event.title} (Kopie)`,
+                );
+                if (!newTitle) return;
+                duplicateMut.mutate({ title: newTitle });
+              }}
+            >
+              ⧉ Duplizieren
+            </button>
+          )}
         </div>
       </div>
+
+      {duplicateMut.error instanceof Error && (
+        <div className="alert alert-error">{duplicateMut.error.message}</div>
+      )}
 
       {editOpen && (
         <EventEditModal
