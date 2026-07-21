@@ -89,6 +89,18 @@ export interface ParticipantDto extends ParticipationDto {
   answers?: RegistrationAnswer[];
 }
 
+// Ergebnis-Eintrag der Live-User-Suche (GET /api/users/search) — für den
+// "Teilnehmer hinzufügen"-Workflow (siehe add-participant-modal.tsx).
+export interface UserSearchResult {
+  id: string;
+  displayName: string;
+  email: string | null;
+  department: string | null;
+  team: string | null;
+  position: string | null;
+  isActive: boolean;
+}
+
 // ─── Registrierungs-Formular pro Event ─────────────────────────
 export const QUESTION_TYPES = ["yes_no", "single_choice", "multi_choice", "date_pick"] as const;
 export type QuestionType = (typeof QUESTION_TYPES)[number];

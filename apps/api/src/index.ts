@@ -23,6 +23,7 @@ import { qnaRoutes } from "./routes/qna.js";
 import { registrationFormRoutes } from "./routes/registration-form.js";
 import { reportRoutes } from "./routes/reports.js";
 import { tenderRoutes } from "./routes/tenders.js";
+import { userSearchRoutes } from "./routes/user-search.js";
 import { vendorRoutes } from "./routes/vendors.js";
 import { mountStatic } from "./static-serve.js";
 
@@ -76,6 +77,7 @@ app.route("/api/tenders", tenderRoutes);
 app.route("/api/vendors", vendorRoutes);
 app.route("/api", qnaRoutes);
 app.route("/api/blueprints", blueprintRoutes);
+app.route("/api/users", userSearchRoutes);
 
 // Serve SPA (last so API routes win on their prefixes)
 const webRoot = process.env.MEXP_WEB_DIST ?? resolve(process.cwd(), "web-dist");

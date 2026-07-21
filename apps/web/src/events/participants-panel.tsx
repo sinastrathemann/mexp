@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiRequestError, apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
+import { AddParticipantModal } from "./add-participant-modal";
 import { RegistrationModal } from "./registration-modal";
 import type {
   EventDto,
@@ -23,6 +24,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const canManage = hasRole("admin", "manager", "event_office", "werkstudent");
   const registrationOpen = event.status === "open";
   const [modalOpen, setModalOpen] = useState(false);
+  const [addParticipantOpen, setAddParticipantOpen] = useState(false);
 
   // Anmelde-Formular-Fragen für dieses Event
   const formQ = useQuery({
@@ -192,9 +194,24 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
         />
       )}
 
+      {addParticipantOpen && (
+        <AddParticipantModal
+          eventId={event.id}
+          eventTitle={event.title}
+          onClose={() => setAddParticipantOpen(false)}
+        />
+      )}
+
       {canManage && (
         <>
           <div className="row" style={{ marginTop: "var(--space-4)" }}>
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={() => setAddParticipantOpen(true)}
+            >
+              {t("participants.addParticipant")}
+            </button>
             <a
               href={`/api/events/${event.id}/participants.csv`}
               target="_blank"

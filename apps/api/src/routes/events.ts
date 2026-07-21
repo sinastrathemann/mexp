@@ -832,6 +832,65 @@ eventRoutes.get("/:id/participants", requireMexpRole(...WRITE_ROLES), async (c) 
   return c.json({ participants: list });
 });
 
+const addParticipantSchema = z.object({ userId: z.string().min(1) });
+
+// Admin/Manager fügen eine bestimmte Person manuell zu einem Event hinzu (z.B. wenn die
+// Anmeldung telefonisch/persönlich reinkam). Getrennt vom Self-Service-Endpoint
+// POST /:id/register (der meldet immer den aufrufenden Hub-User selbst an).
+eventRoutes.post(
+  "/:id/participants",
+  requireMexpRole(...WRITE_ROLES),
+  zValidator("json", addParticipantSchema),
+  async (c) => {
+    const eventId = c.req.param("id");
+    const { userId: targetUserId } = c.req.valid("json");
+
+    if (!env.DATABASE_URL) {
+      const target = mexpUserStore.get(targetUserId);
+      if (!target) {
+        return c.json(
+          { error: { code: "USER_NOT_FOUND", message: `User ${targetUserId} nicht gefunden` } },
+          404,
+        );
+      }
+
+      const existing = devLiveParticipantsStore.get(eventId) ?? [];
+      const already = existing.find((p) => p.userId === targetUserId);
+      if (already) {
+        return c.json({
+          ok: true,
+          skipped: true,
+          message: `${target.displayName ?? targetUserId} ist bereits Teilnehmer`,
+        });
+      }
+
+      const participationId = `p-${targetUserId.slice(0, 12)}`;
+      const registeredAt = new Date().toISOString();
+      const participation = {
+        id: participationId,
+        eventId,
+        userId: targetUserId,
+        userDisplayName: target.displayName ?? targetUserId,
+        userEmail: target.email ?? "—",
+        status: "registered" as const,
+        waitlistPosition: null,
+        registeredAt,
+        checkedInAt: null,
+        cancelledAt: null,
+        personalNote: null,
+      };
+      devLiveParticipantsStore.set(eventId, [...existing, participation]);
+
+      return c.json({ ok: true, participation }, 201);
+    }
+
+    return c.json(
+      { error: { code: "NOT_IMPLEMENTED", message: "Nur im Dev-Mode verfügbar" } },
+      501,
+    );
+  },
+);
+
 eventRoutes.get("/:id/participants.csv", requireMexpRole(...WRITE_ROLES), async (c) => {
   const id = c.req.param("id");
   const list = await listParticipants(id, { events, participations });
