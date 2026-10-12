@@ -115,7 +115,7 @@ export const devCreatedEventsStore = persistentMap<DevEventRecord>("created-even
 
 function listDevBaseEvents(): DevEventRecord[] {
   const baseEvents = [
-    ...(buildMockEventList() as unknown as DevEventRecord[]),
+    ...(env.NODE_ENV === "production" ? [] : (buildMockEventList() as unknown as DevEventRecord[])),
     ...buildOneNoteImportedEvents(),
     ...Array.from(devCreatedEventsStore.values()),
   ] as DevEventRecord[];
@@ -575,7 +575,7 @@ eventRoutes.get("/:id", async (c) => {
         updatedAt: inDays(-1),
       },
     };
-    const event = mock[id] ?? findDevBaseEvent(id);
+    const event = (env.NODE_ENV === "production" ? undefined : mock[id]) ?? findDevBaseEvent(id);
     if (!event)
       return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
     const merged = applyOverride(event);

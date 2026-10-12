@@ -6,27 +6,40 @@ describe("OneNote event import", () => {
     vi.useRealTimers();
   });
 
-  it("imports only the confirmed upcoming event from the current OneNote event plan", () => {
+  it("imports only planned employee events from today onward", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-10-12T12:00:00.000Z"));
     const events = buildOneNoteImportedEvents();
 
-    expect(events).toHaveLength(1);
+    expect(events).toHaveLength(11);
+    expect(events.map((event) => event.title)).toEqual([
+      "Teamevent KI",
+      "Kochstudio Pöschel",
+      "Coworking Köln",
+      "CA-Abendessen",
+      "Zertifeier",
+      "Kundensegmentevent IT für ProLo",
+      "TopGolf",
+      "Teamevent IT für IT PU Security",
+      "Projektteam-Event bei Mainova",
+      "Cocktail Workshop",
+      "Coworking HR Service Emden",
+    ]);
     expect(events[0]).toMatchObject({
-      id: "onenote-local_experience-1",
-      title: "Agritechnica 2026",
-      eventType: "local_experience",
+      id: "onenote-team-teamevent-ki-20261013",
+      title: "Teamevent KI",
+      eventType: "team",
       status: "planned",
       visibility: "internal",
-      startAt: "2026-11-09T08:00:00.000Z",
-      endAt: "2026-11-15T17:00:00.000Z",
-      location: "Messegelände Hannover",
+      startAt: "2026-10-13T16:30:00.000Z",
+      location: "Eventcenter Dissen",
     });
+    expect(events.some((event) => /jobhub|chance osnabrück/i.test(event.title))).toBe(false);
   });
 
   it("omits imported events after their end date", () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-11-16T00:00:00.000Z"));
+    vi.setSystemTime(new Date("2027-06-05T00:00:00.000Z"));
 
     expect(buildOneNoteImportedEvents()).toEqual([]);
   });

@@ -1,6 +1,7 @@
 import { getPortfolioStats } from "@mexp/application";
 import { Hono } from "hono";
 import { dashboard, env } from "../deps.js";
+import { buildOneNoteImportedEvents } from "../onenote-import.js";
 import { requireMexpRole } from "./_user-resolution.js";
 import { devCreatedEventsStore, devEventOverrideStore } from "./events.js";
 import { devLiveParticipantsStore } from "./registration-form.js";
@@ -25,31 +26,32 @@ interface EventLike {
 }
 
 function computeDevStats() {
-  // Statische Mock-Events der Seed-Liste sind in events.ts hardcodiert — für die
-  // Dashboard-Aggregation nehmen wir die aus dem override-Store + created-Store.
-  // Das reicht: der override-Store enthält für alle 7 Seed-Events die Sinas Edits,
-  // der created-Store enthält alle per POST /api/events angelegten Events (die 18
-  // OneNote-Imports + neue via UI). Reine Mock-Events die weder editiert noch neu
-  // angelegt wurden zählen wir nicht mit — die haben eh keine Teilnehmerdaten.
   const seedIds = ["evt-001", "evt-002", "evt-003", "evt-004", "evt-005", "evt-006", "evt-007"];
   const allEvents: EventLike[] = [];
 
-  // Seeds: Base + Override, gelöschte raus
-  for (const seedId of seedIds) {
-    const ov = devEventOverrideStore.get(seedId) as EventLike | undefined;
-    if (ov?._deleted) continue;
-    // Ohne Override existiert das Seed-Event trotzdem — wir kennen aber Status/Dates
-    // nur wenn eins gesetzt wurde. Wenn kein Override: den Base-Status "open"/"planned"
-    // annehmen (wie in buildMockEventList) — konservativ „open" nehmen.
+  if (env.NODE_ENV !== "production") {
+    for (const seedId of seedIds) {
+      const ov = devEventOverrideStore.get(seedId) as EventLike | undefined;
+      if (ov?._deleted) continue;
+      allEvents.push({
+        id: seedId,
+        status: (ov?.status as string) ?? "open",
+        startAt: ov?.startAt as string,
+        endAt: ov?.endAt as string,
+      });
+    }
+  }
+
+  for (const event of buildOneNoteImportedEvents()) {
     allEvents.push({
-      id: seedId,
-      status: (ov?.status as string) ?? "open",
-      startAt: ov?.startAt as string,
-      endAt: ov?.endAt as string,
+      id: event.id,
+      status: event.status,
+      startAt: event.startAt,
+      endAt: event.endAt,
     });
   }
 
-  // Alle per POST angelegten Events (18 OneNote-Imports + neue via UI)
+  // Alle per POST angelegten Events
   for (const evt of devCreatedEventsStore.values()) {
     const e = evt as unknown as EventLike;
     if (e._deleted) continue;
