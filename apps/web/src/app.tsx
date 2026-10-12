@@ -9,6 +9,7 @@ import AdminPage from "./pages/admin";
 import DashboardPage from "./pages/dashboard";
 import EventCreatePage from "./pages/event-create";
 import EventDetailPage from "./pages/event-detail";
+import EventRequestsPage from "./pages/event-requests";
 import EventsListPage from "./pages/events-list";
 import HomePage from "./pages/home";
 import ReportsPage from "./pages/reports";
@@ -44,6 +45,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <EventsListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/event-requests"
+        element={
+          <ProtectedRoute>
+            <EventRequestsPage />
           </ProtectedRoute>
         }
       />

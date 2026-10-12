@@ -51,6 +51,17 @@ export function Sidebar() {
             {t("events.navLink")}
           </NavLink>
         )}
+        {user && (
+          <NavLink
+            to="/event-requests"
+            className={({ isActive }) => `ms-sidebar-link${isActive ? " active" : ""}`}
+          >
+            <span className="ms-sidebar-icon" aria-hidden="true">
+              📝
+            </span>
+            {t("eventRequests.navLink")}
+          </NavLink>
+        )}
         {hasRole("admin", "manager", "event_office") && (
           <NavLink
             to="/reports"
