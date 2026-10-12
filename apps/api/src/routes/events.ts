@@ -26,6 +26,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { events, audit, env, participations } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
+import { buildOneNoteImportedEvents } from "../onenote-import.js";
 import { mexpUserStore, requireMexpRole, resolveMexpRoles } from "./_user-resolution.js";
 import {
   devAnswerStore,
@@ -113,10 +114,13 @@ export interface DevEventRecord {
 export const devCreatedEventsStore = persistentMap<DevEventRecord>("created-events");
 
 function listDevBaseEvents(): DevEventRecord[] {
-  return [
+  const baseEvents = [
     ...(buildMockEventList() as unknown as DevEventRecord[]),
+    ...buildOneNoteImportedEvents(),
     ...Array.from(devCreatedEventsStore.values()),
-  ];
+  ] as DevEventRecord[];
+
+  return baseEvents;
 }
 
 function findDevBaseEvent(id: string): DevEventRecord | undefined {
@@ -571,7 +575,7 @@ eventRoutes.get("/:id", async (c) => {
         updatedAt: inDays(-1),
       },
     };
-    const event = mock[id] ?? devCreatedEventsStore.get(id);
+    const event = mock[id] ?? findDevBaseEvent(id);
     if (!event)
       return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
     const merged = applyOverride(event);
