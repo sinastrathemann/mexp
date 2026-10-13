@@ -34,9 +34,6 @@ export function Sidebar() {
             end
             className={({ isActive }) => `ms-sidebar-link${isActive ? " active" : ""}`}
           >
-            <span className="ms-sidebar-icon" aria-hidden="true">
-              🏠
-            </span>
             {homeLabel}
           </NavLink>
         )}
@@ -45,9 +42,6 @@ export function Sidebar() {
             to="/events"
             className={({ isActive }) => `ms-sidebar-link${isActive ? " active" : ""}`}
           >
-            <span className="ms-sidebar-icon" aria-hidden="true">
-              📅
-            </span>
             {t("events.navLink")}
           </NavLink>
         )}
@@ -56,9 +50,6 @@ export function Sidebar() {
             to="/event-requests"
             className={({ isActive }) => `ms-sidebar-link${isActive ? " active" : ""}`}
           >
-            <span className="ms-sidebar-icon" aria-hidden="true">
-              📝
-            </span>
             {t("eventRequests.navLink")}
           </NavLink>
         )}
@@ -67,9 +58,6 @@ export function Sidebar() {
             to="/reports"
             className={({ isActive }) => `ms-sidebar-link${isActive ? " active" : ""}`}
           >
-            <span className="ms-sidebar-icon" aria-hidden="true">
-              📊
-            </span>
             Reports
           </NavLink>
         )}
@@ -78,9 +66,6 @@ export function Sidebar() {
             to="/admin"
             className={({ isActive }) => `ms-sidebar-link${isActive ? " active" : ""}`}
           >
-            <span className="ms-sidebar-icon" aria-hidden="true">
-              ⚙️
-            </span>
             {t("admin.navLink")}
           </NavLink>
         )}
