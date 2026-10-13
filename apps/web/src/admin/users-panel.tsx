@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import type { FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../api/client";
 import { ROLE_NAMES } from "../auth/types";
 import type { AdminUserRow, RoleName } from "../auth/types";
+import type { UserSearchResult } from "../events/types";
 import { RoleLegend } from "./role-legend";
 
 export function UsersPanel() {
@@ -19,23 +19,26 @@ export function UsersPanel() {
   // statt Luecken zeigen (siehe admin-personio.ts) -- im Alltag stoeren sie
   // aber. Deshalb standardmaessig ausgeblendet, auf Wunsch einblendbar.
   const [showInactive, setShowInactive] = useState(false);
-  const visibleUsers = (data?.users ?? []).filter((u) => showInactive || u.isActive !== false);
-  const hiddenCount = (data?.users.length ?? 0) - visibleUsers.length;
+  const [showParticipants, setShowParticipants] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
+  const [selectedRole, setSelectedRole] = useState<RoleName>("event_office");
+  const activeUsers = (data?.users ?? []).filter((user) => showInactive || user.isActive !== false);
+  const roleAssignedUsers = activeUsers.filter((user) =>
+    user.roles.some((role) => role !== "participant"),
+  );
+  const visibleUsers = showParticipants ? activeUsers : roleAssignedUsers;
+  const hiddenParticipantCount = activeUsers.length - roleAssignedUsers.length;
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["admin", "users"] });
 
-  const createMut = useMutation({
-    mutationFn: (input: {
-      email: string;
-      password: string;
-      displayName: string;
-      roles: RoleName[];
-    }) =>
-      apiFetch("/admin/users", {
-        method: "POST",
-        body: JSON.stringify(input),
-      }),
-    onSuccess: invalidate,
+  const userSearch = useQuery({
+    queryKey: ["admin", "user-search", searchTerm],
+    queryFn: () =>
+      apiFetch<{ users: UserSearchResult[] }>(
+        `/users/search?q=${encodeURIComponent(searchTerm.trim())}&limit=10`,
+      ),
+    enabled: searchTerm.trim().length >= 2,
   });
 
   const toggleActiveMut = useMutation({
@@ -53,7 +56,12 @@ export function UsersPanel() {
         method: "POST",
         body: JSON.stringify({ role: input.role }),
       }),
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate();
+      qc.invalidateQueries({ queryKey: ["admin", "user-search"] });
+      setSearchTerm("");
+      setSelectedUser(null);
+    },
   });
 
   const removeRoleMut = useMutation({
@@ -62,42 +70,167 @@ export function UsersPanel() {
     onSuccess: invalidate,
   });
 
-  const resetPwMut = useMutation({
-    mutationFn: (input: { id: string; newPassword: string }) =>
-      apiFetch(`/admin/users/${input.id}/password`, {
-        method: "POST",
-        body: JSON.stringify({ newPassword: input.newPassword }),
-      }),
-  });
-
   return (
     <>
       <h2 style={{ marginTop: 0 }}>{t("admin.usersListTitle")}</h2>
-      <CreateUserForm
-        onSubmit={(v) => createMut.mutateAsync(v).catch(() => undefined)}
-        pending={createMut.isPending}
-        error={createMut.error}
-      />
-
       <RoleLegend />
+      <section className="card" aria-labelledby="admin-find-user-title">
+        <h3 id="admin-find-user-title" className="card-title" style={{ marginTop: 0 }}>
+          {t("admin.findUserTitle")}
+        </h3>
+        <p className="help-text">{t("admin.findUserHint")}</p>
+        <div className="field">
+          <label className="label" htmlFor="admin-user-search">
+            {t("admin.searchUser")}
+          </label>
+          <input
+            id="admin-user-search"
+            className="input"
+            type="search"
+            autoComplete="off"
+            value={searchTerm}
+            onChange={(event) => {
+              setSearchTerm(event.target.value);
+              setSelectedUser(null);
+            }}
+            placeholder={t("admin.searchUserPlaceholder")}
+          />
+        </div>
+        {searchTerm.trim().length >= 2 && userSearch.isLoading && (
+          <div className="muted text-sm">{t("admin.searchingUsers")}</div>
+        )}
+        {userSearch.error instanceof Error && (
+          <div className="alert alert-error">{userSearch.error.message}</div>
+        )}
+        {searchTerm.trim().length >= 2 && userSearch.data?.users.length === 0 && (
+          <div className="muted text-sm">{t("admin.noUsersFound")}</div>
+        )}
+        {userSearch.data?.users.length && !selectedUser ? (
+          <ul
+            aria-label={t("admin.searchResults")}
+            style={{
+              border: "1px solid var(--border-default)",
+              borderRadius: "var(--radius-md)",
+              overflow: "hidden",
+              maxHeight: 300,
+              overflowY: "auto",
+              listStyle: "none",
+              margin: 0,
+              padding: 0,
+            }}
+          >
+            {userSearch.data.users.map((user) => (
+              <li key={user.id} style={{ listStyle: "none" }}>
+                <button
+                  type="button"
+                  className="row"
+                  style={{
+                    width: "100%",
+                    justifyContent: "space-between",
+                    padding: "var(--space-3) var(--space-4)",
+                    border: 0,
+                    borderBottom: "1px solid var(--border-default)",
+                    background: "transparent",
+                    textAlign: "left",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => setSelectedUser(user)}
+                >
+                  <span>
+                    <strong>{user.displayName}</strong>
+                    <span className="muted" style={{ display: "block" }}>
+                      {user.email ?? user.id}
+                    </span>
+                  </span>
+                  <span className="muted">
+                    {[user.department, user.team].filter(Boolean).join(" · ")}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {selectedUser && (
+          <div className="field-row" style={{ alignItems: "flex-end" }}>
+            <div className="field" style={{ marginBottom: 0 }}>
+              <div className="label">{t("admin.selectedUser")}</div>
+              <div className="text-bold">{selectedUser.displayName}</div>
+              <div className="muted text-sm">{selectedUser.email ?? selectedUser.id}</div>
+            </div>
+            <div className="field" style={{ marginBottom: 0 }}>
+              <label className="label" htmlFor="admin-selected-role">
+                {t("admin.assignRole")}
+              </label>
+              <select
+                id="admin-selected-role"
+                className="select"
+                value={selectedRole}
+                onChange={(event) => setSelectedRole(event.target.value as RoleName)}
+              >
+                {ROLE_NAMES.filter((role) => role !== "participant").map((role) => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={addRoleMut.isPending}
+              onClick={() => addRoleMut.mutate({ id: selectedUser.id, role: selectedRole })}
+            >
+              {addRoleMut.isPending ? t("admin.assigningRole") : t("admin.grantRole")}
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => setSelectedUser(null)}
+              aria-label={t("common.cancel")}
+            >
+              ×
+            </button>
+          </div>
+        )}
+        {addRoleMut.error instanceof Error && (
+          <div className="alert alert-error" style={{ marginTop: "var(--space-3)" }}>
+            {addRoleMut.error.message}
+          </div>
+        )}
+      </section>
       {isLoading && <div className="card muted">{t("auth.loading")}</div>}
       {data && (
-        <label
-          className="row"
-          style={{ gap: 8, alignItems: "center", marginBottom: "var(--space-3)" }}
-        >
-          <input
-            type="checkbox"
-            checked={showInactive}
-            onChange={(e) => setShowInactive(e.target.checked)}
-          />
-          <span>
-            {t("admin.showInactive")}
-            {hiddenCount > 0 && !showInactive && (
-              <span className="muted"> {t("admin.hiddenCount", { hidden: hiddenCount })}</span>
-            )}
-          </span>
-        </label>
+        <div className="row" style={{ gap: 20, marginBottom: "var(--space-3)" }}>
+          <label className="row" style={{ gap: 8, alignItems: "center" }}>
+            <input
+              type="checkbox"
+              checked={showParticipants}
+              onChange={(event) => setShowParticipants(event.target.checked)}
+            />
+            <span>
+              {t("admin.showParticipants")}
+              {!showParticipants && hiddenParticipantCount > 0 && (
+                <span className="muted">
+                  {" "}
+                  {t("admin.hiddenCount", { hidden: hiddenParticipantCount })}
+                </span>
+              )}
+            </span>
+          </label>
+          <label className="row" style={{ gap: 8, alignItems: "center" }}>
+            <input
+              type="checkbox"
+              checked={showInactive}
+              onChange={(event) => setShowInactive(event.target.checked)}
+            />
+            <span>{t("admin.showInactive")}</span>
+          </label>
+        </div>
+      )}
+      {data && visibleUsers.length === 0 && (
+        <div className="card muted">
+          {t(showParticipants ? "admin.noUsers" : "admin.noUsersWithRoles")}
+        </div>
       )}
       {data && (
         <div className="card" style={{ padding: 0, overflow: "hidden" }}>
@@ -164,18 +297,6 @@ export function UsersPanel() {
                       >
                         {u.isActive ? t("admin.deactivate") : t("admin.activate")}
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const pw = window.prompt(t("admin.newPasswordPrompt") ?? "New password");
-                          if (pw && pw.length >= 8) {
-                            resetPwMut.mutate({ id: u.id, newPassword: pw });
-                          }
-                        }}
-                        className="btn btn-ghost btn-sm"
-                      >
-                        {t("admin.resetPassword")}
-                      </button>
                     </div>
                   </td>
                 </tr>
@@ -188,117 +309,18 @@ export function UsersPanel() {
   );
 }
 
-function CreateUserForm(props: {
-  onSubmit: (v: {
-    email: string;
-    password: string;
-    displayName: string;
-    roles: RoleName[];
-  }) => void;
-  pending: boolean;
-  error: unknown;
-}) {
-  const { t } = useTranslation();
-  const [email, setEmail] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState<RoleName>("participant");
-
-  function submit(e: FormEvent) {
-    e.preventDefault();
-    props.onSubmit({ email, password, displayName, roles: [role] });
-    setEmail("");
-    setDisplayName("");
-    setPassword("");
-  }
-
-  return (
-    <form onSubmit={submit} className="card">
-      <h2 className="card-title" style={{ marginTop: 0 }}>
-        {t("admin.create")}
-      </h2>
-      <div className="field-row">
-        <div className="field">
-          <label className="label" htmlFor="adm-email">
-            {t("admin.colEmail")}
-          </label>
-          <input
-            id="adm-email"
-            className="input"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-        <div className="field">
-          <label className="label" htmlFor="adm-name">
-            {t("admin.colDisplayName")}
-          </label>
-          <input
-            id="adm-name"
-            className="input"
-            type="text"
-            required
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-          />
-        </div>
-      </div>
-      <div className="field-row">
-        <div className="field">
-          <label className="label" htmlFor="adm-pw">
-            {t("auth.passwordLabel")}
-          </label>
-          <input
-            id="adm-pw"
-            className="input"
-            type="password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-        <div className="field">
-          <label className="label" htmlFor="adm-role">
-            {t("admin.colRoles")}
-          </label>
-          <select
-            id="adm-role"
-            className="select"
-            value={role}
-            onChange={(e) => setRole(e.target.value as RoleName)}
-          >
-            {ROLE_NAMES.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-      <div className="form-actions">
-        <button type="submit" disabled={props.pending} className="btn btn-primary">
-          {props.pending ? t("admin.creating") : t("admin.create")}
-        </button>
-      </div>
-      {props.error instanceof Error && (
-        <div className="alert alert-error">{props.error.message}</div>
-      )}
-    </form>
-  );
-}
-
 function RoleEditor(props: {
   currentRoles: RoleName[];
   onAdd: (role: RoleName) => void;
   onRemove: (role: RoleName) => void;
 }) {
-  const available = ROLE_NAMES.filter((r) => !props.currentRoles.includes(r));
+  const currentRoles = props.currentRoles.filter((role) => role !== "participant");
+  const available = ROLE_NAMES.filter(
+    (role) => role !== "participant" && !currentRoles.includes(role),
+  );
   return (
     <div className="row" style={{ gap: "var(--space-2)" }}>
-      {props.currentRoles.map((r) => (
+      {currentRoles.map((r) => (
         <span key={r} className="badge badge-orange" style={{ gap: 4 }}>
           {r}
           <button
