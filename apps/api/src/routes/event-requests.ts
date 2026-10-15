@@ -111,14 +111,17 @@ function hasAnyRole(roles: string[], allowed: readonly string[]): boolean {
   return roles.some((role) => allowed.includes(role));
 }
 
-// Anzahl neuer (noch unbearbeiteter) Anfragen + der mir zugewiesenen offenen —
-// für den Zähler in der Seitenleiste. Muss vor "/:id" stehen.
+// Zähler für die Seitenleiste ("Ping"). Muss vor "/:id" stehen.
+// Neue, noch unbearbeitete Anfragen sieht nur der Admin — so behält er den Überblick
+// und entscheidet, wer übernimmt. Alle anderen werden erst gepingt, wenn ihnen eine
+// Anfrage zugewiesen wurde (assignedToMe).
 eventRequestRoutes.get("/pending-count", requireMexpRole(...REQUEST_MANAGER_ROLES), (c) => {
   const userId = getHubUser(c).id;
+  const isAdmin = resolveMexpRoles(c).includes("admin");
   let submitted = 0;
   let assignedToMe = 0;
   for (const request of eventRequestStore.values()) {
-    if (request.status === "submitted") submitted++;
+    if (isAdmin && request.status === "submitted") submitted++;
     if (
       request.assignedToId === userId &&
       (request.status === "submitted" || request.status === "in_review")
