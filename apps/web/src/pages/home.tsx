@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
 import { withBasePath } from "../base-path";
+import { EventFilterBar, useEventFilters } from "../events/event-filters";
 import { EventStatusBadge } from "../events/status-badge";
 import type { EventDto } from "../events/types";
 
@@ -62,22 +63,27 @@ export default function HomePage() {
   const todayLabel = `${WEEKDAYS[today.getDay()]}, ${today.getDate()}. ${MONTHS[today.getMonth()]}`;
 
   const events = eventsQ.data?.events ?? [];
+  // Filter wirkt auf die Event-Abschnitte (Live / Anmeldung offen / In Planung);
+  // Kennzahlen und Erinnerungs-Banner bleiben ungefiltert.
+  const filters = useEventFilters(events);
+  const shown = filters.filtered;
 
   const now = Date.now();
   const inDays = (iso: string) => Math.round((new Date(iso).getTime() - now) / 86400000);
 
-  const live = events
+  const live = shown
     .filter((e) => e.status === "running")
     .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
 
-  const open = events
+  const open = shown
     .filter((e) => e.status === "open")
     .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
 
-  const upcoming = events
+  const upcoming = shown
     .filter((e) => e.status === "planned" && new Date(e.startAt).getTime() > now)
     .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
-    .slice(0, 6);
+    // Ohne Filter nur die nächsten 6, mit Filter alle Treffer
+    .slice(0, filters.hasFilter ? undefined : 6);
 
   // ─── Erinnerungs-Banner ─────────────────────────────────────
   // 1) Bald-Banner: User ist angemeldet, Event startet in <48h
@@ -319,6 +325,15 @@ export default function HomePage() {
             </Section>
           )}
         </>
+      )}
+
+      {events.length > 0 && (
+        <div style={{ marginBottom: "var(--space-6)" }}>
+          <EventFilterBar filters={filters} total={events.length} />
+        </div>
+      )}
+      {filters.hasFilter && live.length + open.length + upcoming.length === 0 && (
+        <div className="card muted">{t("events.filterEmpty")}</div>
       )}
 
       {/* Live jetzt */}

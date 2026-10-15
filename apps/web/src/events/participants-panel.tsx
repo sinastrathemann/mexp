@@ -15,6 +15,10 @@ import type {
   RegistrationQuestion,
 } from "./types";
 
+// Status, die Admin/Werkstudent:innen in der Teilnehmerliste setzen können
+const STAFF_STATUSES = ["registered", "waitlisted", "cancelled", "attended", "no_show"] as const;
+type StaffStatus = (typeof STAFF_STATUSES)[number];
+
 // Max. Anzahl Namen, die Nutzer ohne Verwaltungsrolle in der Teilnehmerliste sehen.
 const PUBLIC_LIST_LIMIT = 12;
 
@@ -103,7 +107,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const editMut = useMutation({
     mutationFn: (input: {
       participationId: string;
-      status?: "registered" | "waitlisted" | "cancelled";
+      status?: StaffStatus;
       personalNote?: string | null;
       answers?: RegistrationAnswer[];
     }) => {
@@ -117,15 +121,6 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
       setEditing(null);
       invalidateAll();
     },
-  });
-
-  const noShowMut = useMutation({
-    mutationFn: (participationId: string) =>
-      apiFetch<{ participation: ParticipationDto }>(
-        `/events/${event.id}/participants/${participationId}/no-show`,
-        { method: "POST" },
-      ),
-    onSuccess: invalidateAll,
   });
 
   const participants = participantsQ.data?.participants ?? [];
@@ -164,7 +159,6 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const attendedCount = participants.filter((p) => p.status === "attended").length;
   const noShowCount = participants.filter((p) => p.status === "no_show").length;
   const cancelledCount = participants.filter((p) => p.status === "cancelled").length;
-  const noShowPhase = event.status === "running" || event.status === "closed";
 
   const visibleParticipants = participants.filter(
     (p) => p.status === "registered" || p.status === "waitlisted" || p.status === "attended",
@@ -358,39 +352,64 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
                   <thead>
                     <tr>
                       <th>{t("participants.colName")}</th>
-                      <th>{t("participants.colEmail")}</th>
                       <th>{t("participants.colStatus")}</th>
+                      <th>{t("participants.colEmail")}</th>
                       <th>{t("participants.colPosition")}</th>
                       <th>{t("participants.colRegisteredAt")}</th>
                       {questions.length > 0 && <th>Antworten</th>}
                       <th>Notiz</th>
-                      <th>{t("participants.colActions")}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredParticipants.map((p) => (
-                      <tr key={p.id} className={p.status === "cancelled" ? "row-cancelled" : undefined}>
-                        <td className="text-bold">
+                      <tr
+                        key={p.id}
+                        className={
+                          p.status === "cancelled" || p.status === "no_show"
+                            ? "row-cancelled"
+                            : undefined
+                        }
+                      >
+                        <td className="text-bold" style={{ whiteSpace: "nowrap" }}>
                           {p.userDisplayName}
-                          {p.personalNote && (
-                            <span
-                              title={p.personalNote}
-                              style={{ marginLeft: 6, fontSize: "0.85em" }}
-                            >
-                              Notiz
-                            </span>
-                          )}
+                          <button
+                            type="button"
+                            disabled={editMut.isPending}
+                            onClick={() => setEditing(p)}
+                            className="btn btn-ghost btn-sm"
+                            style={{ marginLeft: 6 }}
+                            title={t("participants.editRegistrationHint")}
+                          >
+                            {t("participants.editRegistration")}
+                          </button>
+                        </td>
+                        <td>
+                          <select
+                            className="select"
+                            aria-label={t("participants.colStatus")}
+                            disabled={editMut.isPending}
+                            value={p.status}
+                            onChange={(e) =>
+                              editMut.mutate({
+                                participationId: p.id,
+                                status: e.target.value as StaffStatus,
+                              })
+                            }
+                            style={{
+                              minWidth: 170,
+                              ...(p.status === "cancelled" || p.status === "no_show"
+                                ? { color: "#b42318", borderColor: "#b42318", fontWeight: 600 }
+                                : {}),
+                            }}
+                          >
+                            {STAFF_STATUSES.map((st) => (
+                              <option key={st} value={st}>
+                                {t(`participants.status.${st}`)}
+                              </option>
+                            ))}
+                          </select>
                         </td>
                         <td className="muted">{p.userEmail}</td>
-                        <td>
-                          <span
-                            className={
-                              p.status === "cancelled" ? "badge badge-danger" : "badge badge-muted"
-                            }
-                          >
-                            {t(`participants.status.${p.status}`)}
-                          </span>
-                        </td>
                         <td>{p.waitlistPosition ?? "—"}</td>
                         <td className="text-sm muted">{fmtDate(p.registeredAt)}</td>
                         {questions.length > 0 && (
@@ -412,76 +431,6 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
                           ) : (
                             <span className="muted text-xs">—</span>
                           )}
-                        </td>
-                        <td>
-                          <div className="row" style={{ gap: "var(--space-2)" }}>
-                            <button
-                              type="button"
-                              disabled={editMut.isPending}
-                              onClick={() => setEditing(p)}
-                              className="btn btn-ghost btn-sm"
-                            >
-                              {t("participants.editRegistration")}
-                            </button>
-                            {p.status === "registered" && (
-                              <button
-                                type="button"
-                                disabled={editMut.isPending}
-                                onClick={() =>
-                                  editMut.mutate({ participationId: p.id, status: "waitlisted" })
-                                }
-                                className="btn btn-ghost btn-sm"
-                              >
-                                {t("participants.moveToWaitlist")}
-                              </button>
-                            )}
-                            {p.status === "waitlisted" && (
-                              <button
-                                type="button"
-                                disabled={editMut.isPending}
-                                onClick={() =>
-                                  editMut.mutate({ participationId: p.id, status: "registered" })
-                                }
-                                className="btn btn-yellow btn-sm"
-                              >
-                                {t("participants.moveUp")}
-                              </button>
-                            )}
-                            {(p.status === "registered" || p.status === "waitlisted") && (
-                              <button
-                                type="button"
-                                disabled={editMut.isPending}
-                                onClick={() =>
-                                  editMut.mutate({ participationId: p.id, status: "cancelled" })
-                                }
-                                className="btn btn-outline-orange btn-sm"
-                              >
-                                {t("participants.markCancelled")}
-                              </button>
-                            )}
-                            {p.status === "cancelled" && (
-                              <button
-                                type="button"
-                                disabled={editMut.isPending}
-                                onClick={() =>
-                                  editMut.mutate({ participationId: p.id, status: "registered" })
-                                }
-                                className="btn btn-outline btn-sm"
-                              >
-                                {t("participants.undoCancelled")}
-                              </button>
-                            )}
-                            {p.status === "registered" && noShowPhase && (
-                              <button
-                                type="button"
-                                disabled={noShowMut.isPending}
-                                onClick={() => noShowMut.mutate(p.id)}
-                                className="btn btn-ghost btn-sm"
-                              >
-                                {t("participants.markNoShow")}
-                              </button>
-                            )}
-                          </div>
                         </td>
                       </tr>
                     ))}
@@ -558,6 +507,15 @@ function SelfActions(props: SelfActionsProps) {
             {withdrawError.message}
           </div>
         )}
+      </div>
+    );
+  }
+
+  // Vom Event-Team als teilgenommen / nicht teilgenommen markiert: keine Selbst-Anmeldung mehr
+  if (own && (own.status === "attended" || own.status === "no_show")) {
+    return (
+      <div className="alert alert-info" style={{ marginTop: "var(--space-3)" }}>
+        {t("participants.yourStatusFinal", { status: t(`participants.status.${own.status}`) })}
       </div>
     );
   }

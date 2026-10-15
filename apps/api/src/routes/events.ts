@@ -1274,7 +1274,7 @@ eventRoutes.post(
 );
 
 const editParticipationSchema = z.object({
-  status: z.enum(["registered", "waitlisted", "cancelled"]).optional(),
+  status: z.enum(["registered", "waitlisted", "cancelled", "attended", "no_show"]).optional(),
   personalNote: z.string().max(2000).nullable().optional(),
   answers: z
     .array(
@@ -1313,6 +1313,7 @@ eventRoutes.patch(
     if (input.status && input.status !== participation.status) {
       patch.status = input.status;
       patch.cancelledAt = input.status === "cancelled" ? new Date().toISOString() : null;
+      patch.checkedInAt = input.status === "attended" ? new Date().toISOString() : null;
       patch.waitlistPosition =
         input.status === "waitlisted"
           ? Math.max(0, ...all.map((p) => (p.status === "waitlisted" ? (p.waitlistPosition ?? 0) : 0))) + 1

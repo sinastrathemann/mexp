@@ -1,17 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
+import { EventFilterBar, useEventFilters } from "../events/event-filters";
 import { EventStatusBadge } from "../events/status-badge";
-import { EVENT_STATUSES, EVENT_TYPES, type EventDto } from "../events/types";
-
-// "2026-11" aus einem ISO-Zeitstempel (lokale Zeit)
-function monthKey(iso: string): string {
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
+import { EVENT_STATUSES, type EventDto } from "../events/types";
 
 export default function EventsListPage() {
   const { t, i18n } = useTranslation();
@@ -25,46 +20,9 @@ export default function EventsListPage() {
     queryFn: () => apiFetch<{ events: EventDto[] }>("/events"),
   });
 
-  // Filter stehen in der URL, damit eine gefilterte Übersicht verlinkt werden kann
-  const [params, setParams] = useSearchParams();
-  const typeFilter = params.get("type") ?? "";
-  const monthFilter = params.get("month") ?? "";
-  const statusFilter = params.get("status") ?? "";
-  const search = params.get("q") ?? "";
-  const setFilter = (key: string, value: string) => {
-    const next = new URLSearchParams(params);
-    if (value) next.set(key, value);
-    else next.delete(key);
-    setParams(next, { replace: true });
-  };
-  const hasFilter = Boolean(typeFilter || monthFilter || statusFilter || search);
-
   const allEvents = data?.events ?? [];
-  const months = useMemo(
-    () => Array.from(new Set(allEvents.map((e) => monthKey(e.startAt)))).sort(),
-    [allEvents],
-  );
-  const events = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    return allEvents
-      .filter((e) => !typeFilter || e.eventType === typeFilter)
-      .filter((e) => !monthFilter || monthKey(e.startAt) === monthFilter)
-      .filter((e) => !statusFilter || e.status === statusFilter)
-      .filter(
-        (e) =>
-          !needle ||
-          e.title.toLowerCase().includes(needle) ||
-          (e.location ?? "").toLowerCase().includes(needle),
-      )
-      .sort((a, b) => a.startAt.localeCompare(b.startAt));
-  }, [allEvents, typeFilter, monthFilter, statusFilter, search]);
-  const fmtMonth = (key: string) => {
-    const [year = "", month = ""] = key.split("-");
-    return new Date(Number(year), Number(month) - 1, 1).toLocaleDateString(
-      i18n.language === "de" ? "de-DE" : "en-US",
-      { month: "long", year: "numeric" },
-    );
-  };
+  const filters = useEventFilters(allEvents);
+  const events = filters.filtered;
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const bulkMut = useMutation({
@@ -106,75 +64,7 @@ export default function EventsListPage() {
       </div>
 
       {data && allEvents.length > 0 && (
-        <div className="card" style={{ padding: "var(--space-3) var(--space-4)" }}>
-          <div className="row" style={{ gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-            <input
-              type="search"
-              className="input"
-              placeholder={t("events.filterSearch")}
-              value={search}
-              onChange={(e) => setFilter("q", e.target.value)}
-              style={{ maxWidth: 240 }}
-              aria-label={t("events.filterSearch")}
-            />
-            <select
-              className="select"
-              value={typeFilter}
-              onChange={(e) => setFilter("type", e.target.value)}
-              style={{ maxWidth: 220 }}
-              aria-label={t("events.filterType")}
-            >
-              <option value="">{t("events.filterAllTypes")}</option>
-              {EVENT_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {t(`events.type.${type}`)}
-                </option>
-              ))}
-            </select>
-            <select
-              className="select"
-              value={monthFilter}
-              onChange={(e) => setFilter("month", e.target.value)}
-              style={{ maxWidth: 200 }}
-              aria-label={t("events.filterMonth")}
-            >
-              <option value="">{t("events.filterAllMonths")}</option>
-              {months.map((m) => (
-                <option key={m} value={m}>
-                  {fmtMonth(m)}
-                </option>
-              ))}
-            </select>
-            {canManage && (
-              <select
-                className="select"
-                value={statusFilter}
-                onChange={(e) => setFilter("status", e.target.value)}
-                style={{ maxWidth: 200 }}
-                aria-label={t("events.filterStatus")}
-              >
-                <option value="">{t("events.filterAllStatuses")}</option>
-                {EVENT_STATUSES.map((st) => (
-                  <option key={st} value={st}>
-                    {t(`events.status.${st}`)}
-                  </option>
-                ))}
-              </select>
-            )}
-            {hasFilter && (
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => setParams(new URLSearchParams(), { replace: true })}
-              >
-                {t("events.filterReset")}
-              </button>
-            )}
-            <span className="muted text-sm" style={{ marginLeft: "auto" }}>
-              {t("events.filterCount", { count: events.length, total: allEvents.length })}
-            </span>
-          </div>
-        </div>
+        <EventFilterBar filters={filters} total={allEvents.length} showStatus={canManage} />
       )}
 
       {isLoading && <div className="card">{t("auth.loading")}</div>}

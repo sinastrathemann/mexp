@@ -250,8 +250,6 @@
   },
   "participants": {
     "cancelledCount": "{{count}} cancelled",
-    "markCancelled": "Mark as cancelled",
-    "undoCancelled": "Undo cancellation",
     "editRegistration": "Edit",
     "yourNote": "Your note",
     "noChangesHint": "Changes to your registration are handled by the event team.",
@@ -261,15 +259,13 @@
     "count": "{{count}} registered",
     "waitlistCount": "{{count}} on waitlist",
     "attendedCount": "{{count}} attended",
-    "noShowCount": "{{count}} no-show",
-    "markNoShow": "Mark as no-show",
+    "noShowCount": "{{count}} did not attend",
     "empty": "No registrations yet.",
     "colName": "Name",
     "colEmail": "Email",
     "colStatus": "Status",
     "colPosition": "Position",
     "colRegisteredAt": "Registered at",
-    "colActions": "Actions",
     "register": "Register for event",
     "registering": "Registering …",
     "withdraw": "Withdraw",
@@ -298,10 +294,10 @@
       "waitlisted": "Waitlisted",
       "cancelled": "Cancelled",
       "attended": "Attended",
-      "no_show": "No show"
+      "no_show": "Did not attend"
     },
-    "moveToWaitlist": "Move to waitlist",
-    "moveUp": "Move up"
+    "editRegistrationHint": "Edit answers and note",
+    "yourStatusFinal": "Your status for this event: {{status}}. Please contact the event team with any questions."
   },
   "budget": {
     "title": "Budget",

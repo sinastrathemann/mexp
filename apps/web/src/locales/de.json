@@ -250,8 +250,6 @@
   },
   "participants": {
     "cancelledCount": "{{count}} abgemeldet",
-    "markCancelled": "Abmeldung markieren",
-    "undoCancelled": "Abmeldung zurücknehmen",
     "editRegistration": "Bearbeiten",
     "yourNote": "Deine Notiz",
     "noChangesHint": "Änderungen an deiner Anmeldung übernimmt das Event-Team.",
@@ -260,16 +258,14 @@
     "sectionTitle": "Teilnehmer",
     "count": "{{count}} angemeldet",
     "waitlistCount": "{{count}} auf Warteliste",
-    "attendedCount": "{{count}} anwesend",
-    "noShowCount": "{{count}} nicht erschienen",
-    "markNoShow": "Als No-Show markieren",
+    "attendedCount": "{{count}} teilgenommen",
+    "noShowCount": "{{count}} nicht teilgenommen",
     "empty": "Noch keine Anmeldungen.",
     "colName": "Name",
     "colEmail": "E-Mail",
     "colStatus": "Status",
     "colPosition": "Position",
     "colRegisteredAt": "Angemeldet am",
-    "colActions": "Aktionen",
     "register": "Für Event anmelden",
     "registering": "Wird angemeldet …",
     "withdraw": "Abmelden",
@@ -297,11 +293,11 @@
       "registered": "Angemeldet",
       "waitlisted": "Warteliste",
       "cancelled": "Abgemeldet",
-      "attended": "Anwesend",
-      "no_show": "Nicht erschienen"
+      "attended": "Teilgenommen",
+      "no_show": "Nicht teilgenommen"
     },
-    "moveToWaitlist": "Auf Warteliste",
-    "moveUp": "Nachrücken"
+    "editRegistrationHint": "Antworten und Notiz bearbeiten",
+    "yourStatusFinal": "Dein Status für dieses Event: {{status}}. Bei Fragen wende dich an das Event-Team."
   },
   "budget": {
     "title": "Budget",
