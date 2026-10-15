@@ -485,21 +485,21 @@ function SelfActions(props: SelfActionsProps) {
     return (
       <div style={{ marginTop: "var(--space-3)" }}>
         {own.status === "registered" ? (
-          <div className="registration-status" role="status">
+          <output className="registration-status">
             <span className="registration-status-icon" aria-hidden="true">
               ✓
             </span>
             <strong>{t("participants.yourStatusRegistered")}</strong>
-          </div>
+          </output>
         ) : (
-          <div className="registration-status registration-status--waitlist" role="status">
+          <output className="registration-status registration-status--waitlist">
             <span className="registration-status-icon" aria-hidden="true">
               {own.waitlistPosition ?? "?"}
             </span>
             <span>
               {t("participants.yourStatusWaitlisted", { position: own.waitlistPosition ?? "?" })}
             </span>
-          </div>
+          </output>
         )}
         <button
           type="button"
