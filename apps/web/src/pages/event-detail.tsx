@@ -30,6 +30,20 @@ export default function EventDetailPage() {
   });
 
   const [editOpen, setEditOpen] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  // Link, der das Event direkt mit geöffnetem Anmeldeformular zeigt
+  const copyRegistrationLink = async () => {
+    const url = `${window.location.origin}${withBasePath(`/events/${id}?anmelden=1`)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      window.prompt(t("events.copyRegistrationLink"), url);
+      return;
+    }
+    setLinkCopied(true);
+    window.setTimeout(() => setLinkCopied(false), 2000);
+  };
 
   const transitionMut = useMutation({
     mutationFn: (status: EventStatus) =>
@@ -113,6 +127,11 @@ export default function EventDetailPage() {
           >
             📅 In Kalender speichern
           </a>
+          {canManage && (
+            <button type="button" className="btn btn-outline" onClick={copyRegistrationLink}>
+              {linkCopied ? `✓ ${t("events.linkCopied")}` : t("events.copyRegistrationLink")}
+            </button>
+          )}
           {canManage && (
             <button type="button" className="btn btn-outline" onClick={() => setEditOpen(true)}>
               ✎ Bearbeiten

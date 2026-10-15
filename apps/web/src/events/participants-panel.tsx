@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import { ApiRequestError, apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
 import { withBasePath } from "../base-path";
@@ -131,6 +132,33 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const ownFromList = user ? participants.find((p) => p.userId === user.id) : undefined;
   const ownFromSelf = myParticipationQ.data?.participation ?? undefined;
   const own: ParticipationDto | undefined = ownFromList ?? ownFromSelf ?? undefined;
+
+  // Anmeldelink (?anmelden=1): Anmeldeformular direkt öffnen, sobald feststeht, dass
+  // die Person noch nicht angemeldet ist und die Anmeldung offen ist.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const wantsRegistration = searchParams.get("anmelden") === "1";
+  const sectionRef = useRef<HTMLElement>(null);
+  const ownLoaded = canManage ? participantsQ.isSuccess : myParticipationQ.isSuccess;
+  const deadlineOpen =
+    !event.registrationDeadline || new Date(event.registrationDeadline).getTime() >= Date.now();
+  useEffect(() => {
+    if (!wantsRegistration || !ownLoaded || !formQ.isSuccess) return;
+    const alreadyIn = own && own.status !== "cancelled";
+    if (!alreadyIn && registrationOpen && deadlineOpen) setModalOpen(true);
+    sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const next = new URLSearchParams(searchParams);
+    next.delete("anmelden");
+    setSearchParams(next, { replace: true });
+  }, [
+    wantsRegistration,
+    ownLoaded,
+    formQ.isSuccess,
+    own,
+    registrationOpen,
+    deadlineOpen,
+    searchParams,
+    setSearchParams,
+  ]);
   const activeCount = participants.filter((p) => p.status === "registered").length;
   const waitlistCount = participants.filter((p) => p.status === "waitlisted").length;
   const attendedCount = participants.filter((p) => p.status === "attended").length;
@@ -159,7 +187,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const ownForSelfActions = own;
 
   return (
-    <section className="card">
+    <section className="card" ref={sectionRef}>
       <h2 className="card-title">{t("participants.sectionTitle")}</h2>
 
       <p className="muted" style={{ marginTop: 0 }}>
@@ -295,6 +323,11 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
               </button>
             )}
           </div>
+          {editMut.error instanceof Error && !editing && (
+            <div className="alert alert-error" style={{ marginTop: "var(--space-2)" }}>
+              {editMut.error.message}
+            </div>
+          )}
           {promoteMut.error instanceof Error && (
             <div className="alert alert-error" style={{ marginTop: "var(--space-2)" }}>
               {promoteMut.error.message}
@@ -390,6 +423,30 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
                             >
                               {t("participants.editRegistration")}
                             </button>
+                            {p.status === "registered" && (
+                              <button
+                                type="button"
+                                disabled={editMut.isPending}
+                                onClick={() =>
+                                  editMut.mutate({ participationId: p.id, status: "waitlisted" })
+                                }
+                                className="btn btn-ghost btn-sm"
+                              >
+                                {t("participants.moveToWaitlist")}
+                              </button>
+                            )}
+                            {p.status === "waitlisted" && (
+                              <button
+                                type="button"
+                                disabled={editMut.isPending}
+                                onClick={() =>
+                                  editMut.mutate({ participationId: p.id, status: "registered" })
+                                }
+                                className="btn btn-yellow btn-sm"
+                              >
+                                {t("participants.moveUp")}
+                              </button>
+                            )}
                             {(p.status === "registered" || p.status === "waitlisted") && (
                               <button
                                 type="button"

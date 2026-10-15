@@ -157,7 +157,20 @@
       "running": "Läuft",
       "closed": "Abgeschlossen",
       "cancelled": "Abgesagt"
-    }
+    },
+    "filterSearch": "Titel oder Ort suchen…",
+    "filterType": "Kategorie",
+    "filterAllTypes": "Alle Kategorien",
+    "filterMonth": "Monat",
+    "filterAllMonths": "Alle Monate",
+    "filterStatus": "Status",
+    "filterAllStatuses": "Alle Status",
+    "filterReset": "Filter zurücksetzen",
+    "filterCount": "{{count}} von {{total}} Events",
+    "filterEmpty": "Keine Events für diese Filter.",
+    "registrations": "Anmeldungen",
+    "copyRegistrationLink": "Anmeldelink kopieren",
+    "linkCopied": "Link kopiert"
   },
   "eventRequests": {
     "navLink": "Eventanfragen",
@@ -286,7 +299,9 @@
       "cancelled": "Abgemeldet",
       "attended": "Anwesend",
       "no_show": "Nicht erschienen"
-    }
+    },
+    "moveToWaitlist": "Auf Warteliste",
+    "moveUp": "Nachrücken"
   },
   "budget": {
     "title": "Budget",

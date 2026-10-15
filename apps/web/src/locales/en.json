@@ -157,7 +157,20 @@
       "running": "Running",
       "closed": "Closed",
       "cancelled": "Cancelled"
-    }
+    },
+    "filterSearch": "Search title or location…",
+    "filterType": "Category",
+    "filterAllTypes": "All categories",
+    "filterMonth": "Month",
+    "filterAllMonths": "All months",
+    "filterStatus": "Status",
+    "filterAllStatuses": "All statuses",
+    "filterReset": "Reset filters",
+    "filterCount": "{{count}} of {{total}} events",
+    "filterEmpty": "No events match these filters.",
+    "registrations": "Registrations",
+    "copyRegistrationLink": "Copy registration link",
+    "linkCopied": "Link copied"
   },
   "eventRequests": {
     "navLink": "Event requests",
@@ -286,7 +299,9 @@
       "cancelled": "Cancelled",
       "attended": "Attended",
       "no_show": "No show"
-    }
+    },
+    "moveToWaitlist": "Move to waitlist",
+    "moveUp": "Move up"
   },
   "budget": {
     "title": "Budget",

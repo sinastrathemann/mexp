@@ -35,6 +35,9 @@ export interface EventDto {
   // Zusatz-Infos zur Location: Adresse, Parkmöglichkeiten, Besonderheiten
   locationDetails?: string | null;
   capacity: number | null;
+  // Nur in der Listenansicht (GET /events) befüllt
+  registeredCount?: number;
+  waitlistCount?: number;
   // Anmeldung wird automatisch geschlossen ab diesem Datum
   registrationDeadline?: string | null;
   // Sichtbarkeits-Filter

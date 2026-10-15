@@ -351,6 +351,17 @@ eventRoutes.get("/", zValidator("query", listQuerySchema), async (c) => {
           return userDept !== undefined && userDept !== null && allowed.includes(userDept);
         }
         return true;
+      })
+      // Anmeldezahlen für die Übersicht (Bearbeiter:innen sehen "12 / 30")
+      .map((e) => {
+        const participants = getDevParticipants(e.id);
+        return {
+          ...e,
+          registeredCount: participants.filter(
+            (p) => p.status === "registered" || p.status === "attended",
+          ).length,
+          waitlistCount: participants.filter((p) => p.status === "waitlisted").length,
+        };
       });
     return c.json({ events });
   }
