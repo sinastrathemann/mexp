@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ApiRequestError, apiFetch } from "../api/client";
 import {
   EVENT_TYPES,
@@ -13,10 +13,34 @@ import {
   type UserFacetsDto,
 } from "../events/types";
 
+interface EventRequestPrefill {
+  id: string;
+  occasion: string;
+  category: string;
+  categoryDetails: string;
+  participantList: string;
+  participantCount: number;
+  notes: string;
+  activity: string;
+  destination: string;
+  fixedDate: string | null;
+  proposedDates: string;
+  contactName: string | null;
+  requesterName: string | null;
+}
+
 export default function EventCreatePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const requestId = searchParams.get("requestId");
+
+  const requestPrefillQuery = useQuery({
+    queryKey: ["event-request", requestId],
+    queryFn: () => apiFetch<{ request: EventRequestPrefill }>(`/event-requests/${requestId}`),
+    enabled: Boolean(requestId),
+  });
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -41,6 +65,46 @@ export default function EventCreatePage() {
     queryFn: () => apiFetch<UserFacetsDto>("/users/facets"),
     enabled: audienceScope === "teams" || audienceScope === "departments",
   });
+
+  useEffect(() => {
+    const req = requestPrefillQuery.data?.request;
+    if (!req) return;
+
+    const combinedDescription = [
+      req.categoryDetails,
+      req.participantList && `Teilnehmerliste: ${req.participantList}`,
+      req.activity && `Aktivität: ${req.activity}`,
+      req.destination && `Ort/Ziel: ${req.destination}`,
+      req.notes && `Notiz: ${req.notes}`,
+      req.requesterName && `Antragsteller:in: ${req.requesterName}`,
+      req.contactName && `Kontakt: ${req.contactName}`,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+    setTitle(req.occasion || "Event aus Anfrage");
+    setDescription(combinedDescription);
+
+    if (req.fixedDate) {
+      const fixedDate = new Date(req.fixedDate);
+      setStartAt(new Date(fixedDate.getTime()).toISOString().slice(0, 16));
+      setEndAt(new Date(fixedDate.getTime() + 3 * 60 * 60 * 1000).toISOString().slice(0, 16));
+    } else if (req.proposedDates) {
+      const firstDateMatch = req.proposedDates.match(/\d{4}-\d{2}-\d{2}(?:[T\s]\d{2}:\d{2})?/);
+      if (firstDateMatch) {
+        const firstDate = firstDateMatch[0].replace(" ", "T");
+        const parsed = new Date(firstDate.length === 10 ? `${firstDate}T09:00` : firstDate);
+        if (!Number.isNaN(parsed.getTime())) {
+          setStartAt(parsed.toISOString().slice(0, 16));
+          setEndAt(new Date(parsed.getTime() + 3 * 60 * 60 * 1000).toISOString().slice(0, 16));
+        }
+      }
+    }
+
+    if (req.participantCount > 0) {
+      setCapacity(String(req.participantCount));
+    }
+  }, [requestPrefillQuery.data]);
 
   const createMut = useMutation({
     mutationFn: (input: Record<string, unknown>) =>

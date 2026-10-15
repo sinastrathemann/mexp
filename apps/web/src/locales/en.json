@@ -205,6 +205,8 @@
     "submit": "Submit request",
     "submitting": "Submitting …",
     "submitted": "Your request was submitted. You can view it here but cannot change it.",
+    "newRequestPing": "{{count}} new event request(s) are waiting for review.",
+    "createFromRequest": "Create event from request",
     "emptyMine": "You have not submitted any requests yet.",
     "emptyInbox": "There are no event requests.",
     "requester": "Requester",

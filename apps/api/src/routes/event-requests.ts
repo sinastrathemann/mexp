@@ -90,6 +90,23 @@ export interface EventRequestRecord {
 export const eventRequestStore = persistentMap<EventRequestRecord>("event-requests");
 export const eventRequestRoutes = new Hono();
 
+eventRequestRoutes.get("/:id", (c) => {
+  const user = getHubUser(c);
+  const request = eventRequestStore.get(c.req.param("id"));
+
+  if (!request) {
+    return c.json({ error: { code: "NOT_FOUND", message: "Anfrage nicht gefunden." } }, 404);
+  }
+
+  const roles = resolveMexpRoles(c);
+  const canManage = roles.some((role) => REQUEST_MANAGER_ROLES.includes(role as never));
+  if (request.requesterId !== user.id && !canManage) {
+    return c.json({ error: { code: "FORBIDDEN", message: "Keine Berechtigung." } }, 403);
+  }
+
+  return c.json({ request });
+});
+
 eventRequestRoutes.get("/", (c) => {
   const user = getHubUser(c);
   const canManage = resolveMexpRoles(c).some((role) =>

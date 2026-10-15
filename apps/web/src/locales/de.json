@@ -205,6 +205,8 @@
     "submit": "Antrag absenden",
     "submitting": "Wird gesendet …",
     "submitted": "Dein Antrag wurde eingereicht. Du kannst ihn hier ansehen, aber nicht mehr ändern.",
+    "newRequestPing": "{{count}} neue Eventanfrage(n) warten auf Bearbeitung.",
+    "createFromRequest": "Als Event anlegen",
     "emptyMine": "Du hast noch keine Anfragen gestellt.",
     "emptyInbox": "Es liegen keine Eventanfragen vor.",
     "requester": "Antragsteller:in",

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
 
@@ -129,6 +130,7 @@ export default function EventRequestsPage() {
   const { t, i18n } = useTranslation();
   const { hasRole } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const canManage = hasRole("admin", "manager", "event_office", "werkstudent");
   const [view, setView] = useState<View>("new");
   const [form, setForm] = useState(EMPTY_FORM);
@@ -216,6 +218,7 @@ export default function EventRequestsPage() {
   const yesNo = (value: boolean | null) =>
     value === null ? "—" : value ? t("eventRequests.yes") : t("eventRequests.no");
   const requests = requestQuery.data?.requests ?? [];
+  const newInboxCount = requests.filter((request) => request.status === "submitted").length;
 
   return (
     <div className="page page-narrow">
@@ -260,9 +263,20 @@ export default function EventRequestsPage() {
             onClick={() => setView("inbox")}
           >
             {t("eventRequests.inbox")}
+            {newInboxCount > 0 && (
+              <span className="badge badge-warning" style={{ marginLeft: 8 }}>
+                {newInboxCount}
+              </span>
+            )}
           </button>
         )}
       </div>
+
+      {view === "inbox" && newInboxCount > 0 && (
+        <div className="alert alert-success" style={{ marginBottom: 16 }}>
+          {t("eventRequests.newRequestPing", { count: newInboxCount })}
+        </div>
+      )}
 
       {view === "new" && (
         <form onSubmit={submitRequest} className="card">
@@ -593,29 +607,40 @@ export default function EventRequestsPage() {
                   </div>
                 </details>
                 {view === "inbox" && (
-                  <div className="field" style={{ marginTop: "var(--space-3)" }}>
-                    <label className="label" htmlFor={`request-status-${request.id}`}>
-                      {t("eventRequests.updateStatus")}
-                    </label>
-                    <select
-                      id={`request-status-${request.id}`}
-                      className="select"
-                      disabled={updateMutation.isPending}
-                      value={request.status}
-                      onChange={(event) =>
-                        updateMutation.mutate({
-                          id: request.id,
-                          status: event.target.value as RequestStatus,
-                        })
-                      }
-                    >
-                      {STATUSES.map((status) => (
-                        <option key={status} value={status}>
-                          {t(`eventRequests.status.${status}`)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <>
+                    <div className="field" style={{ marginTop: "var(--space-3)" }}>
+                      <label className="label" htmlFor={`request-status-${request.id}`}>
+                        {t("eventRequests.updateStatus")}
+                      </label>
+                      <select
+                        id={`request-status-${request.id}`}
+                        className="select"
+                        disabled={updateMutation.isPending}
+                        value={request.status}
+                        onChange={(event) =>
+                          updateMutation.mutate({
+                            id: request.id,
+                            status: event.target.value as RequestStatus,
+                          })
+                        }
+                      >
+                        {STATUSES.map((status) => (
+                          <option key={status} value={status}>
+                            {t(`eventRequests.status.${status}`)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div style={{ marginTop: "var(--space-3)" }}>
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={() => navigate(`/events/new?requestId=${request.id}`)}
+                      >
+                        {t("eventRequests.createFromRequest")}
+                      </button>
+                    </div>
+                  </>
                 )}
               </article>
             ))}
