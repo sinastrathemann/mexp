@@ -43,11 +43,13 @@ function computeDevStats() {
   }
 
   for (const event of buildOneNoteImportedEvents()) {
+    const override = devEventOverrideStore.get(event.id) as EventLike | undefined;
+    if (override?._deleted) continue;
     allEvents.push({
       id: event.id,
-      status: event.status,
-      startAt: event.startAt,
-      endAt: event.endAt,
+      status: (override?.status as string) ?? event.status,
+      startAt: (override?.startAt as string | undefined) ?? event.startAt,
+      endAt: (override?.endAt as string | undefined) ?? event.endAt,
     });
   }
 
