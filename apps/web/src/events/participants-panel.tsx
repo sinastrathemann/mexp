@@ -126,7 +126,9 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const participants = participantsQ.data?.participants ?? [];
   const ownFromList = user ? participants.find((p) => p.userId === user.id) : undefined;
   const ownFromSelf = myParticipationQ.data?.participation ?? undefined;
-  const own: ParticipationDto | undefined = ownFromList ?? ownFromSelf ?? undefined;
+  // Die eigene Anmeldung (mit Notiz) hat Vorrang: Nutzer ohne Verwaltungsrolle bekommen
+  // in der Teilnehmerliste nur Name + Status, ohne persönliche Notiz.
+  const own: ParticipationDto | undefined = ownFromSelf ?? ownFromList ?? undefined;
 
   // Anmeldelink (?anmelden=1): Anmeldeformular direkt öffnen, sobald feststeht, dass
   // die Person noch nicht angemeldet ist und die Anmeldung offen ist.
@@ -483,15 +485,20 @@ function SelfActions(props: SelfActionsProps) {
     return (
       <div style={{ marginTop: "var(--space-3)" }}>
         {own.status === "registered" ? (
-          <div
-            className="alert alert-info"
-            style={{ borderColor: "var(--brand-yellow)", background: "var(--brand-yellow-light)" }}
-          >
-            {t("participants.yourStatusRegistered")}
+          <div className="registration-status" role="status">
+            <span className="registration-status-icon" aria-hidden="true">
+              ✓
+            </span>
+            <strong>{t("participants.yourStatusRegistered")}</strong>
           </div>
         ) : (
-          <div className="alert alert-info">
-            {t("participants.yourStatusWaitlisted", { position: own.waitlistPosition ?? "?" })}
+          <div className="registration-status registration-status--waitlist" role="status">
+            <span className="registration-status-icon" aria-hidden="true">
+              {own.waitlistPosition ?? "?"}
+            </span>
+            <span>
+              {t("participants.yourStatusWaitlisted", { position: own.waitlistPosition ?? "?" })}
+            </span>
           </div>
         )}
         <button

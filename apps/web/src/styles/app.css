@@ -876,6 +876,46 @@ legend {
   border-color: var(--border-default);
 }
 
+.alert-success {
+  background: var(--color-lime-50);
+  color: var(--fg-strong);
+  border-color: var(--color-lime-100);
+}
+
+/* Bestätigung "Du bist angemeldet" — ruhig, klar positiv, keine Warnoptik */
+.registration-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-base);
+  border: 1px solid var(--color-lime-100);
+  border-left: 4px solid var(--color-success);
+  background: var(--color-lime-50);
+  color: var(--fg-strong);
+  margin-bottom: var(--space-3);
+}
+.registration-status-icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-success);
+  color: var(--color-white);
+  font-weight: 700;
+}
+.registration-status--waitlist {
+  border-color: var(--border-default);
+  border-left-color: var(--fg-muted);
+  background: var(--bg-subtle);
+}
+.registration-status--waitlist .registration-status-icon {
+  background: var(--fg-muted);
+}
+
 /* ─── Utility helpers ─────────────────────────────────────────── */
 .stack > * + * {
   margin-top: var(--space-3);
