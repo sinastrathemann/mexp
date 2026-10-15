@@ -26,12 +26,12 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { events, audit, env, participations } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
+import { buildOneNoteImportedEvents } from "../onenote-import.js";
 import {
   type ExportParticipant,
   type ExportQuestion,
   buildParticipantsWorkbook,
 } from "../participants-export.js";
-import { buildOneNoteImportedEvents } from "../onenote-import.js";
 import { mexpUserStore, requireMexpRole, resolveMexpRoles } from "./_user-resolution.js";
 import {
   devAnswerStore,
@@ -840,8 +840,7 @@ eventRoutes.get("/:id/my-participation", async (c) => {
   const id = c.req.param("id");
   const actorIdSession = getHubUser(c).id;
   if (!env.DATABASE_URL) {
-    const live = devLiveParticipantsStore.get(id) ?? [];
-    const found = live.find((p) => p.userId === actorIdSession);
+    const found = getDevParticipants(id).find((p) => p.userId === actorIdSession);
     return c.json({ participation: found ?? null });
   }
   const actorId = actorIdSession;
@@ -849,46 +848,9 @@ eventRoutes.get("/:id/my-participation", async (c) => {
   return c.json({ participation });
 });
 
-// Notiz zur eigenen Anmeldung bearbeiten
-eventRoutes.patch("/:id/my-participation", async (c) => {
-  const id = c.req.param("id");
-  const actorId = getHubUser(c).id;
-  if (env.DATABASE_URL) {
-    return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Dev-only" } }, 501);
-  }
-  let personalNote: string | null = null;
-  try {
-    const body = (await c.req.json()) as { personalNote?: string | null };
-    if (typeof body.personalNote === "string") {
-      personalNote = body.personalNote.trim() === "" ? null : body.personalNote.trim();
-    } else if (body.personalNote === null) {
-      personalNote = null;
-    }
-  } catch {
-    return c.json({ error: { code: "INVALID_BODY", message: "Erwarte JSON" } }, 400);
-  }
-
-  const live = devLiveParticipantsStore.get(id) ?? [];
-  const idx = live.findIndex((p) => p.userId === actorId);
-  if (idx === -1) {
-    return c.json(
-      { error: { code: "NOT_REGISTERED", message: "Du bist nicht für dieses Event angemeldet." } },
-      404,
-    );
-  }
-  const existing = live[idx];
-  if (!existing) {
-    return c.json(
-      { error: { code: "NOT_REGISTERED", message: "Du bist nicht für dieses Event angemeldet." } },
-      404,
-    );
-  }
-  const updated = { ...existing, personalNote };
-  const nextList = [...live];
-  nextList[idx] = updated;
-  devLiveParticipantsStore.set(id, nextList);
-  return c.json({ participation: updated });
-});
+// Teilnehmende können ihre Anmeldung nachträglich nicht ändern — nur einmalig
+// anmelden und wieder abmelden. Änderungen übernehmen Admin/Werkstudent:innen über
+// PATCH /:eventId/participants/:participationId.
 
 // Dev-Mode (file-store — Design-Spec §3.4): Override-Store für Teilnahmen
 // (participationId → Patch: status, waitlistPosition, checkedInAt, ...). Analog zu
@@ -1120,7 +1082,22 @@ eventRoutes.post("/:id/register", async (c) => {
     }
 
     const participationId = `p-${actorId.slice(0, 8)}`;
+    const current = getDevParticipants(id).find((p) => p.userId === actorId);
+    if (current && current.status !== "cancelled") {
+      return c.json(
+        {
+          error: {
+            code: "ALREADY_REGISTERED",
+            message:
+              "Du bist bereits angemeldet. Für Änderungen wende dich bitte an das Event-Team.",
+          },
+        },
+        409,
+      );
+    }
     devAnswerStore.set(participationId, answers);
+    // Nach einer Abmeldung neu anmelden: alten Status-Override (cancelled) verwerfen
+    devParticipationOverrideStore.delete(participationId);
 
     // Kapazität prüfen: ist das Event voll, landet die Anmeldung auf der Warteliste.
     // Die eigene (ggf. frühere) Anmeldung zählt nicht mit, sonst blockiert ein
@@ -1208,26 +1185,21 @@ eventRoutes.post("/:id/withdraw", async (c) => {
   const id = c.req.param("id");
   const actorId = getHubUser(c).id;
   if (!env.DATABASE_URL) {
-    const participationId = `p-${actorId.slice(0, 8)}`;
-    // Aus Live-Store + Answer-Store entfernen
-    const existing = devLiveParticipantsStore.get(id) ?? [];
-    devLiveParticipantsStore.set(
-      id,
-      existing.filter((p) => p.userId !== actorId),
-    );
-    devAnswerStore.delete(participationId);
-    return c.json({
-      participation: {
-        id: participationId,
-        eventId: id,
-        userId: actorId,
-        status: "cancelled",
-        waitlistPosition: null,
-        registeredAt: new Date(Date.now() - 86400000).toISOString(),
-        checkedInAt: null,
-        cancelledAt: new Date().toISOString(),
-      },
+    // Eintrag bleibt als "cancelled" erhalten, damit das Event-Team die Abmeldung
+    // in der Teilnehmerliste (rot markiert) sieht.
+    const own = getDevParticipants(id).find((p) => p.userId === actorId);
+    if (!own || own.status === "cancelled") {
+      return c.json(
+        { error: { code: "NOT_REGISTERED", message: "Du bist nicht für dieses Event angemeldet." } },
+        404,
+      );
+    }
+    const patch = { status: "cancelled", waitlistPosition: null, cancelledAt: new Date().toISOString() };
+    devParticipationOverrideStore.set(own.id, {
+      ...devParticipationOverrideStore.get(own.id),
+      ...patch,
     });
+    return c.json({ participation: { ...own, ...patch } });
   }
   const participation = await withdrawFromEvent({ eventId: id, userId: actorId }, actorId, {
     events,
@@ -1287,6 +1259,75 @@ eventRoutes.post(
       audit,
     });
     return c.json({ participation });
+  },
+);
+
+const editParticipationSchema = z.object({
+  status: z.enum(["registered", "waitlisted", "cancelled"]).optional(),
+  personalNote: z.string().max(2000).nullable().optional(),
+  answers: z
+    .array(
+      z.object({
+        questionId: z.string().min(1),
+        value: z.union([z.boolean(), z.string(), z.array(z.string()), z.null()]),
+      }),
+    )
+    .optional(),
+});
+
+// Admin/Werkstudent:innen bearbeiten eine Anmeldung: Status (u. a. Abmeldung
+// markieren bzw. zurücknehmen), Notiz und Formularantworten.
+eventRoutes.patch(
+  "/:eventId/participants/:participationId",
+  requireMexpRole(...WRITE_ROLES),
+  zValidator("json", editParticipationSchema),
+  async (c) => {
+    if (env.DATABASE_URL) {
+      return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Dev-only" } }, 501);
+    }
+    const eventId = c.req.param("eventId");
+    const participationId = c.req.param("participationId");
+    const input = c.req.valid("json");
+
+    const all = getDevParticipants(eventId);
+    const participation = all.find((p) => p.id === participationId);
+    if (!participation) {
+      return c.json(
+        { error: { code: "PARTICIPATION_NOT_FOUND", message: "Keine Anmeldung gefunden" } },
+        404,
+      );
+    }
+
+    const patch: Record<string, unknown> = {};
+    if (input.status && input.status !== participation.status) {
+      patch.status = input.status;
+      patch.cancelledAt = input.status === "cancelled" ? new Date().toISOString() : null;
+      patch.waitlistPosition =
+        input.status === "waitlisted"
+          ? Math.max(0, ...all.map((p) => (p.status === "waitlisted" ? (p.waitlistPosition ?? 0) : 0))) + 1
+          : null;
+    }
+    if (input.personalNote !== undefined) {
+      const trimmed = input.personalNote?.trim() ?? "";
+      patch.personalNote = trimmed === "" ? null : trimmed;
+    }
+    if (Object.keys(patch).length > 0) {
+      devParticipationOverrideStore.set(participationId, {
+        ...devParticipationOverrideStore.get(participationId),
+        ...patch,
+      });
+    }
+    if (input.answers) {
+      devAnswerStore.set(participationId, input.answers);
+    }
+
+    return c.json({
+      participation: {
+        ...participation,
+        ...patch,
+        answers: devAnswerStore.get(participationId) ?? [],
+      },
+    });
   },
 );
 

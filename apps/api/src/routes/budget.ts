@@ -49,6 +49,8 @@ const invoiceSchema = z.object({
 
 const OWNER_ROLES = ["admin", "manager", "event_office", "budget_owner"] as const;
 const APPROVER_ROLES = ["admin", "manager", "budget_owner"] as const;
+// Werkstudent:innen dürfen Budgetposten nur lesen, nicht anlegen/ändern/freigeben.
+const VIEWER_ROLES = [...OWNER_ROLES, "werkstudent"] as const;
 
 // ─── Dev-Mode In-Memory Store ──────────────────────────────────
 interface DevBudgetItem {
@@ -82,7 +84,7 @@ export type { DevBudgetItem };
 
 export const budgetRoutes = new Hono();
 
-budgetRoutes.get("/events/:eventId/budget", requireMexpRole(...OWNER_ROLES), async (c) => {
+budgetRoutes.get("/events/:eventId/budget", requireMexpRole(...VIEWER_ROLES), async (c) => {
   const eventId = c.req.param("eventId");
   if (!env.DATABASE_URL) {
     const items = Array.from(devBudgetStore.values()).filter((b) => b.eventId === eventId);

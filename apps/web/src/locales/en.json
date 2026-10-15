@@ -221,6 +221,12 @@
     }
   },
   "participants": {
+    "cancelledCount": "{{count}} cancelled",
+    "markCancelled": "Mark as cancelled",
+    "undoCancelled": "Undo cancellation",
+    "editRegistration": "Edit",
+    "yourNote": "Your note",
+    "noChangesHint": "Changes to your registration are handled by the event team.",
     "publicListTitle": "Registered people",
     "publicListMore": "+ {{count}} more",
     "sectionTitle": "Participants",
@@ -228,7 +234,6 @@
     "waitlistCount": "{{count}} on waitlist",
     "attendedCount": "{{count}} attended",
     "noShowCount": "{{count}} no-show",
-    "checkIn": "Check in",
     "markNoShow": "Mark as no-show",
     "empty": "No registrations yet.",
     "colName": "Name",

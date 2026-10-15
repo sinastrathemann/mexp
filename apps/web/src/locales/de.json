@@ -221,6 +221,12 @@
     }
   },
   "participants": {
+    "cancelledCount": "{{count}} abgemeldet",
+    "markCancelled": "Abmeldung markieren",
+    "undoCancelled": "Abmeldung zurücknehmen",
+    "editRegistration": "Bearbeiten",
+    "yourNote": "Deine Notiz",
+    "noChangesHint": "Änderungen an deiner Anmeldung übernimmt das Event-Team.",
     "publicListTitle": "Angemeldete Personen",
     "publicListMore": "+ {{count}} weitere",
     "sectionTitle": "Teilnehmer",
@@ -228,7 +234,6 @@
     "waitlistCount": "{{count}} auf Warteliste",
     "attendedCount": "{{count}} anwesend",
     "noShowCount": "{{count}} nicht erschienen",
-    "checkIn": "Check-in",
     "markNoShow": "Als No-Show markieren",
     "empty": "Noch keine Anmeldungen.",
     "colName": "Name",

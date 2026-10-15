@@ -6,7 +6,7 @@ import { persistentMap } from "../dev-persistence.js";
 import { requireMexpRole } from "./_user-resolution.js";
 
 // ─── Schemas ─────────────────────────────────────────────────────
-const questionTypeSchema = z.enum(["yes_no", "single_choice", "multi_choice", "date_pick"]);
+const questionTypeSchema = z.enum(["yes_no", "single_choice", "multi_choice", "date_pick", "free_text"]);
 
 const questionSchema = z.object({
   id: z.string().min(1),
@@ -43,7 +43,7 @@ const answersSchema = z.object({
 export interface DevRegistrationQuestion {
   id: string;
   order: number;
-  type: "yes_no" | "single_choice" | "multi_choice" | "date_pick";
+  type: "yes_no" | "single_choice" | "multi_choice" | "date_pick" | "free_text";
   label: string;
   required: boolean;
   options: string[];
@@ -107,6 +107,13 @@ export function validateAnswers(
       }
       if (typeof a.value === "string" && !q.options.includes(a.value)) {
         return { ok: false, message: `"${q.label}": Ungültige Option` };
+      }
+    } else if (q.type === "free_text") {
+      if (a.value !== null && typeof a.value !== "string") {
+        return { ok: false, message: `"${q.label}": Erwarte einen Text` };
+      }
+      if (typeof a.value === "string" && a.value.length > 2000) {
+        return { ok: false, message: `"${q.label}": Text ist zu lang (max. 2000 Zeichen)` };
       }
     } else if (q.type === "multi_choice" || q.type === "date_pick") {
       if (a.value !== null && !Array.isArray(a.value)) {

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiRequestError, apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
+import { withBasePath } from "../base-path";
 import { AddParticipantModal } from "./add-participant-modal";
 import { RegistrationModal } from "./registration-modal";
 import type {
@@ -12,7 +13,6 @@ import type {
   RegistrationAnswer,
   RegistrationQuestion,
 } from "./types";
-import { withBasePath } from "../base-path";
 
 // Max. Anzahl Namen, die Nutzer ohne Verwaltungsrolle in der Teilnehmerliste sehen.
 const PUBLIC_LIST_LIMIT = 12;
@@ -29,6 +29,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const registrationOpen = event.status === "open";
   const [modalOpen, setModalOpen] = useState(false);
   const [addParticipantOpen, setAddParticipantOpen] = useState(false);
+  const [editing, setEditing] = useState<ParticipantDto | null>(null);
 
   // Anmelde-Formular-Fragen für dieses Event
   const formQ = useQuery({
@@ -80,15 +81,6 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
     }
   };
 
-  const updateNoteMut = useMutation({
-    mutationFn: (personalNote: string | null) =>
-      apiFetch<{ participation: ParticipationDto }>(`/events/${event.id}/my-participation`, {
-        method: "PATCH",
-        body: JSON.stringify({ personalNote }),
-      }),
-    onSuccess: () => invalidateAll(),
-  });
-
   const withdrawMut = useMutation({
     mutationFn: () =>
       apiFetch<{ participation: ParticipationDto }>(`/events/${event.id}/withdraw`, {
@@ -106,13 +98,24 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
     onSuccess: invalidateAll,
   });
 
-  const checkInMut = useMutation({
-    mutationFn: (participationId: string) =>
-      apiFetch<{ participation: ParticipationDto }>(
-        `/events/${event.id}/participants/${participationId}/check-in`,
-        { method: "POST" },
-      ),
-    onSuccess: invalidateAll,
+  // Admin/Werkstudent:in bearbeitet eine Anmeldung (Status, Notiz, Antworten)
+  const editMut = useMutation({
+    mutationFn: (input: {
+      participationId: string;
+      status?: "registered" | "waitlisted" | "cancelled";
+      personalNote?: string | null;
+      answers?: RegistrationAnswer[];
+    }) => {
+      const { participationId, ...body } = input;
+      return apiFetch<{ participation: ParticipantDto }>(
+        `/events/${event.id}/participants/${participationId}`,
+        { method: "PATCH", body: JSON.stringify(body) },
+      );
+    },
+    onSuccess: () => {
+      setEditing(null);
+      invalidateAll();
+    },
   });
 
   const noShowMut = useMutation({
@@ -132,7 +135,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const waitlistCount = participants.filter((p) => p.status === "waitlisted").length;
   const attendedCount = participants.filter((p) => p.status === "attended").length;
   const noShowCount = participants.filter((p) => p.status === "no_show").length;
-  const checkInPhase = event.status === "open" || event.status === "running";
+  const cancelledCount = participants.filter((p) => p.status === "cancelled").length;
   const noShowPhase = event.status === "running" || event.status === "closed";
 
   const visibleParticipants = participants.filter(
@@ -165,6 +168,9 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
         {waitlistCount > 0 && ` · ${t("participants.waitlistCount", { count: waitlistCount })}`}
         {attendedCount > 0 && ` · ${t("participants.attendedCount", { count: attendedCount })}`}
         {noShowCount > 0 && ` · ${t("participants.noShowCount", { count: noShowCount })}`}
+        {canManage &&
+          cancelledCount > 0 &&
+          ` · ${t("participants.cancelledCount", { count: cancelledCount })}`}
       </p>
 
       {!canManage && visibleParticipants.length > 0 && (
@@ -214,11 +220,30 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
       />
 
       {own && own.status !== "cancelled" && own.status !== "no_show" && (
-        <MyNoteBlock
-          note={own.personalNote ?? null}
-          pending={updateNoteMut.isPending}
-          onSave={(text) => updateNoteMut.mutate(text)}
-          error={updateNoteMut.error instanceof Error ? updateNoteMut.error.message : null}
+        <div className="muted text-sm" style={{ marginTop: "var(--space-3)" }}>
+          {own.personalNote && (
+            <div style={{ whiteSpace: "pre-wrap", marginBottom: 4 }}>
+              <strong>{t("participants.yourNote")}:</strong> {own.personalNote}
+            </div>
+          )}
+          {t("participants.noChangesHint")}
+        </div>
+      )}
+
+      {editing && (
+        <RegistrationModal
+          mode="edit"
+          eventTitle={editing.userDisplayName}
+          subtitle={event.title}
+          questions={questions}
+          initialAnswers={editing.answers ?? []}
+          initialPersonalNote={editing.personalNote ?? ""}
+          pending={editMut.isPending}
+          error={editMut.error instanceof Error ? editMut.error.message : null}
+          onCancel={() => setEditing(null)}
+          onSubmit={(answers, personalNote) =>
+            editMut.mutate({ participationId: editing.id, answers, personalNote })
+          }
         />
       )}
 
@@ -311,7 +336,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
                   </thead>
                   <tbody>
                     {filteredParticipants.map((p) => (
-                      <tr key={p.id}>
+                      <tr key={p.id} className={p.status === "cancelled" ? "row-cancelled" : undefined}>
                         <td className="text-bold">
                           {p.userDisplayName}
                           {p.personalNote && (
@@ -325,7 +350,11 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
                         </td>
                         <td className="muted">{p.userEmail}</td>
                         <td>
-                          <span className="badge badge-muted">
+                          <span
+                            className={
+                              p.status === "cancelled" ? "badge badge-danger" : "badge badge-muted"
+                            }
+                          >
                             {t(`participants.status.${p.status}`)}
                           </span>
                         </td>
@@ -353,14 +382,36 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
                         </td>
                         <td>
                           <div className="row" style={{ gap: "var(--space-2)" }}>
-                            {p.status === "registered" && checkInPhase && (
+                            <button
+                              type="button"
+                              disabled={editMut.isPending}
+                              onClick={() => setEditing(p)}
+                              className="btn btn-ghost btn-sm"
+                            >
+                              {t("participants.editRegistration")}
+                            </button>
+                            {(p.status === "registered" || p.status === "waitlisted") && (
                               <button
                                 type="button"
-                                disabled={checkInMut.isPending}
-                                onClick={() => checkInMut.mutate(p.id)}
+                                disabled={editMut.isPending}
+                                onClick={() =>
+                                  editMut.mutate({ participationId: p.id, status: "cancelled" })
+                                }
                                 className="btn btn-outline-orange btn-sm"
                               >
-                                {t("participants.checkIn")}
+                                {t("participants.markCancelled")}
+                              </button>
+                            )}
+                            {p.status === "cancelled" && (
+                              <button
+                                type="button"
+                                disabled={editMut.isPending}
+                                onClick={() =>
+                                  editMut.mutate({ participationId: p.id, status: "registered" })
+                                }
+                                className="btn btn-outline btn-sm"
+                              >
+                                {t("participants.undoCancelled")}
                               </button>
                             )}
                             {p.status === "registered" && noShowPhase && (
@@ -524,7 +575,8 @@ function AnswerSummary({
     const a = byId.get(q.id);
     if (!a || a.value === null || a.value === "") return "—";
     if (q.type === "yes_no") return a.value === true ? "Ja" : a.value === false ? "Nein" : "—";
-    if (q.type === "single_choice" && typeof a.value === "string") return a.value;
+    if ((q.type === "single_choice" || q.type === "free_text") && typeof a.value === "string")
+      return a.value;
     if (q.type === "multi_choice" && Array.isArray(a.value)) return a.value.join(", ") || "—";
     if (q.type === "date_pick" && Array.isArray(a.value)) {
       return a.value.map(fmtDate).join(" · ") || "—";
@@ -545,109 +597,3 @@ function AnswerSummary({
   );
 }
 
-function MyNoteBlock({
-  note,
-  pending,
-  error,
-  onSave,
-}: {
-  note: string | null;
-  pending: boolean;
-  error: string | null;
-  onSave: (text: string | null) => void;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<string>(note ?? "");
-
-  const startEdit = () => {
-    setDraft(note ?? "");
-    setEditing(true);
-  };
-  const save = () => {
-    const trimmed = draft.trim();
-    onSave(trimmed === "" ? null : trimmed);
-    setEditing(false);
-  };
-  const cancel = () => {
-    setDraft(note ?? "");
-    setEditing(false);
-  };
-
-  return (
-    <div
-      style={{
-        marginTop: "var(--space-3)",
-        padding: "var(--space-3) var(--space-4)",
-        background: "var(--bg-subtle)",
-        borderRadius: "var(--radius-md)",
-        border: "1px solid var(--border-default)",
-      }}
-    >
-      <div
-        className="row"
-        style={{ justifyContent: "space-between", marginBottom: editing || note ? 8 : 0 }}
-      >
-        <span
-          className="text-mono text-xs"
-          style={{
-            letterSpacing: "var(--tracking-wider)",
-            textTransform: "uppercase",
-            color: "var(--fg-strong)",
-            fontWeight: 700,
-          }}
-        >
-          Deine Notiz
-        </span>
-        {!editing && (
-          <button type="button" className="btn btn-ghost btn-sm" onClick={startEdit}>
-            {note ? "✎ Bearbeiten" : "+ Notiz hinzufügen"}
-          </button>
-        )}
-      </div>
-
-      {!editing && note && (
-        <p style={{ margin: 0, whiteSpace: "pre-wrap", color: "var(--fg-strong)" }}>{note}</p>
-      )}
-      {!editing && !note && (
-        <p className="muted text-sm" style={{ margin: 0 }}>
-          Noch keine Notiz. z. B. "komme mit Partner", "vegetarisch", "kann erst ab 15:30"
-        </p>
-      )}
-
-      {editing && (
-        <>
-          <textarea
-            className="textarea"
-            rows={2}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder='z. B. "komme mit Partner"'
-          />
-          <div className="row" style={{ gap: 8, marginTop: 8 }}>
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
-              onClick={save}
-              disabled={pending}
-            >
-              {pending ? "Speichere…" : "Speichern"}
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={cancel}
-              disabled={pending}
-            >
-              Abbrechen
-            </button>
-          </div>
-        </>
-      )}
-      {error && (
-        <div className="alert alert-error" style={{ marginTop: 8 }}>
-          {error}
-        </div>
-      )}
-    </div>
-  );
-}

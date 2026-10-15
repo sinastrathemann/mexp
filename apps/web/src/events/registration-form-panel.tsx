@@ -14,6 +14,7 @@ const TYPE_LABEL: Record<QuestionType, string> = {
   single_choice: "Einfachauswahl",
   multi_choice: "Mehrfachauswahl",
   date_pick: "Termin-Abstimmung",
+  free_text: "Freitext",
 };
 
 const QUESTION_TEMPLATES: { label: string; build: () => Omit<RegistrationQuestion, "id"> }[] = [
@@ -45,6 +46,16 @@ const QUESTION_TEMPLATES: { label: string; build: () => Omit<RegistrationQuestio
       label: "Hast du Allergien oder Unverträglichkeiten?",
       required: false,
       options: ["Gluten", "Laktose", "Nüsse", "Histamin"],
+    }),
+  },
+  {
+    label: "+ Freitext",
+    build: () => ({
+      order: 0,
+      type: "free_text",
+      label: "Möchtest du uns noch etwas mitteilen?",
+      required: false,
+      options: [],
     }),
   },
   {
@@ -326,7 +337,9 @@ function QuestionEditor({ question, onChange, onRemove, onMoveUp, onMoveDown }: 
           {(isChoice || isDate) && (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {question.options.map((opt, idx) => (
-                <div key={`option-${idx}-${opt}`} className="row" style={{ gap: 6 }}>
+                // Index statt Optionstext als Key, sonst verliert das Feld bei jedem Tastendruck den Fokus
+                // biome-ignore lint/suspicious/noArrayIndexKey: Optionen haben keine stabile ID
+                <div key={`option-${idx}`} className="row" style={{ gap: 6 }}>
                   <input
                     className="input"
                     type={isDate ? "datetime-local" : "text"}

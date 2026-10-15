@@ -112,7 +112,13 @@ export interface UserSearchResult {
 }
 
 // ─── Registrierungs-Formular pro Event ─────────────────────────
-export const QUESTION_TYPES = ["yes_no", "single_choice", "multi_choice", "date_pick"] as const;
+export const QUESTION_TYPES = [
+  "yes_no",
+  "single_choice",
+  "multi_choice",
+  "date_pick",
+  "free_text",
+] as const;
 export type QuestionType = (typeof QUESTION_TYPES)[number];
 
 export interface RegistrationQuestion {
@@ -127,7 +133,7 @@ export interface RegistrationQuestion {
 }
 
 // Antwort kann sein: boolean (yes_no), string (single_choice),
-// string[] (multi_choice / date_pick)
+// string[] (multi_choice / date_pick), string (free_text)
 export type AnswerValue = boolean | string | string[] | null;
 
 export interface RegistrationAnswer {

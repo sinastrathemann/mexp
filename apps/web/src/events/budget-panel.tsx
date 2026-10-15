@@ -50,7 +50,9 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
   const { t, i18n } = useTranslation();
   const { hasRole } = useAuth();
   const qc = useQueryClient();
-  const canView = hasRole("admin", "manager", "event_office", "budget_owner");
+  const canEdit = hasRole("admin", "manager", "event_office", "budget_owner");
+  // Werkstudent:innen sehen die Budgetposten, können sie aber nicht bearbeiten.
+  const canView = canEdit || hasRole("werkstudent");
   const canApprove = hasRole("admin", "manager", "budget_owner");
   const [form, setForm] = useState<FormState>(initialForm);
   const [showForm, setShowForm] = useState(false);
@@ -244,13 +246,15 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
     <section className="card">
       <div className="card-header">
         <h2 className="card-title">{t("budget.title")}</h2>
-        <button
-          type="button"
-          onClick={() => setShowForm((s) => !s)}
-          className={showForm ? "btn btn-outline btn-sm" : "btn btn-primary btn-sm"}
-        >
-          {showForm ? t("common.cancel") : `+ ${t("budget.addItem")}`}
-        </button>
+        {canEdit && (
+          <button
+            type="button"
+            onClick={() => setShowForm((s) => !s)}
+            className={showForm ? "btn btn-outline btn-sm" : "btn btn-primary btn-sm"}
+          >
+            {showForm ? t("common.cancel") : `+ ${t("budget.addItem")}`}
+          </button>
+        )}
       </div>
 
       {(() => {
@@ -449,6 +453,7 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
                                 ? `${item.invoiceFileName.slice(0, 20)}…`
                                 : item.invoiceFileName}
                             </span>
+                            {canEdit && (
                             <button
                               type="button"
                               className="btn btn-ghost btn-sm"
@@ -458,6 +463,7 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
                             >
                               ×
                             </button>
+                            )}
                           </div>
                           {extractedById[item.id] && (
                             <span
@@ -469,6 +475,8 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
                             </span>
                           )}
                         </div>
+                      ) : !canEdit ? (
+                        <span className="muted">—</span>
                       ) : (
                         <div className="row" style={{ gap: 6 }}>
                           <label
@@ -516,7 +524,7 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
                     </td>
                     <td>
                       <div className="row" style={{ gap: "var(--space-2)" }}>
-                        {item.status === "draft" && (
+                        {canEdit && item.status === "draft" && (
                           <button
                             type="button"
                             onClick={() => submitMut.mutate(item.id)}
@@ -563,7 +571,7 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
                             </button>
                           </>
                         )}
-                        {item.status === "rejected" && (
+                        {canEdit && item.status === "rejected" && (
                           <button
                             type="button"
                             onClick={() => reopenMut.mutate(item.id)}
@@ -576,7 +584,7 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
                       </div>
                     </td>
                   </tr>
-                  {isOpen && !item.invoiceFileName && (
+                  {canEdit && isOpen && !item.invoiceFileName && (
                     <tr key={`${item.id}-invoice`}>
                       <td colSpan={7} style={{ background: "var(--bg-subtle)" }}>
                         <div

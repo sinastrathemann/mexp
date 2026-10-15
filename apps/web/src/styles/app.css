@@ -733,6 +733,15 @@ legend {
   background: var(--bg-muted);
   color: var(--fg-default);
 }
+.badge-danger {
+  background: #fde8e8;
+  color: #b42318;
+}
+/* Abgemeldete Teilnehmende in der Teilnehmerliste rot hervorheben */
+.table tr.row-cancelled td {
+  background: #fdf2f2;
+  color: #b42318;
+}
 .badge-outline {
   background: transparent;
   border: 1px solid var(--border-strong);

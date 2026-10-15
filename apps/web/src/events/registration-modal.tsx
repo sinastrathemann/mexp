@@ -8,6 +8,10 @@ interface Props {
   error?: string | null;
   previewMode?: boolean;
   initialPersonalNote?: string;
+  // "edit": Admin/Werkstudent:in bearbeitet eine bestehende Anmeldung
+  mode?: "register" | "edit";
+  subtitle?: string;
+  initialAnswers?: RegistrationAnswer[];
   onCancel: () => void;
   onSubmit: (answers: RegistrationAnswer[], personalNote: string | null) => void;
 }
@@ -19,10 +23,16 @@ export function RegistrationModal({
   error,
   previewMode = false,
   initialPersonalNote = "",
+  mode = "register",
+  subtitle,
+  initialAnswers = [],
   onCancel,
   onSubmit,
 }: Props) {
-  const [values, setValues] = useState<Record<string, boolean | string | string[] | null>>({});
+  const [values, setValues] = useState<Record<string, boolean | string | string[] | null>>(() =>
+    Object.fromEntries(initialAnswers.map((a) => [a.questionId, a.value])),
+  );
+  const isEdit = mode === "edit";
   const [personalNote, setPersonalNote] = useState<string>(initialPersonalNote);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -68,7 +78,11 @@ export function RegistrationModal({
         <div className="card-header" style={{ marginBottom: "var(--space-2)" }}>
           <div>
             <div className="eyebrow">
-              {previewMode ? "Vorschau · Anmelde-Formular" : "Anmeldung"}
+              {previewMode
+                ? "Vorschau · Anmelde-Formular"
+                : isEdit
+                  ? "Anmeldung bearbeiten"
+                  : "Anmeldung"}
             </div>
             <h2 className="card-title" style={{ marginTop: 4 }}>
               {eventTitle}
@@ -81,7 +95,9 @@ export function RegistrationModal({
         <p className="muted text-sm" style={{ marginTop: 0 }}>
           {previewMode
             ? "So sieht das Formular aus, wenn Teilnehmer sich anmelden. Eingaben werden nicht gespeichert."
-            : "Bitte beantworte die folgenden Fragen, um deine Anmeldung abzuschließen."}
+            : isEdit
+              ? (subtitle ?? "Änderungen werden direkt in der Teilnehmerliste übernommen.")
+              : "Bitte beantworte die folgenden Fragen, um deine Anmeldung abzuschließen."}
         </p>
 
         <form onSubmit={handleSubmit} style={{ marginTop: "var(--space-4)" }}>
@@ -125,7 +141,9 @@ export function RegistrationModal({
               placeholder='z. B. "komme mit Partner", "vegetarisch", "kann erst ab 15:30"'
             />
             <p className="help-text" style={{ marginTop: 4 }}>
-              Du kannst diese Notiz auch später noch im Event-Detail bearbeiten.
+              {isEdit
+                ? "Notiz der teilnehmenden Person."
+                : "Nach dem Absenden kannst du deine Anmeldung nicht mehr ändern, dich aber jederzeit wieder abmelden. Für Änderungen wende dich an das Event-Team."}
             </p>
           </fieldset>
 
@@ -138,7 +156,13 @@ export function RegistrationModal({
           <div className="form-actions" style={{ marginTop: "var(--space-5)" }}>
             {!previewMode && (
               <button type="submit" disabled={pending} className="btn btn-primary">
-                {pending ? "Melde an…" : "Anmeldung absenden"}
+                {pending
+                  ? isEdit
+                    ? "Speichere…"
+                    : "Melde an…"
+                  : isEdit
+                    ? "Änderungen speichern"
+                    : "Anmeldung absenden"}
               </button>
             )}
             <button type="button" className="btn btn-ghost" onClick={onCancel} disabled={pending}>
@@ -153,7 +177,7 @@ export function RegistrationModal({
 
 function defaultValue(q: RegistrationQuestion): boolean | string | string[] | null {
   if (q.type === "yes_no") return null;
-  if (q.type === "single_choice") return null;
+  if (q.type === "single_choice" || q.type === "free_text") return null;
   return [];
 }
 
@@ -186,6 +210,15 @@ function QuestionField({ question, value, onChange }: FieldProps) {
           options={question.options}
           value={(value ?? []) as string[]}
           onChange={onChange}
+        />
+      )}
+      {question.type === "free_text" && (
+        <textarea
+          className="textarea"
+          rows={3}
+          maxLength={2000}
+          value={typeof value === "string" ? value : ""}
+          onChange={(e) => onChange(e.target.value === "" ? null : e.target.value)}
         />
       )}
       {question.type === "date_pick" && (
