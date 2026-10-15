@@ -253,8 +253,6 @@
     "editRegistration": "Edit",
     "yourNote": "Your note",
     "noChangesHint": "Changes to your registration are handled by the event team.",
-    "publicListTitle": "Registered people",
-    "publicListMore": "+ {{count}} more",
     "sectionTitle": "Participants",
     "count": "{{count}} registered",
     "waitlistCount": "{{count}} on waitlist",
@@ -297,7 +295,11 @@
       "no_show": "Did not attend"
     },
     "editRegistrationHint": "Edit answers and note",
-    "yourStatusFinal": "Your status for this event: {{status}}. Please contact the event team with any questions."
+    "yourStatusFinal": "Your status for this event: {{status}}. Please contact the event team with any questions.",
+    "bannerRegistered": "You are registered for this event",
+    "listRegistered": "Registered ({{count}})",
+    "listWaitlist": "Waitlist ({{count}})",
+    "tableTitle": "All participants ({{count}})"
   },
   "budget": {
     "title": "Budget",

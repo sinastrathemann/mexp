@@ -19,9 +19,6 @@ import type {
 const STAFF_STATUSES = ["registered", "waitlisted", "cancelled", "attended", "no_show"] as const;
 type StaffStatus = (typeof STAFF_STATUSES)[number];
 
-// Max. Anzahl Namen, die Nutzer ohne Verwaltungsrolle in der Teilnehmerliste sehen.
-const PUBLIC_LIST_LIMIT = 12;
-
 interface ParticipantsPanelProps {
   event: EventDto;
 }
@@ -165,6 +162,13 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const visibleParticipants = participants.filter(
     (p) => p.status === "registered" || p.status === "waitlisted" || p.status === "attended",
   );
+  const confirmedNames = visibleParticipants
+    .filter((p) => p.status !== "waitlisted")
+    .map((p) => ({ id: p.id, name: p.userDisplayName }));
+  const waitlistNames = visibleParticipants
+    .filter((p) => p.status === "waitlisted")
+    .sort((x, y) => (x.waitlistPosition ?? 0) - (y.waitlistPosition ?? 0))
+    .map((p) => ({ id: p.id, name: p.userDisplayName }));
 
   const [searchTerm, setSearchTerm] = useState("");
   const filteredParticipants = searchTerm.trim()
@@ -198,34 +202,17 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
       </p>
 
       {!canManage && visibleParticipants.length > 0 && (
-        <div
-          className="card"
-          style={{
-            marginTop: "var(--space-3)",
-            padding: "var(--space-3) var(--space-4)",
-            background: "var(--bg-subtle)",
-            border: "1px solid var(--border-default)",
-          }}
-        >
-          <div
-            className="text-xs"
-            style={{ fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}
-          >
-            {t("participants.publicListTitle")}
-          </div>
-          <div className="row" style={{ marginTop: 8, flexWrap: "wrap", gap: 8 }}>
-            {visibleParticipants.slice(0, PUBLIC_LIST_LIMIT).map((p) => (
-              <span key={p.id} className="badge badge-muted">
-                {p.userDisplayName}
-              </span>
-            ))}
-          </div>
-          {visibleParticipants.length > PUBLIC_LIST_LIMIT && (
-            <div className="muted text-xs" style={{ marginTop: 8 }}>
-              {t("participants.publicListMore", {
-                count: visibleParticipants.length - PUBLIC_LIST_LIMIT,
-              })}
-            </div>
+        <div className="participant-list-box">
+          <ParticipantNameList
+            title={t("participants.listRegistered", { count: confirmedNames.length })}
+            names={confirmedNames}
+          />
+          {waitlistNames.length > 0 && (
+            <ParticipantNameList
+              title={t("participants.listWaitlist", { count: waitlistNames.length })}
+              names={waitlistNames}
+              muted
+            />
           )}
         </div>
       )}
@@ -335,6 +322,17 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
               <p className="muted">{t("participants.empty")}</p>
             ) : (
               <>
+                <h3 className="participant-table-title">
+                  {t("participants.tableTitle", { count: participants.length })}
+                  <span className="muted">
+                    {" · "}
+                    {t("participants.count", { count: activeCount + attendedCount })}
+                    {waitlistCount > 0 &&
+                      ` · ${t("participants.waitlistCount", { count: waitlistCount })}`}
+                    {cancelledCount + noShowCount > 0 &&
+                      ` · ${t("participants.cancelledCount", { count: cancelledCount + noShowCount })}`}
+                  </span>
+                </h3>
                 <div className="row" style={{ marginBottom: "var(--space-3)" }}>
                   <input
                     type="search"
@@ -353,6 +351,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
                 <table className="table">
                   <thead>
                     <tr>
+                      <th style={{ width: 40 }}>#</th>
                       <th>{t("participants.colName")}</th>
                       <th>{t("participants.colStatus")}</th>
                       <th>{t("participants.colEmail")}</th>
@@ -363,7 +362,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredParticipants.map((p) => (
+                    {filteredParticipants.map((p, index) => (
                       <tr
                         key={p.id}
                         className={
@@ -372,6 +371,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
                             : undefined
                         }
                       >
+                        <td className="muted text-mono">{index + 1}</td>
                         <td className="text-bold" style={{ whiteSpace: "nowrap" }}>
                           {p.userDisplayName}
                           <button
@@ -444,6 +444,27 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
         </>
       )}
     </section>
+  );
+}
+
+function ParticipantNameList({
+  title,
+  names,
+  muted = false,
+}: {
+  title: string;
+  names: { id: string; name: string }[];
+  muted?: boolean;
+}) {
+  return (
+    <div className="participant-list">
+      <div className="participant-list-title">{title}</div>
+      <ol className={muted ? "participant-list-items is-muted" : "participant-list-items"}>
+        {names.map((n) => (
+          <li key={n.id}>{n.name}</li>
+        ))}
+      </ol>
+    </div>
   );
 }
 

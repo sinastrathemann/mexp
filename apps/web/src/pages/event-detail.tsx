@@ -13,7 +13,12 @@ import { ParticipantsPanel } from "../events/participants-panel";
 import { RegistrationFormPanel } from "../events/registration-form-panel";
 import { EventStatusBadge } from "../events/status-badge";
 import { TenderPanel } from "../events/tender-panel";
-import { type EventDto, type EventStatus, allowedTransitions } from "../events/types";
+import {
+  type EventDto,
+  type EventStatus,
+  type ParticipationDto,
+  allowedTransitions,
+} from "../events/types";
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +33,17 @@ export default function EventDetailPage() {
     queryFn: () => apiFetch<{ event: EventDto }>(`/events/${id}`),
     enabled: Boolean(id),
   });
+
+  // Eigener Anmeldestatus — gleicher Query-Key wie im Teilnehmer-Panel, damit der
+  // Banner oben sich beim An-/Abmelden sofort mit aktualisiert.
+  const myParticipationQ = useQuery({
+    queryKey: ["events", id, "my-participation"],
+    queryFn: () =>
+      apiFetch<{ participation: ParticipationDto | null }>(`/events/${id}/my-participation`),
+    enabled: Boolean(id),
+  });
+  const myStatus = myParticipationQ.data?.participation?.status;
+  const myWaitlistPosition = myParticipationQ.data?.participation?.waitlistPosition;
 
   const [editOpen, setEditOpen] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -139,6 +155,31 @@ export default function EventDetailPage() {
           )}
         </div>
       </div>
+
+      {(myStatus === "registered" || myStatus === "attended") && (
+        <output className="registration-status registration-status--banner">
+          <span className="registration-status-icon" aria-hidden="true">
+            ✓
+          </span>
+          <span>
+            <strong>{t("participants.bannerRegistered")}</strong>
+            <span className="muted" style={{ display: "block", fontSize: "var(--text-sm)" }}>
+              {fmtDate(event.startAt)}
+              {event.location ? ` · ${event.location}` : ""}
+            </span>
+          </span>
+        </output>
+      )}
+      {myStatus === "waitlisted" && (
+        <output className="registration-status registration-status--waitlist registration-status--banner">
+          <span className="registration-status-icon" aria-hidden="true">
+            {myWaitlistPosition ?? "?"}
+          </span>
+          <strong>
+            {t("participants.yourStatusWaitlisted", { position: myWaitlistPosition ?? "?" })}
+          </strong>
+        </output>
+      )}
 
       {editOpen && (
         <EventEditModal

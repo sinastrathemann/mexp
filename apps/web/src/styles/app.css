@@ -907,6 +907,17 @@ legend {
   color: var(--color-white);
   font-weight: 700;
 }
+/* Variante oben auf der Event-Seite: größer und mit Abstand zum Kopf */
+.registration-status--banner {
+  margin: 0 0 var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--text-md);
+}
+.registration-status--banner .registration-status-icon {
+  width: 36px;
+  height: 36px;
+  font-size: 18px;
+}
 .registration-status--waitlist {
   border-color: var(--border-default);
   border-left-color: var(--fg-muted);
@@ -1963,4 +1974,41 @@ legend {
   .sso-bg-word {
     display: none;
   }
+}
+
+/* Teilnehmerliste für Teilnehmende: Namen untereinander, nummeriert */
+.participant-list-box {
+  margin-top: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-base);
+  background: var(--bg-subtle);
+  display: grid;
+  gap: var(--space-4);
+}
+.participant-list-title {
+  font-weight: 700;
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-2);
+}
+.participant-list-items {
+  margin: 0;
+  padding-left: 2em;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.participant-list-items li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-default);
+}
+.participant-list-items li:last-child {
+  border-bottom: none;
+}
+.participant-list-items.is-muted {
+  color: var(--fg-muted);
+}
+.participant-table-title {
+  font-size: var(--text-md);
+  margin: 0 0 var(--space-3);
 }

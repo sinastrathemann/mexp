@@ -253,8 +253,6 @@
     "editRegistration": "Bearbeiten",
     "yourNote": "Deine Notiz",
     "noChangesHint": "Änderungen an deiner Anmeldung übernimmt das Event-Team.",
-    "publicListTitle": "Angemeldete Personen",
-    "publicListMore": "+ {{count}} weitere",
     "sectionTitle": "Teilnehmer",
     "count": "{{count}} angemeldet",
     "waitlistCount": "{{count}} auf Warteliste",
@@ -297,7 +295,11 @@
       "no_show": "Nicht teilgenommen"
     },
     "editRegistrationHint": "Antworten und Notiz bearbeiten",
-    "yourStatusFinal": "Dein Status für dieses Event: {{status}}. Bei Fragen wende dich an das Event-Team."
+    "yourStatusFinal": "Dein Status für dieses Event: {{status}}. Bei Fragen wende dich an das Event-Team.",
+    "bannerRegistered": "Du bist für dieses Event angemeldet",
+    "listRegistered": "Angemeldet ({{count}})",
+    "listWaitlist": "Warteliste ({{count}})",
+    "tableTitle": "Alle Teilnehmenden ({{count}})"
   },
   "budget": {
     "title": "Budget",
