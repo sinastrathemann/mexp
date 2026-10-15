@@ -213,13 +213,26 @@ function QuestionField({ question, value, onChange }: FieldProps) {
         />
       )}
       {question.type === "free_text" && (
-        <textarea
-          className="textarea"
-          rows={3}
-          maxLength={2000}
-          value={typeof value === "string" ? value : ""}
-          onChange={(e) => onChange(e.target.value === "" ? null : e.target.value)}
-        />
+        // Freie Antwort optisch von den Auswahl-Buttons abgesetzt
+        <div
+          style={{
+            padding: "var(--space-3)",
+            border: "1px dashed var(--border-strong)",
+            borderRadius: "var(--radius-md)",
+            background: "var(--bg-subtle)",
+          }}
+        >
+          <div className="muted text-xs" style={{ marginBottom: 6 }}>
+            Deine Antwort (freier Text)
+          </div>
+          <textarea
+            className="textarea"
+            rows={3}
+            maxLength={2000}
+            value={typeof value === "string" ? value : ""}
+            onChange={(e) => onChange(e.target.value === "" ? null : e.target.value)}
+          />
+        </div>
       )}
       {question.type === "date_pick" && (
         <DatePickField

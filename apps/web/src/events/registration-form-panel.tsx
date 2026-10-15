@@ -255,17 +255,46 @@ export function RegistrationFormPanel({ event }: Props) {
         <div className="label" style={{ marginBottom: "var(--space-2)" }}>
           Schnell hinzufügen
         </div>
-        <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-          {QUESTION_TEMPLATES.map((tpl) => (
-            <button
-              key={tpl.label}
-              type="button"
-              className="btn btn-outline btn-sm"
-              onClick={() => addQuestion(tpl)}
-            >
-              {tpl.label}
-            </button>
-          ))}
+        <div className="row" style={{ gap: "var(--space-5)", flexWrap: "wrap", alignItems: "flex-start" }}>
+          <div>
+            <div className="muted text-xs" style={{ marginBottom: 6 }}>
+              Mit vorgegebenen Antwortmöglichkeiten
+            </div>
+            <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+              {QUESTION_TEMPLATES.filter((tpl) => tpl.build().type !== "free_text").map((tpl) => (
+                <button
+                  key={tpl.label}
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={() => addQuestion(tpl)}
+                >
+                  {tpl.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div
+            style={{
+              paddingLeft: "var(--space-5)",
+              borderLeft: "1px solid var(--border-default)",
+            }}
+          >
+            <div className="muted text-xs" style={{ marginBottom: 6 }}>
+              Freie Antwort (ohne Optionen)
+            </div>
+            <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+              {QUESTION_TEMPLATES.filter((tpl) => tpl.build().type === "free_text").map((tpl) => (
+                <button
+                  key={tpl.label}
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={() => addQuestion(tpl)}
+                >
+                  {tpl.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -311,7 +340,11 @@ function QuestionEditor({ question, onChange, onRemove, onMoveUp, onMoveDown }: 
       >
         <div>
           <div className="row" style={{ gap: 8, marginBottom: 8 }}>
-            <span className="badge badge-ink">{TYPE_LABEL[question.type]}</span>
+            <span
+              className={question.type === "free_text" ? "badge badge-cobalt" : "badge badge-ink"}
+            >
+              {TYPE_LABEL[question.type]}
+            </span>
             <label
               className="text-mono text-xs muted"
               style={{ display: "inline-flex", gap: 6, alignItems: "center" }}
@@ -333,6 +366,23 @@ function QuestionEditor({ question, onChange, onRemove, onMoveUp, onMoveDown }: 
             onChange={(e) => onChange({ label: e.target.value })}
             style={{ marginBottom: 8 }}
           />
+
+          {question.type === "free_text" && (
+            <div>
+              <p className="help-text" style={{ margin: "0 0 6px" }}>
+                Teilnehmende schreiben ihre Antwort selbst – hier gibt es keine
+                Antwortmöglichkeiten. Für feste Optionen eine Einfach- oder Mehrfachauswahl
+                verwenden.
+              </p>
+              <textarea
+                className="textarea"
+                rows={2}
+                disabled
+                placeholder="Antwortfeld für die teilnehmende Person"
+                style={{ borderStyle: "dashed" }}
+              />
+            </div>
+          )}
 
           {(isChoice || isDate) && (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
