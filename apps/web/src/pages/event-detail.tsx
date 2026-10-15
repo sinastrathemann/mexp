@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
+import { withBasePath } from "../base-path";
 import { BudgetPanel } from "../events/budget-panel";
 import { DocumentsPanel } from "../events/documents-panel";
 import { EventEditModal } from "../events/event-edit-modal";
@@ -19,6 +20,7 @@ export default function EventDetailPage() {
   const { t, i18n } = useTranslation();
   const { hasRole } = useAuth();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const canManage = hasRole("admin", "manager", "event_office", "werkstudent");
 
   const { data, isLoading, error } = useQuery({
@@ -56,21 +58,8 @@ export default function EventDetailPage() {
     mutationFn: () => apiFetch<{ ok: true }>(`/events/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["events"] });
-      // zurück zur Liste
-      window.location.href = "/events";
-    },
-  });
-
-  const duplicateMut = useMutation({
-    mutationFn: (body: { title?: string; startAt?: string; endAt?: string }) =>
-      apiFetch<{ event: EventDto }>(`/events/${id}/duplicate`, {
-        method: "POST",
-        body: JSON.stringify(body),
-      }),
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ["events"] });
-      // Zur neuen Event-Detail-Seite navigieren
-      window.location.href = `/events/${data.event.id}`;
+      // zurück zur Liste — über den Router, damit der Basispfad (/mexp) erhalten bleibt
+      navigate("/events");
     },
   });
 
@@ -118,7 +107,7 @@ export default function EventDetailPage() {
         </div>
         <div className="row" style={{ gap: 8 }}>
           <a
-            href={`/api/events/${event.id}/calendar.ics`}
+            href={withBasePath(`/api/events/${event.id}/calendar.ics`)}
             className="btn btn-outline"
             title="Lädt eine .ics-Datei herunter, die in Outlook, Apple Calendar oder Google Calendar geöffnet werden kann."
           >
@@ -129,29 +118,8 @@ export default function EventDetailPage() {
               ✎ Bearbeiten
             </button>
           )}
-          {canManage && (
-            <button
-              type="button"
-              className="btn btn-outline"
-              disabled={duplicateMut.isPending}
-              onClick={() => {
-                const newTitle = window.prompt(
-                  `Neues Event basiert auf "${event.title}". Titel für Kopie:`,
-                  `${event.title} (Kopie)`,
-                );
-                if (!newTitle) return;
-                duplicateMut.mutate({ title: newTitle });
-              }}
-            >
-              ⧉ Duplizieren
-            </button>
-          )}
         </div>
       </div>
-
-      {duplicateMut.error instanceof Error && (
-        <div className="alert alert-error">{duplicateMut.error.message}</div>
-      )}
 
       {editOpen && (
         <EventEditModal

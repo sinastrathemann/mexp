@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "../api/client";
+import { withBasePath } from "../base-path";
 
 interface ReportSummary {
   totalEvents: number;
@@ -43,7 +44,7 @@ export default function ReportsPage() {
   const data = reportQ.data;
 
   const downloadCsv = (which: "events" | "participants") => {
-    window.open(`/api/reports/${which}.csv`, "_blank");
+    window.open(withBasePath(`/api/reports/${which}.csv`), "_blank");
   };
 
   return (

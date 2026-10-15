@@ -252,7 +252,10 @@ function TenderEditor({ tender, eventId }: { tender: TenderDto; eventId: string 
             </legend>
             {criteria.map((c, idx) => (
               <div
-                key={`criterion-${idx}-${c.label}`}
+                // Index statt Label als Key: ein Label-Key ändert sich bei jedem Tastendruck,
+                // React baut die Zeile neu und das Eingabefeld verliert den Fokus.
+                // biome-ignore lint/suspicious/noArrayIndexKey: Kriterien haben keine stabile ID
+                key={`criterion-${idx}`}
                 className="row"
                 style={{ gap: 8, marginBottom: 6, alignItems: "center" }}
               >

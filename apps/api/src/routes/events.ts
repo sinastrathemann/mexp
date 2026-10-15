@@ -26,6 +26,11 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { events, audit, env, participations } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
+import {
+  type ExportParticipant,
+  type ExportQuestion,
+  buildParticipantsWorkbook,
+} from "../participants-export.js";
 import { buildOneNoteImportedEvents } from "../onenote-import.js";
 import { mexpUserStore, requireMexpRole, resolveMexpRoles } from "./_user-resolution.js";
 import {
@@ -1032,76 +1037,38 @@ eventRoutes.post(
   },
 );
 
-eventRoutes.get("/:id/participants.csv", requireMexpRole(...WRITE_ROLES), async (c) => {
+eventRoutes.get("/:id/participants.xlsx", requireMexpRole(...WRITE_ROLES), async (c) => {
   const id = c.req.param("id");
-  const list = await listParticipants(id, { events, participations });
-  const header = [
-    "userId",
-    "displayName",
-    "email",
-    "status",
-    "waitlistPosition",
-    "registeredAt",
-    "checkedInAt",
-    "cancelledAt",
-  ].join(",");
-  const lines = list.map((p) =>
-    [
-      p.userId,
-      csvEscape(p.userDisplayName),
-      csvEscape(p.userEmail),
-      p.status,
-      p.waitlistPosition ?? "",
-      p.registeredAt.toISOString(),
-      p.checkedInAt ? p.checkedInAt.toISOString() : "",
-      p.cancelledAt ? p.cancelledAt.toISOString() : "",
-    ].join(","),
-  );
-  const csv = `${header}\n${lines.join("\n")}\n`;
-  return new Response(csv, {
+  let title: string;
+  let rows: ExportParticipant[];
+  let questions: ExportQuestion[] = [];
+  if (!env.DATABASE_URL) {
+    const base = findDevBaseEvent(id);
+    const merged = base ? applyOverride(base) : null;
+    title = typeof merged?.title === "string" ? merged.title : id;
+    rows = getDevParticipants(id).map((p) => ({ ...p, answers: devAnswerStore.get(p.id) ?? [] }));
+    questions = (devFormStore.get(id) ?? []).slice().sort((x, y) => x.order - y.order);
+  } else {
+    title = (await getEvent(id, { events })).title;
+    const list = await listParticipants(id, { events, participations });
+    rows = list.map((p) => ({
+      userDisplayName: p.userDisplayName,
+      userEmail: p.userEmail,
+      status: p.status,
+      waitlistPosition: p.waitlistPosition,
+      registeredAt: p.registeredAt.toISOString(),
+      cancelledAt: p.cancelledAt ? p.cancelledAt.toISOString() : null,
+    }));
+  }
+  const buffer = await buildParticipantsWorkbook(title, rows, questions);
+  return new Response(buffer, {
     status: 200,
     headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="event-${id}-participants.csv"`,
+      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Disposition": `attachment; filename="event-${id}-teilnehmer.xlsx"`,
     },
   });
 });
-
-eventRoutes.get("/:id/emergency-list", requireMexpRole(...WRITE_ROLES), async (c) => {
-  const id = c.req.param("id");
-  const event = await getEvent(id, { events });
-  const list = await listParticipants(id, { events, participations });
-  const active = list.filter((p) => p.status === "registered" || p.status === "attended");
-  return c.json({
-    event: {
-      id: event.id,
-      title: event.title,
-      startAt: event.startAt,
-      endAt: event.endAt,
-      location: event.location,
-    },
-    generatedAt: new Date().toISOString(),
-    count: active.length,
-    participants: active.map((p) => ({
-      displayName: p.userDisplayName,
-      email: p.userEmail,
-      status: p.status,
-      checkedInAt: p.checkedInAt,
-    })),
-  });
-});
-
-function csvEscape(value: string): string {
-  // Zellen, die mit = + - @ Tab oder CR beginnen, fuehrt Excel/LibreOffice beim
-  // Oeffnen als Formel aus statt sie als Text anzuzeigen (CSV Injection, SEC-19).
-  // Namen und Freitexte stammen aus Personio, SharePoint und CSV-Import — also
-  // aus Quellen ausserhalb der Anwendung. Ein Apostroph erzwingt Text.
-  const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
-  if (/[",\n\r]/.test(safe)) {
-    return `"${safe.replace(/"/g, '""')}"`;
-  }
-  return safe;
-}
 
 eventRoutes.post("/:id/register", async (c) => {
   const id = c.req.param("id");

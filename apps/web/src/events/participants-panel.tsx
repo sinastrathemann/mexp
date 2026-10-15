@@ -12,6 +12,7 @@ import type {
   RegistrationAnswer,
   RegistrationQuestion,
 } from "./types";
+import { withBasePath } from "../base-path";
 
 // Max. Anzahl Namen, die Nutzer ohne Verwaltungsrolle in der Teilnehmerliste sehen.
 const PUBLIC_LIST_LIMIT = 12;
@@ -251,20 +252,10 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
               {t("participants.addParticipant")}
             </button>
             <a
-              href={`/api/events/${event.id}/participants.csv`}
-              target="_blank"
-              rel="noreferrer"
+              href={withBasePath(`/api/events/${event.id}/participants.xlsx`)}
               className="btn btn-outline btn-sm"
             >
-              {t("participants.exportCsv")}
-            </a>
-            <a
-              href={`/api/events/${event.id}/emergency-list`}
-              target="_blank"
-              rel="noreferrer"
-              className="btn btn-outline btn-sm"
-            >
-              {t("participants.emergencyList")}
+              {t("participants.exportExcel")}
             </a>
             {waitlistCount > 0 && event.capacity !== null && activeCount < event.capacity && (
               <button
