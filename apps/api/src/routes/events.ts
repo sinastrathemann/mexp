@@ -1201,11 +1201,17 @@ eventRoutes.post("/:id/withdraw", async (c) => {
     const own = getDevParticipants(id).find((p) => p.userId === actorId);
     if (!own || own.status === "cancelled") {
       return c.json(
-        { error: { code: "NOT_REGISTERED", message: "Du bist nicht für dieses Event angemeldet." } },
+        {
+          error: { code: "NOT_REGISTERED", message: "Du bist nicht für dieses Event angemeldet." },
+        },
         404,
       );
     }
-    const patch = { status: "cancelled", waitlistPosition: null, cancelledAt: new Date().toISOString() };
+    const patch = {
+      status: "cancelled",
+      waitlistPosition: null,
+      cancelledAt: new Date().toISOString(),
+    };
     devParticipationOverrideStore.set(own.id, {
       ...devParticipationOverrideStore.get(own.id),
       ...patch,
@@ -1316,7 +1322,10 @@ eventRoutes.patch(
       patch.checkedInAt = input.status === "attended" ? new Date().toISOString() : null;
       patch.waitlistPosition =
         input.status === "waitlisted"
-          ? Math.max(0, ...all.map((p) => (p.status === "waitlisted" ? (p.waitlistPosition ?? 0) : 0))) + 1
+          ? Math.max(
+              0,
+              ...all.map((p) => (p.status === "waitlisted" ? (p.waitlistPosition ?? 0) : 0)),
+            ) + 1
           : null;
     }
     if (input.personalNote !== undefined) {

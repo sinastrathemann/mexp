@@ -255,7 +255,10 @@ export function RegistrationFormPanel({ event }: Props) {
         <div className="label" style={{ marginBottom: "var(--space-2)" }}>
           Schnell hinzufügen
         </div>
-        <div className="row" style={{ gap: "var(--space-5)", flexWrap: "wrap", alignItems: "flex-start" }}>
+        <div
+          className="row"
+          style={{ gap: "var(--space-5)", flexWrap: "wrap", alignItems: "flex-start" }}
+        >
           <div>
             <div className="muted text-xs" style={{ marginBottom: 6 }}>
               Mit vorgegebenen Antwortmöglichkeiten

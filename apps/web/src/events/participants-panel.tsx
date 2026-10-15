@@ -174,7 +174,10 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const filteredParticipants = searchTerm.trim()
     ? participants.filter((p) => {
         const q = searchTerm.toLowerCase();
-        return p.userDisplayName.toLowerCase().includes(q) || (p.userEmail ?? "").toLowerCase().includes(q);
+        return (
+          p.userDisplayName.toLowerCase().includes(q) ||
+          (p.userEmail ?? "").toLowerCase().includes(q)
+        );
       })
     : participants;
 
@@ -639,4 +642,3 @@ function AnswerSummary({
     </div>
   );
 }
-

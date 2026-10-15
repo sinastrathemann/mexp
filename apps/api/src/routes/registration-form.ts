@@ -6,7 +6,13 @@ import { persistentMap } from "../dev-persistence.js";
 import { requireMexpRole } from "./_user-resolution.js";
 
 // ─── Schemas ─────────────────────────────────────────────────────
-const questionTypeSchema = z.enum(["yes_no", "single_choice", "multi_choice", "date_pick", "free_text"]);
+const questionTypeSchema = z.enum([
+  "yes_no",
+  "single_choice",
+  "multi_choice",
+  "date_pick",
+  "free_text",
+]);
 
 const questionSchema = z.object({
   id: z.string().min(1),

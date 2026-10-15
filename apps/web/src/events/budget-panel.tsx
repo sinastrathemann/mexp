@@ -454,15 +454,15 @@ export function BudgetPanel({ event }: BudgetPanelProps) {
                                 : item.invoiceFileName}
                             </span>
                             {canEdit && (
-                            <button
-                              type="button"
-                              className="btn btn-ghost btn-sm"
-                              onClick={() => removeInvoiceMut.mutate(item.id)}
-                              disabled={removeInvoiceMut.isPending}
-                              title="Rechnung entfernen"
-                            >
-                              ×
-                            </button>
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-sm"
+                                onClick={() => removeInvoiceMut.mutate(item.id)}
+                                disabled={removeInvoiceMut.isPending}
+                                title="Rechnung entfernen"
+                              >
+                                ×
+                              </button>
                             )}
                           </div>
                           {extractedById[item.id] && (

@@ -17,7 +17,7 @@ describe("buildParticipantsWorkbook", () => {
           answers: [{ questionId: "q1", value: true }],
         },
         {
-          userDisplayName: "=HYPERLINK(\"x\")",
+          userDisplayName: '=HYPERLINK("x")',
           userEmail: "tim@example.com",
           status: "cancelled",
           waitlistPosition: null,
