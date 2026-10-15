@@ -218,6 +218,21 @@
       "in_review": "In Bearbeitung",
       "approved": "Genehmigt",
       "declined": "Abgelehnt"
+    },
+    "assignedToMe": "Mir zugewiesen",
+    "assignedTo": "Zugewiesen an",
+    "forwardTo": "Weiterleiten an",
+    "notAssigned": "— nicht zugewiesen —",
+    "openEvent": "Zum Event",
+    "participantListPlaceholder": "1. Name",
+    "participantListHint": "Eine Person pro Zeile – die Nummerierung erfolgt automatisch.",
+    "timeOfDay": "Tages- oder Abendveranstaltung?",
+    "timeOfDayHint": "Die genaue Uhrzeit klären wir nachträglich mit dir.",
+    "timeOfDayRequired": "Bitte angeben, ob es eine Tages- oder Abendveranstaltung ist.",
+    "pendingBadge": "{{count}} neue Anfragen",
+    "timeOfDayOptions": {
+      "day": "Tagesveranstaltung",
+      "evening": "Abendveranstaltung"
     }
   },
   "participants": {

@@ -218,6 +218,21 @@
       "in_review": "In review",
       "approved": "Approved",
       "declined": "Declined"
+    },
+    "assignedToMe": "Assigned to me",
+    "assignedTo": "Assigned to",
+    "forwardTo": "Forward to",
+    "notAssigned": "— not assigned —",
+    "openEvent": "Open event",
+    "participantListPlaceholder": "1. Name",
+    "participantListHint": "One person per line – numbering is added automatically.",
+    "timeOfDay": "Daytime or evening event?",
+    "timeOfDayHint": "We will clarify the exact time with you later.",
+    "timeOfDayRequired": "Please choose whether it is a daytime or evening event.",
+    "pendingBadge": "{{count}} new requests",
+    "timeOfDayOptions": {
+      "day": "Daytime event",
+      "evening": "Evening event"
     }
   },
   "participants": {

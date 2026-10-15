@@ -7,7 +7,8 @@ import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
 
 type RequestStatus = "submitted" | "in_review" | "approved" | "declined";
-type View = "new" | "mine" | "inbox";
+type View = "new" | "mine" | "inbox" | "assigned";
+type TimeOfDay = "day" | "evening";
 
 interface EventRequestDto {
   id: string;
@@ -32,7 +33,27 @@ interface EventRequestDto {
   coworking: boolean;
   notes: string;
   status: RequestStatus;
+  timeOfDay?: TimeOfDay | null;
+  assignedToId?: string | null;
+  assignedToName?: string | null;
+  eventId?: string | null;
   createdAt: string;
+}
+
+interface AssigneeDto {
+  id: string;
+  displayName: string;
+}
+
+// Teilnehmerliste automatisch durchnummerieren ("1. Anna", "2. Tim", …).
+// Bereits vorhandene Nummern werden entfernt und neu vergeben.
+function renumberLines(text: string): string {
+  return text
+    .split("\n")
+    .map((line) => line.replace(/^\s*\d+[.)]\s*/, "").trim())
+    .filter((line) => line !== "")
+    .map((line, index) => `${index + 1}. ${line}`)
+    .join("\n");
 }
 
 interface RequestForm {
@@ -43,6 +64,7 @@ interface RequestForm {
   partnersInvited: boolean | null;
   dateFixed: boolean | null;
   fixedDate: string;
+  timeOfDay: TimeOfDay | null;
   hasCalendarBlocker: boolean | null;
   proposedDates: string;
   wholeWeekend: boolean | null;
@@ -64,6 +86,7 @@ const EMPTY_FORM: RequestForm = {
   partnersInvited: null,
   dateFixed: null,
   fixedDate: "",
+  timeOfDay: null,
   hasCalendarBlocker: null,
   proposedDates: "",
   wholeWeekend: null,
@@ -137,13 +160,27 @@ export default function EventRequestsPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
 
+  const { user } = useAuth();
+  const canAssign = hasRole("admin", "manager", "event_office");
   const requestQuery = useQuery({
-    queryKey: ["event-requests", view],
+    queryKey: ["event-requests", view === "assigned" ? "inbox" : view],
     queryFn: () =>
       apiFetch<{ requests: EventRequestDto[]; canManage: boolean }>(
-        view === "inbox" ? "/event-requests" : "/event-requests?mine=true",
+        view === "inbox" || view === "assigned" ? "/event-requests" : "/event-requests?mine=true",
       ),
     enabled: view !== "new",
+  });
+  const pendingQuery = useQuery({
+    queryKey: ["event-requests", "pending-count"],
+    queryFn: () =>
+      apiFetch<{ submitted: number; assignedToMe: number }>("/event-requests/pending-count"),
+    enabled: canManage,
+  });
+  const assigneesQuery = useQuery({
+    queryKey: ["event-requests", "assignees"],
+    queryFn: () => apiFetch<{ assignees: AssigneeDto[] }>("/event-requests/assignees"),
+    enabled: canAssign && (view === "inbox" || view === "assigned"),
+    staleTime: 5 * 60_000,
   });
 
   const submitMutation = useMutation({
@@ -162,10 +199,13 @@ export default function EventRequestsPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: RequestStatus }) =>
+    mutationFn: ({
+      id,
+      ...patch
+    }: { id: string; status?: RequestStatus; assignedToId?: string | null }) =>
       apiFetch<{ request: EventRequestDto }>(`/event-requests/${id}`, {
         method: "PATCH",
-        body: JSON.stringify({ status }),
+        body: JSON.stringify(patch),
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["event-requests"] }),
   });
@@ -189,6 +229,10 @@ export default function EventRequestsPage() {
       setFormError(t("eventRequests.answerAllChoices"));
       return;
     }
+    if (!form.timeOfDay) {
+      setFormError(t("eventRequests.timeOfDayRequired"));
+      return;
+    }
     if (form.dateFixed && !form.fixedDate) {
       setFormError(t("eventRequests.fixedDateRequired"));
       return;
@@ -205,7 +249,9 @@ export default function EventRequestsPage() {
     submitMutation.mutate({
       ...form,
       participantCount: Number.parseInt(form.participantCount, 10),
-      fixedDate: form.dateFixed ? new Date(form.fixedDate).toISOString() : null,
+      participantList: renumberLines(form.participantList),
+      // Nur das Datum (UTC-Mitternacht); die Uhrzeit klärt das Event-Team später
+      fixedDate: form.dateFixed ? `${form.fixedDate}T00:00:00.000Z` : null,
       contactName: form.contactIsRequester ? null : form.contactName.trim(),
     });
   }
@@ -217,8 +263,16 @@ export default function EventRequestsPage() {
     });
   const yesNo = (value: boolean | null) =>
     value === null ? "—" : value ? t("eventRequests.yes") : t("eventRequests.no");
-  const requests = requestQuery.data?.requests ?? [];
-  const newInboxCount = requests.filter((request) => request.status === "submitted").length;
+  const formatDay = (value: string) =>
+    new Date(value).toLocaleDateString(i18n.language === "de" ? "de-DE" : "en-US", {
+      dateStyle: "medium",
+      timeZone: "UTC",
+    });
+  const allRequests = requestQuery.data?.requests ?? [];
+  const requests =
+    view === "assigned" ? allRequests.filter((r) => r.assignedToId === user?.id) : allRequests;
+  const newInboxCount = pendingQuery.data?.submitted ?? 0;
+  const assignedCount = pendingQuery.data?.assignedToMe ?? 0;
 
   return (
     <div className="page page-narrow">
@@ -264,15 +318,31 @@ export default function EventRequestsPage() {
           >
             {t("eventRequests.inbox")}
             {newInboxCount > 0 && (
-              <span className="badge badge-warning" style={{ marginLeft: 8 }}>
+              <span className="badge badge-orange" style={{ marginLeft: 8 }}>
                 {newInboxCount}
+              </span>
+            )}
+          </button>
+        )}
+        {canManage && (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={view === "assigned"}
+            className={view === "assigned" ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm"}
+            onClick={() => setView("assigned")}
+          >
+            {t("eventRequests.assignedToMe")}
+            {assignedCount > 0 && (
+              <span className="badge badge-orange" style={{ marginLeft: 8 }}>
+                {assignedCount}
               </span>
             )}
           </button>
         )}
       </div>
 
-      {view === "inbox" && newInboxCount > 0 && (
+      {(view === "inbox" || view === "assigned") && newInboxCount > 0 && (
         <div className="alert alert-success" style={{ marginBottom: 16 }}>
           {t("eventRequests.newRequestPing", { count: newInboxCount })}
         </div>
@@ -347,9 +417,27 @@ export default function EventRequestsPage() {
               className="textarea"
               rows={3}
               maxLength={5000}
+              placeholder={t("eventRequests.participantListPlaceholder")}
               value={form.participantList}
               onChange={(event) => updateField("participantList", event.target.value)}
+              onFocus={() => {
+                if (form.participantList === "") updateField("participantList", "1. ");
+              }}
+              onKeyDown={(event) => {
+                // Bei Enter direkt die nächste Nummer vorgeben
+                if (event.key !== "Enter") return;
+                event.preventDefault();
+                const el = event.currentTarget;
+                const before = form.participantList.slice(0, el.selectionStart);
+                const after = form.participantList.slice(el.selectionEnd);
+                const insert = `\n${before.split("\n").length + 1}. `;
+                updateField("participantList", before + insert + after);
+                const caret = before.length + insert.length;
+                requestAnimationFrame(() => el.setSelectionRange(caret, caret));
+              }}
+              onBlur={() => updateField("participantList", renumberLines(form.participantList))}
             />
+            <p className="help-text">{t("eventRequests.participantListHint")}</p>
           </div>
 
           <h2 className="card-title">{t("eventRequests.dateSection")}</h2>
@@ -367,7 +455,7 @@ export default function EventRequestsPage() {
               <input
                 id="request-fixed-date"
                 className="input"
-                type="datetime-local"
+                type="date"
                 required
                 value={form.fixedDate}
                 onChange={(event) => updateField("fixedDate", event.target.value)}
@@ -389,6 +477,24 @@ export default function EventRequestsPage() {
               />
             </div>
           ) : null}
+          <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
+            <legend className="label">{t("eventRequests.timeOfDay")}</legend>
+            <div className="row" style={{ gap: 16 }}>
+              {(["day", "evening"] as const).map((choice) => (
+                <label key={choice} className="row" style={{ gap: 6 }}>
+                  <input
+                    type="radio"
+                    name="request-time-of-day"
+                    required
+                    checked={form.timeOfDay === choice}
+                    onChange={() => updateField("timeOfDay", choice)}
+                  />
+                  {t(`eventRequests.timeOfDayOptions.${choice}`)}
+                </label>
+              ))}
+            </div>
+            <p className="help-text">{t("eventRequests.timeOfDayHint")}</p>
+          </fieldset>
           <div className="field-row">
             <YesNoField
               name="request-calendar-blocker"
@@ -548,12 +654,23 @@ export default function EventRequestsPage() {
                   />
                   <MetaRow
                     label={t("eventRequests.dateSection")}
-                    value={
+                    value={[
                       request.dateFixed && request.fixedDate
-                        ? formatDate(request.fixedDate)
-                        : request.proposedDates || "—"
-                    }
+                        ? formatDay(request.fixedDate)
+                        : request.proposedDates || "—",
+                      request.timeOfDay
+                        ? t(`eventRequests.timeOfDayOptions.${request.timeOfDay}`)
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
                   />
+                  {(view === "inbox" || view === "assigned") && (
+                    <MetaRow
+                      label={t("eventRequests.assignedTo")}
+                      value={request.assignedToName ?? "—"}
+                    />
+                  )}
                   <MetaRow
                     label={t("eventRequests.destination")}
                     value={request.destination || "—"}
@@ -606,7 +723,7 @@ export default function EventRequestsPage() {
                     <MetaRow label={t("eventRequests.notes")} value={request.notes || "—"} />
                   </div>
                 </details>
-                {view === "inbox" && (
+                {(view === "inbox" || view === "assigned") && (
                   <>
                     <div className="field" style={{ marginTop: "var(--space-3)" }}>
                       <label className="label" htmlFor={`request-status-${request.id}`}>
@@ -631,14 +748,50 @@ export default function EventRequestsPage() {
                         ))}
                       </select>
                     </div>
+                    {canAssign && (
+                      <div className="field" style={{ marginTop: "var(--space-3)" }}>
+                        <label className="label" htmlFor={`request-assignee-${request.id}`}>
+                          {t("eventRequests.forwardTo")}
+                        </label>
+                        <select
+                          id={`request-assignee-${request.id}`}
+                          className="select"
+                          disabled={updateMutation.isPending}
+                          value={request.assignedToId ?? ""}
+                          onChange={(event) =>
+                            updateMutation.mutate({
+                              id: request.id,
+                              assignedToId: event.target.value || null,
+                            })
+                          }
+                        >
+                          <option value="">{t("eventRequests.notAssigned")}</option>
+                          {(assigneesQuery.data?.assignees ?? []).map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {a.displayName}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                     <div style={{ marginTop: "var(--space-3)" }}>
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm"
-                        onClick={() => navigate(`/events/new?requestId=${request.id}`)}
-                      >
-                        {t("eventRequests.createFromRequest")}
-                      </button>
+                      {request.eventId ? (
+                        <button
+                          type="button"
+                          className="btn btn-outline btn-sm"
+                          onClick={() => navigate(`/events/${request.eventId}`)}
+                        >
+                          {t("eventRequests.openEvent")}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-sm"
+                          onClick={() => navigate(`/events/new?requestId=${request.id}`)}
+                        >
+                          {t("eventRequests.createFromRequest")}
+                        </button>
+                      )}
                     </div>
                   </>
                 )}

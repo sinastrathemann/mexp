@@ -4,10 +4,12 @@ import { getHubUser } from "@mexp/auth";
 import { Hono } from "hono";
 import { z } from "zod";
 import { persistentMap } from "../dev-persistence.js";
-import { requireMexpRole, resolveMexpRoles } from "./_user-resolution.js";
+import { mexpUserStore, requireMexpRole, resolveMexpRoles } from "./_user-resolution.js";
 
 const eventRequestStatusSchema = z.enum(["submitted", "in_review", "approved", "declined"]);
 const isoDateSchema = z.string().datetime({ offset: true });
+// Bei der Anfrage nur grob Tag/Abend — die genaue Uhrzeit klärt das Event-Team später.
+const timeOfDaySchema = z.enum(["day", "evening"]);
 
 const createRequestSchema = z
   .object({
@@ -18,6 +20,7 @@ const createRequestSchema = z
     partnersInvited: z.boolean(),
     dateFixed: z.boolean(),
     fixedDate: isoDateSchema.nullable(),
+    timeOfDay: timeOfDaySchema.nullable().default(null),
     hasCalendarBlocker: z.boolean(),
     proposedDates: z.string().max(2000).default(""),
     wholeWeekend: z.boolean(),
@@ -54,8 +57,17 @@ const createRequestSchema = z
     }
   });
 
-const updateRequestSchema = z.object({ status: eventRequestStatusSchema });
+const updateRequestSchema = z
+  .object({
+    status: eventRequestStatusSchema.optional(),
+    // null = Zuweisung entfernen
+    assignedToId: z.string().min(1).nullable().optional(),
+    eventId: z.string().min(1).optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: "Leeres Update." });
 const REQUEST_MANAGER_ROLES = ["admin", "manager", "event_office", "werkstudent"] as const;
+// Nur diese Rollen dürfen Anfragen an jemanden im Team weiterleiten.
+const REQUEST_ASSIGNER_ROLES = ["admin", "manager", "event_office"] as const;
 
 export type EventRequestStatus = z.infer<typeof eventRequestStatusSchema>;
 
@@ -71,6 +83,7 @@ export interface EventRequestRecord {
   partnersInvited: boolean;
   dateFixed: boolean;
   fixedDate: string | null;
+  timeOfDay?: "day" | "evening" | null;
   hasCalendarBlocker: boolean;
   proposedDates: string;
   wholeWeekend: boolean;
@@ -83,12 +96,47 @@ export interface EventRequestRecord {
   coworking: boolean;
   notes: string;
   status: EventRequestStatus;
+  assignedToId?: string | null;
+  assignedToName?: string | null;
+  // Event, das aus dieser Anfrage angelegt wurde
+  eventId?: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
 export const eventRequestStore = persistentMap<EventRequestRecord>("event-requests");
 export const eventRequestRoutes = new Hono();
+
+function hasAnyRole(roles: string[], allowed: readonly string[]): boolean {
+  return roles.some((role) => allowed.includes(role));
+}
+
+// Anzahl neuer (noch unbearbeiteter) Anfragen + der mir zugewiesenen offenen —
+// für den Zähler in der Seitenleiste. Muss vor "/:id" stehen.
+eventRequestRoutes.get("/pending-count", requireMexpRole(...REQUEST_MANAGER_ROLES), (c) => {
+  const userId = getHubUser(c).id;
+  let submitted = 0;
+  let assignedToMe = 0;
+  for (const request of eventRequestStore.values()) {
+    if (request.status === "submitted") submitted++;
+    if (
+      request.assignedToId === userId &&
+      (request.status === "submitted" || request.status === "in_review")
+    ) {
+      assignedToMe++;
+    }
+  }
+  return c.json({ submitted, assignedToMe });
+});
+
+// Personen im Team, an die eine Anfrage weitergeleitet werden kann
+eventRequestRoutes.get("/assignees", requireMexpRole(...REQUEST_ASSIGNER_ROLES), (c) => {
+  const assignees = Array.from(mexpUserStore.values())
+    .filter((u) => u.isActive && hasAnyRole(u.roles, REQUEST_MANAGER_ROLES))
+    .map((u) => ({ id: u.id, displayName: u.displayName ?? u.email ?? u.id }))
+    .sort((a, b) => a.displayName.localeCompare(b.displayName, "de"));
+  return c.json({ assignees });
+});
 
 eventRequestRoutes.get("/:id", (c) => {
   const user = getHubUser(c);
@@ -98,8 +146,7 @@ eventRequestRoutes.get("/:id", (c) => {
     return c.json({ error: { code: "NOT_FOUND", message: "Anfrage nicht gefunden." } }, 404);
   }
 
-  const roles = resolveMexpRoles(c);
-  const canManage = roles.some((role) => REQUEST_MANAGER_ROLES.includes(role as never));
+  const canManage = hasAnyRole(resolveMexpRoles(c), REQUEST_MANAGER_ROLES);
   if (request.requesterId !== user.id && !canManage) {
     return c.json({ error: { code: "FORBIDDEN", message: "Keine Berechtigung." } }, 403);
   }
@@ -109,9 +156,7 @@ eventRequestRoutes.get("/:id", (c) => {
 
 eventRequestRoutes.get("/", (c) => {
   const user = getHubUser(c);
-  const canManage = resolveMexpRoles(c).some((role) =>
-    REQUEST_MANAGER_ROLES.includes(role as never),
-  );
+  const canManage = hasAnyRole(resolveMexpRoles(c), REQUEST_MANAGER_ROLES);
   const mineOnly = !canManage || c.req.query("mine") === "true";
   const requests = Array.from(eventRequestStore.values())
     .filter((request) => !mineOnly || request.requesterId === user.id)
@@ -130,6 +175,9 @@ eventRequestRoutes.post("/", zValidator("json", createRequestSchema), (c) => {
     requesterEmail: user.email,
     ...input,
     status: "submitted",
+    assignedToId: null,
+    assignedToName: null,
+    eventId: null,
     createdAt: now,
     updatedAt: now,
   };
@@ -146,11 +194,38 @@ eventRequestRoutes.patch(
     if (!request) {
       return c.json({ error: { code: "NOT_FOUND", message: "Anfrage nicht gefunden." } }, 404);
     }
-    const updated: EventRequestRecord = {
-      ...request,
-      status: c.req.valid("json").status,
-      updatedAt: new Date().toISOString(),
-    };
+    const input = c.req.valid("json");
+    const updated: EventRequestRecord = { ...request, updatedAt: new Date().toISOString() };
+    if (input.status) updated.status = input.status;
+    if (input.eventId) updated.eventId = input.eventId;
+    if (input.assignedToId !== undefined) {
+      if (!hasAnyRole(resolveMexpRoles(c), REQUEST_ASSIGNER_ROLES)) {
+        return c.json(
+          { error: { code: "FORBIDDEN", message: "Nur Admins dürfen Anfragen weiterleiten." } },
+          403,
+        );
+      }
+      if (input.assignedToId === null) {
+        updated.assignedToId = null;
+        updated.assignedToName = null;
+      } else {
+        const assignee = mexpUserStore.get(input.assignedToId);
+        if (!assignee || !hasAnyRole(assignee.roles, REQUEST_MANAGER_ROLES)) {
+          return c.json(
+            {
+              error: {
+                code: "INVALID_ASSIGNEE",
+                message: "Diese Person kann keine Eventanfragen bearbeiten.",
+              },
+            },
+            400,
+          );
+        }
+        updated.assignedToId = assignee.id;
+        updated.assignedToName = assignee.displayName ?? assignee.email ?? assignee.id;
+        if (updated.status === "submitted") updated.status = "in_review";
+      }
+    }
     eventRequestStore.set(updated.id, updated);
     return c.json({ request: updated });
   },

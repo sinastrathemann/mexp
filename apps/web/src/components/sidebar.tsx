@@ -1,6 +1,8 @@
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { NavLink } from "react-router-dom";
 import { ADMIN_AREA_ROLES } from "../admin/role-order";
+import { apiFetch } from "../api/client";
 import logoUrl from "../assets/logo-mindsquare.png";
 import { useAuth } from "../auth/auth-context";
 
@@ -14,6 +16,18 @@ export function Sidebar() {
   // so gibt's genau EIN Dashboard pro User statt zwei parallel.
   const isPrivileged = hasRole("admin", "manager", "event_office");
   const homeRoute = isPrivileged ? "/dashboard" : "/";
+
+  // "Ping" für das Event-Team: neue Eventanfragen + mir zugewiesene offene Anfragen.
+  // Pollt jede Minute, damit neue Anfragen ohne Reload auftauchen.
+  const canManageRequests = hasRole("admin", "manager", "event_office", "werkstudent");
+  const pendingQ = useQuery({
+    queryKey: ["event-requests", "pending-count"],
+    queryFn: () =>
+      apiFetch<{ submitted: number; assignedToMe: number }>("/event-requests/pending-count"),
+    enabled: canManageRequests,
+    refetchInterval: 60_000,
+  });
+  const pendingRequests = (pendingQ.data?.submitted ?? 0) + (pendingQ.data?.assignedToMe ?? 0);
   const homeLabel = isPrivileged
     ? t("dashboard.navLink")
     : i18n.language === "de"
@@ -51,6 +65,15 @@ export function Sidebar() {
             className={({ isActive }) => `ms-sidebar-link${isActive ? " active" : ""}`}
           >
             {t("eventRequests.navLink")}
+            {pendingRequests > 0 && (
+              <span
+                className="badge badge-orange"
+                style={{ marginLeft: 8 }}
+                title={t("eventRequests.pendingBadge", { count: pendingRequests })}
+              >
+                {pendingRequests}
+              </span>
+            )}
           </NavLink>
         )}
         {hasRole("admin", "manager", "event_office") && (

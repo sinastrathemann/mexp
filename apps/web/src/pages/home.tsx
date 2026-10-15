@@ -3,9 +3,9 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
+import { withBasePath } from "../base-path";
 import { EventStatusBadge } from "../events/status-badge";
 import type { EventDto } from "../events/types";
-import { withBasePath } from "../base-path";
 
 interface MyEventShort {
   id: string;

@@ -24,6 +24,7 @@ interface EventRequestPrefill {
   activity: string;
   destination: string;
   fixedDate: string | null;
+  timeOfDay?: "day" | "evening" | null;
   proposedDates: string;
   contactName: string | null;
   requesterName: string | null;
@@ -85,20 +86,31 @@ export default function EventCreatePage() {
     setTitle(req.occasion || "Event aus Anfrage");
     setDescription(combinedDescription);
 
+    // Die Anfrage enthält nur Datum + Tag/Abend; die Uhrzeit ist ein Vorschlag, den das
+    // Event-Team anpasst. Bewusst als lokale datetime-local-Strings gebaut — toISOString()
+    // würde in UTC umrechnen und die Uhrzeit verschieben.
+    const [startTime, endTime] =
+      req.timeOfDay === "evening"
+        ? ["18:00", "22:00"]
+        : req.timeOfDay === "day"
+          ? ["09:00", "17:00"]
+          : ["09:00", "12:00"];
+    let day: string | null = null;
     if (req.fixedDate) {
-      const fixedDate = new Date(req.fixedDate);
-      setStartAt(new Date(fixedDate.getTime()).toISOString().slice(0, 16));
-      setEndAt(new Date(fixedDate.getTime() + 3 * 60 * 60 * 1000).toISOString().slice(0, 16));
+      day = req.fixedDate.slice(0, 10);
     } else if (req.proposedDates) {
-      const firstDateMatch = req.proposedDates.match(/\d{4}-\d{2}-\d{2}(?:[T\s]\d{2}:\d{2})?/);
-      if (firstDateMatch) {
-        const firstDate = firstDateMatch[0].replace(" ", "T");
-        const parsed = new Date(firstDate.length === 10 ? `${firstDate}T09:00` : firstDate);
-        if (!Number.isNaN(parsed.getTime())) {
-          setStartAt(parsed.toISOString().slice(0, 16));
-          setEndAt(new Date(parsed.getTime() + 3 * 60 * 60 * 1000).toISOString().slice(0, 16));
-        }
+      const iso = req.proposedDates.match(/\d{4}-\d{2}-\d{2}/);
+      const german = req.proposedDates.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+      if (iso) {
+        day = iso[0];
+      } else if (german) {
+        const [, dd = "", mm = "", yyyy = ""] = german;
+        day = `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
       }
+    }
+    if (day) {
+      setStartAt(`${day}T${startTime}`);
+      setEndAt(`${day}T${endTime}`);
     }
 
     if (req.participantCount > 0) {
@@ -112,7 +124,15 @@ export default function EventCreatePage() {
         method: "POST",
         body: JSON.stringify(input),
       }),
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
+      if (requestId) {
+        // Anfrage mit dem neuen Event verknüpfen und als genehmigt markieren
+        await apiFetch(`/event-requests/${requestId}`, {
+          method: "PATCH",
+          body: JSON.stringify({ eventId: res.event.id, status: "approved" }),
+        }).catch(() => undefined);
+        qc.invalidateQueries({ queryKey: ["event-requests"] });
+      }
       qc.invalidateQueries({ queryKey: ["events"] });
       navigate(`/events/${res.event.id}`);
     },
