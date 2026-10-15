@@ -85,8 +85,9 @@ export interface ParticipationDto {
   personalNote?: string | null;
 }
 
+// userEmail/answers fehlen in der reduzierten Sicht für Nutzer ohne Schreibrolle.
 export interface ParticipantDto extends ParticipationDto {
-  userEmail: string;
+  userEmail?: string;
   userDisplayName: string;
   answers?: RegistrationAnswer[];
 }

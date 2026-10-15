@@ -221,6 +221,8 @@
     }
   },
   "participants": {
+    "publicListTitle": "Registered people",
+    "publicListMore": "+ {{count}} more",
     "sectionTitle": "Participants",
     "count": "{{count}} registered",
     "waitlistCount": "{{count}} on waitlist",

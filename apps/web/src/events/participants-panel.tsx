@@ -13,6 +13,9 @@ import type {
   RegistrationQuestion,
 } from "./types";
 
+// Max. Anzahl Namen, die Nutzer ohne Verwaltungsrolle in der Teilnehmerliste sehen.
+const PUBLIC_LIST_LIMIT = 12;
+
 interface ParticipantsPanelProps {
   event: EventDto;
 }
@@ -37,7 +40,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const participantsQ = useQuery({
     queryKey: ["events", event.id, "participants"],
     queryFn: () => apiFetch<{ participants: ParticipantDto[] }>(`/events/${event.id}/participants`),
-    enabled: canManage,
+    enabled: Boolean(event.id),
   });
 
   const myParticipationQ = useQuery({
@@ -131,11 +134,15 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const checkInPhase = event.status === "open" || event.status === "running";
   const noShowPhase = event.status === "running" || event.status === "closed";
 
+  const visibleParticipants = participants.filter(
+    (p) => p.status === "registered" || p.status === "waitlisted" || p.status === "attended",
+  );
+
   const [searchTerm, setSearchTerm] = useState("");
   const filteredParticipants = searchTerm.trim()
     ? participants.filter((p) => {
         const q = searchTerm.toLowerCase();
-        return p.userDisplayName.toLowerCase().includes(q) || p.userEmail.toLowerCase().includes(q);
+        return p.userDisplayName.toLowerCase().includes(q) || (p.userEmail ?? "").toLowerCase().includes(q);
       })
     : participants;
 
@@ -151,14 +158,45 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
     <section className="card">
       <h2 className="card-title">{t("participants.sectionTitle")}</h2>
 
-      {canManage && (
-        <p className="muted" style={{ marginTop: 0 }}>
-          {t("participants.count", { count: activeCount })}
-          {event.capacity !== null && ` / ${event.capacity}`}
-          {waitlistCount > 0 && ` · ${t("participants.waitlistCount", { count: waitlistCount })}`}
-          {attendedCount > 0 && ` · ${t("participants.attendedCount", { count: attendedCount })}`}
-          {noShowCount > 0 && ` · ${t("participants.noShowCount", { count: noShowCount })}`}
-        </p>
+      <p className="muted" style={{ marginTop: 0 }}>
+        {t("participants.count", { count: activeCount })}
+        {event.capacity !== null && ` / ${event.capacity}`}
+        {waitlistCount > 0 && ` · ${t("participants.waitlistCount", { count: waitlistCount })}`}
+        {attendedCount > 0 && ` · ${t("participants.attendedCount", { count: attendedCount })}`}
+        {noShowCount > 0 && ` · ${t("participants.noShowCount", { count: noShowCount })}`}
+      </p>
+
+      {!canManage && visibleParticipants.length > 0 && (
+        <div
+          className="card"
+          style={{
+            marginTop: "var(--space-3)",
+            padding: "var(--space-3) var(--space-4)",
+            background: "var(--bg-subtle)",
+            border: "1px solid var(--border-default)",
+          }}
+        >
+          <div
+            className="text-xs"
+            style={{ fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}
+          >
+            {t("participants.publicListTitle")}
+          </div>
+          <div className="row" style={{ marginTop: 8, flexWrap: "wrap", gap: 8 }}>
+            {visibleParticipants.slice(0, PUBLIC_LIST_LIMIT).map((p) => (
+              <span key={p.id} className="badge badge-muted">
+                {p.userDisplayName}
+              </span>
+            ))}
+          </div>
+          {visibleParticipants.length > PUBLIC_LIST_LIMIT && (
+            <div className="muted text-xs" style={{ marginTop: 8 }}>
+              {t("participants.publicListMore", {
+                count: visibleParticipants.length - PUBLIC_LIST_LIMIT,
+              })}
+            </div>
+          )}
+        </div>
       )}
 
       <SelfActions
@@ -256,7 +294,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
                   <input
                     type="search"
                     className="input"
-                    placeholder="🔍 Nach Name oder E-Mail suchen…"
+                    placeholder="Nach Name oder E-Mail suchen…"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     style={{ maxWidth: 360 }}
@@ -290,7 +328,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
                               title={p.personalNote}
                               style={{ marginLeft: 6, fontSize: "0.85em" }}
                             >
-                              📝
+                              Notiz
                             </span>
                           )}
                         </td>
@@ -567,7 +605,7 @@ function MyNoteBlock({
             fontWeight: 700,
           }}
         >
-          📝 Deine Notiz
+          Deine Notiz
         </span>
         {!editing && (
           <button type="button" className="btn btn-ghost btn-sm" onClick={startEdit}>

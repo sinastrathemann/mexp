@@ -221,6 +221,8 @@
     }
   },
   "participants": {
+    "publicListTitle": "Angemeldete Personen",
+    "publicListMore": "+ {{count}} weitere",
     "sectionTitle": "Teilnehmer",
     "count": "{{count}} angemeldet",
     "waitlistCount": "{{count}} auf Warteliste",

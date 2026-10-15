@@ -930,10 +930,38 @@ function getDevParticipants(eventId: string): DevParticipantRecord[] {
   return merged.map(applyParticipationOverride);
 }
 
-eventRoutes.get("/:id/participants", requireMexpRole(...WRITE_ROLES), async (c) => {
+// Reduzierte Sicht für Nutzer ohne Schreibrolle: nur Name + Status, keine
+// E-Mail, Notizen oder Formularantworten (Datenschutz).
+interface PublicParticipant {
+  id: string;
+  eventId: string;
+  userId: string;
+  userDisplayName: string;
+  status: string;
+  waitlistPosition: number | null;
+}
+
+function toPublicParticipant(p: PublicParticipant): PublicParticipant {
+  return {
+    id: p.id,
+    eventId: p.eventId,
+    userId: p.userId,
+    userDisplayName: p.userDisplayName,
+    status: p.status,
+    waitlistPosition: p.waitlistPosition,
+  };
+}
+
+eventRoutes.get("/:id/participants", async (c) => {
   const id = c.req.param("id");
+  const canManage = resolveMexpRoles(c).some((role) =>
+    WRITE_ROLES.includes(role as (typeof WRITE_ROLES)[number]),
+  );
   if (!env.DATABASE_URL) {
     const merged = getDevParticipants(id);
+    if (!canManage) {
+      return c.json({ participants: merged.map(toPublicParticipant) });
+    }
     // Antworten aus devAnswerStore nachladen
     const withAnswers = merged.map((p) => ({
       ...p,
@@ -942,7 +970,7 @@ eventRoutes.get("/:id/participants", requireMexpRole(...WRITE_ROLES), async (c) 
     return c.json({ participants: withAnswers });
   }
   const list = await listParticipants(id, { events, participations });
-  return c.json({ participants: list });
+  return c.json({ participants: canManage ? list : list.map(toPublicParticipant) });
 });
 
 const addParticipantSchema = z.object({ userId: z.string().min(1) });
@@ -1127,6 +1155,24 @@ eventRoutes.post("/:id/register", async (c) => {
     const participationId = `p-${actorId.slice(0, 8)}`;
     devAnswerStore.set(participationId, answers);
 
+    // Kapazität prüfen: ist das Event voll, landet die Anmeldung auf der Warteliste.
+    // Die eigene (ggf. frühere) Anmeldung zählt nicht mit, sonst blockiert ein
+    // erneutes Anmelden den eigenen Platz.
+    const others = getDevParticipants(id).filter((p) => p.userId !== actorId);
+    const eventBase = findDevBaseEvent(id);
+    const eventCapacity = eventBase ? applyOverride(eventBase).capacity : null;
+    const occupiedCount = others.filter(
+      (p) => p.status === "registered" || p.status === "attended",
+    ).length;
+    const isWaitlisted =
+      typeof eventCapacity === "number" && eventCapacity > 0 && occupiedCount >= eventCapacity;
+    const waitlistPosition = isWaitlisted
+      ? Math.max(
+          0,
+          ...others.map((p) => (p.status === "waitlisted" ? (p.waitlistPosition ?? 0) : 0)),
+        ) + 1
+      : null;
+
     // Display-Name aus Personio-synced User-Store auflösen (falls verfügbar),
     // sonst aus dem Hub-User-Header, sonst Fallback auf hardcoded Dev-Users.
     const hubUser = getHubUser(c);
@@ -1157,8 +1203,8 @@ eventRoutes.post("/:id/register", async (c) => {
       userId: actorId,
       userDisplayName: profile.name,
       userEmail: profile.email,
-      status: "registered",
-      waitlistPosition: null,
+      status: isWaitlisted ? "waitlisted" : "registered",
+      waitlistPosition,
       registeredAt,
       checkedInAt: null,
       cancelledAt: null,
@@ -1172,8 +1218,8 @@ eventRoutes.post("/:id/register", async (c) => {
           id: participationId,
           eventId: id,
           userId: actorId,
-          status: "registered",
-          waitlistPosition: null,
+          status: isWaitlisted ? "waitlisted" : "registered",
+          waitlistPosition,
           registeredAt,
           checkedInAt: null,
           cancelledAt: null,
