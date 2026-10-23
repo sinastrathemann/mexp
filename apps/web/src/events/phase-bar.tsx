@@ -21,7 +21,31 @@ export function PhaseBar({ status, pending, onTransition }: Props) {
   const allowed = allowedTransitions(status);
 
   if (status === "cancelled") {
-    return <output className="alert alert-error">{t("projectPlan.cancelledNotice")}</output>;
+    return (
+      <div className="card">
+        <output className="alert alert-error">{t("projectPlan.cancelledNotice")}</output>
+        <div className="row" style={{ gap: "var(--space-2)", marginTop: "var(--space-3)" }}>
+          {allowed.map((target) => {
+            const phaseKey = PHASES.find((p) => p.status === target)?.key;
+            const label = phaseKey ? t(phaseKey) : t(`events.status.${target}`);
+            return (
+              <button
+                key={target}
+                type="button"
+                className="btn btn-outline btn-sm"
+                disabled={pending}
+                onClick={() => {
+                  if (window.confirm(t("projectPlan.confirmReactivate", { phase: label })))
+                    onTransition(target);
+                }}
+              >
+                {t("projectPlan.reactivateTo", { phase: label })}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
   }
 
   const currentIndex = PHASES.findIndex((p) => p.status === status);
@@ -40,7 +64,15 @@ export function PhaseBar({ status, pending, onTransition }: Props) {
               disabled={!clickable}
               aria-current={state === "current" ? "step" : undefined}
               title={clickable ? t("projectPlan.phaseSwitchTo", { phase: label }) : undefined}
-              onClick={() => onTransition(phase.status)}
+              onClick={() => {
+                // Rückschritt nur nach Rückfrage
+                if (
+                  i < currentIndex &&
+                  !window.confirm(t("projectPlan.confirmStepBack", { phase: label }))
+                )
+                  return;
+                onTransition(phase.status);
+              }}
             >
               {state === "done" ? "✓ " : state === "current" ? "● " : ""}
               {label}
