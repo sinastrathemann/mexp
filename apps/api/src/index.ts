@@ -17,6 +17,7 @@ import { budgetRoutes } from "./routes/budget.js";
 import { dashboardRoutes } from "./routes/dashboard.js";
 import { documentRoutes } from "./routes/documents.js";
 import { eventRequestRoutes } from "./routes/event-requests.js";
+import { eventTaskRoutes } from "./routes/event-tasks.js";
 import { eventRoutes } from "./routes/events.js";
 import { feedbackRoutes } from "./routes/feedback.js";
 import { myDashboardRoutes } from "./routes/my-dashboard.js";
@@ -24,6 +25,7 @@ import { qnaRoutes } from "./routes/qna.js";
 import { registrationFormRoutes } from "./routes/registration-form.js";
 import { reportRoutes } from "./routes/reports.js";
 import { tenderRoutes } from "./routes/tenders.js";
+import { toolRoutes } from "./routes/tools.js";
 import { userSearchRoutes } from "./routes/user-search.js";
 import { vendorRoutes } from "./routes/vendors.js";
 import { mountStatic } from "./static-serve.js";
@@ -80,6 +82,8 @@ app.route("/api/vendors", vendorRoutes);
 app.route("/api", qnaRoutes);
 app.route("/api/blueprints", blueprintRoutes);
 app.route("/api/users", userSearchRoutes);
+app.route("/api/tools", toolRoutes);
+app.route("/api", eventTaskRoutes);
 
 // Serve SPA (last so API routes win on their prefixes)
 const webRoot = process.env.MEXP_WEB_DIST ?? resolve(process.cwd(), "web-dist");

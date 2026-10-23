@@ -5,20 +5,19 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
 import { withBasePath } from "../base-path";
-import { BudgetPanel } from "../events/budget-panel";
+import { BudgetLinkCard } from "../events/budget-link-card";
 import { DocumentsPanel } from "../events/documents-panel";
 import { EventEditModal } from "../events/event-edit-modal";
 import { FeedbackPanel } from "../events/feedback-panel";
+import { KeyFiguresCard } from "../events/key-figures-card";
 import { ParticipantsPanel } from "../events/participants-panel";
+import { PhaseBar } from "../events/phase-bar";
 import { RegistrationFormPanel } from "../events/registration-form-panel";
 import { EventStatusBadge } from "../events/status-badge";
+import { TaskChecklist } from "../events/task-checklist";
 import { TenderPanel } from "../events/tender-panel";
-import {
-  type EventDto,
-  type EventStatus,
-  type ParticipationDto,
-  allowedTransitions,
-} from "../events/types";
+import { ToolsCard } from "../events/tools-card";
+import type { EventDto, EventStatus, ParticipationDto } from "../events/types";
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +26,8 @@ export default function EventDetailPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const canManage = hasRole("admin", "manager", "event_office", "werkstudent");
+  // Budget-Owner sieht nur den Link ins Budget-Control-Tool (Team-Rollen: rechte Spalte)
+  const showBudgetOnly = !canManage && hasRole("budget_owner");
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["events", id, "detail"],
@@ -108,7 +109,6 @@ export default function EventDetailPage() {
       dateStyle: "medium",
       timeStyle: "short",
     });
-  const next = allowedTransitions(event.status);
 
   return (
     <div className="page">
@@ -200,6 +200,29 @@ export default function EventDetailPage() {
         />
       )}
 
+      {showBudgetOnly && <BudgetLinkCard />}
+
+      {canManage && (
+        <>
+          <PhaseBar
+            status={event.status}
+            pending={transitionMut.isPending}
+            onTransition={(status) => transitionMut.mutate(status)}
+          />
+          {transitionMut.error instanceof Error && (
+            <div className="alert alert-error">{transitionMut.error.message}</div>
+          )}
+          <div className="project-plan-grid">
+            <TaskChecklist eventId={event.id} />
+            <div className="project-plan-side">
+              <ToolsCard />
+              <KeyFiguresCard event={event} />
+              <BudgetLinkCard />
+            </div>
+          </div>
+        </>
+      )}
+
       <div className="card">
         <div
           style={{
@@ -253,33 +276,8 @@ export default function EventDetailPage() {
         </div>
       </div>
 
-      {canManage && next.length > 0 && (
-        <div className="card">
-          <h2 className="card-title">{t("events.statusActions")}</h2>
-          <div className="row" style={{ marginTop: "var(--space-3)" }}>
-            {next.map((status) => (
-              <button
-                key={status}
-                type="button"
-                disabled={transitionMut.isPending}
-                onClick={() => transitionMut.mutate(status)}
-                className="btn btn-outline-orange btn-sm"
-              >
-                → {t(`events.status.${status}`)}
-              </button>
-            ))}
-          </div>
-          {transitionMut.error instanceof Error && (
-            <div className="alert alert-error" style={{ marginTop: "var(--space-3)" }}>
-              {transitionMut.error.message}
-            </div>
-          )}
-        </div>
-      )}
-
       <RegistrationFormPanel event={event} />
       <ParticipantsPanel event={event} />
-      <BudgetPanel event={event} />
       <TenderPanel event={event} />
       <DocumentsPanel event={event} />
       <FeedbackPanel event={event} />

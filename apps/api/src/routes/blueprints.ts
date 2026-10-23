@@ -9,12 +9,17 @@ import {
 } from "@mexp/application";
 import { getHubUser } from "@mexp/auth";
 import { EVENT_TYPES, EVENT_VISIBILITIES } from "@mexp/domain";
+import { rootLogger } from "@mexp/shared";
 import { Hono } from "hono";
 import { z } from "zod";
 import { events, audit, blueprints, env } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
+import { blueprintTaskStore, copyBlueprintTasksToEvent } from "../project-plan/model.js";
 import { requireMexpRole } from "./_user-resolution.js";
+import { createBlueprintTaskRoutes } from "./blueprint-tasks.js";
 import { createDevEvent } from "./events.js";
+
+const log = rootLogger.child({ module: "api/blueprints" });
 
 const eventTypeSchema = z.enum(EVENT_TYPES);
 const visibilitySchema = z.enum(EVENT_VISIBILITIES);
@@ -76,9 +81,22 @@ export interface DevBlueprint {
   updatedAt: string;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const devBlueprintStore = persistentMap<DevBlueprint>("blueprints");
 
 export const blueprintRoutes = new Hono();
+
+// Aufgaben-Vorlagen je Blueprint (/:id/tasks, zwei Segmente — kollidiert nicht mit /:id)
+blueprintRoutes.route(
+  "/",
+  createBlueprintTaskRoutes(async (id) =>
+    env.DATABASE_URL
+      ? // Postgres-Spalte ist uuid: Nicht-UUIDs würden sonst einen 500 statt 404 auslösen.
+        UUID_RE.test(id) && (await blueprints.findById(id)) !== null
+      : devBlueprintStore.has(id),
+  ),
+);
 
 blueprintRoutes.get("/", async (c) => {
   if (!env.DATABASE_URL) {
@@ -183,10 +201,14 @@ blueprintRoutes.delete("/:id", requireMexpRole("admin"), async (c) => {
       return c.json({ error: { code: "NOT_FOUND", message: "Blueprint nicht gefunden" } }, 404);
     }
     devBlueprintStore.delete(id);
+    // Vorlagen-Aufgaben des Blueprints mitlöschen
+    blueprintTaskStore.delete(id);
     return c.json({ ok: true });
   }
 
   await deleteBlueprint(id, actorId, { blueprints, audit });
+  // Vorlagen-Aufgaben des Blueprints mitlöschen
+  blueprintTaskStore.delete(id);
   return c.json({ ok: true });
 });
 
@@ -220,6 +242,13 @@ blueprintRoutes.post(
         capacity: blueprint.defaultCapacity,
         ownerId: actorId,
       });
+      // Vorlagen-Aufgaben in das neue Event kopieren (Fälligkeit = Start minus N Tage)
+      try {
+        copyBlueprintTasksToEvent(id, event.id, startAt.toISOString(), actorId);
+      } catch (err) {
+        // Event existiert bereits — ein Kopierfehler darf kein Duplikat durch Retry erzeugen.
+        log.warn({ err, blueprintId: id, eventId: event.id }, "Vorlagen-Aufgaben nicht kopiert");
+      }
       return c.json({ event }, 201);
     }
 
@@ -228,6 +257,13 @@ blueprintRoutes.post(
       actorId,
       { blueprints, events, audit },
     );
+    // Vorlagen-Aufgaben in das neue Event kopieren (Fälligkeit = Start minus N Tage)
+    try {
+      copyBlueprintTasksToEvent(id, event.id, new Date(input.startAt).toISOString(), actorId);
+    } catch (err) {
+      // Event existiert bereits — ein Kopierfehler darf kein Duplikat durch Retry erzeugen.
+      log.warn({ err, blueprintId: id, eventId: event.id }, "Vorlagen-Aufgaben nicht kopiert");
+    }
     return c.json({ event }, 201);
   },
 );

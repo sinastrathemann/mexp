@@ -38,6 +38,7 @@ jobs:
         run: pnpm lint
 
       - name: Test
-        run: pnpm -r test --if-present
+        # Root-Vitest: deckt apps/, packages/ und tests/ ab (pnpm -r lief nur in Paketen mit eigenem test-Skript)
+        run: pnpm test
         env:
           NODE_ENV: test
