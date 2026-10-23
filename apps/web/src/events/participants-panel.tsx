@@ -269,6 +269,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
         <RegistrationModal
           mode="self-edit"
           eventTitle={event.title}
+          event={event}
           questions={questions}
           initialAnswers={own.answers ?? []}
           initialPersonalNote={own.personalNote ?? ""}
@@ -299,6 +300,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
       {modalOpen && (
         <RegistrationModal
           eventTitle={event.title}
+          event={event}
           questions={questions}
           pending={registerMut.isPending}
           error={registerMut.error instanceof Error ? registerMut.error.message : null}

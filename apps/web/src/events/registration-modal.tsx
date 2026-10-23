@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { type AnswerValues, type OtherTexts, buildAnswers, checkAnswers } from "./answer-utils";
-import type { RegistrationAnswer, RegistrationQuestion } from "./types";
+import { formatEventDate } from "./event-date";
+import type { EventDto, RegistrationAnswer, RegistrationQuestion } from "./types";
 
 interface Props {
   eventTitle: string;
+  // Eventinfos über dem Formular (Datum, Ort, Beschreibung)
+  event?: EventDto;
   questions: RegistrationQuestion[];
   pending: boolean;
   error?: string | null;
@@ -21,6 +25,7 @@ interface Props {
 
 export function RegistrationModal({
   eventTitle,
+  event,
   questions,
   pending,
   error,
@@ -110,6 +115,8 @@ export function RegistrationModal({
                 : "Bitte beantworte die folgenden Fragen, um deine Anmeldung abzuschließen."}
         </p>
 
+        {event && <EventInfo event={event} />}
+
         <form onSubmit={handleSubmit} style={{ marginTop: "var(--space-4)" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
             {questions.map((q) => (
@@ -185,6 +192,60 @@ export function RegistrationModal({
       </div>
     </div>,
     document.body,
+  );
+}
+
+// Lange Beschreibungen werden gekürzt und lassen sich aufklappen
+const DESCRIPTION_PREVIEW_CHARS = 280;
+
+function EventInfo({ event }: { event: EventDto }) {
+  const { t, i18n } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
+  const description = event.description.trim();
+  const isLong = description.length > DESCRIPTION_PREVIEW_CHARS;
+  const shown =
+    isLong && !expanded
+      ? `${description.slice(0, DESCRIPTION_PREVIEW_CHARS).trimEnd()} …`
+      : description;
+  const sameDay = event.startAt.slice(0, 10) === event.endAt.slice(0, 10);
+
+  return (
+    <div
+      className="card-flat"
+      style={{
+        margin: 0,
+        padding: "var(--space-3) var(--space-4)",
+        background: "var(--bg-subtle)",
+      }}
+    >
+      <div className="text-sm" style={{ display: "grid", gap: 4 }}>
+        <div>
+          <strong>{t("events.fieldStart")}:</strong>{" "}
+          {formatEventDate(event.startAt, event.timeTbd, i18n.language)}
+          {!sameDay && <> – {formatEventDate(event.endAt, event.timeTbd, i18n.language)}</>}
+        </div>
+        {event.location && (
+          <div>
+            <strong>{t("events.fieldLocation")}:</strong> {event.location}
+          </div>
+        )}
+      </div>
+      {description && (
+        <div className="text-sm" style={{ marginTop: "var(--space-2)", whiteSpace: "pre-wrap" }}>
+          {shown}
+          {isLong && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setExpanded((v) => !v)}
+              style={{ marginLeft: 4, padding: "0 6px" }}
+            >
+              {expanded ? "Weniger anzeigen" : "Mehr anzeigen"}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

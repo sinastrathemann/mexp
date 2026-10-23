@@ -236,6 +236,7 @@ export function RegistrationFormPanel({ event }: Props) {
       {previewOpen && (
         <RegistrationModal
           eventTitle={event.title}
+          event={event}
           questions={questions}
           pending={false}
           previewMode={true}
