@@ -49,59 +49,69 @@ export function ToolsPanel() {
     <div className="card">
       <h2 className="card-title">{t("projectPlan.adminToolsTitle")}</h2>
       <p className="muted">{t("projectPlan.adminToolsHint")}</p>
+      {q.isPending && <p className="muted">{t("projectPlan.loading")}</p>}
+      {q.isError && (
+        <div className="alert alert-error" style={{ marginTop: "var(--space-3)" }}>
+          {t("projectPlan.loadError", {
+            message: q.error instanceof Error ? q.error.message : String(q.error),
+          })}
+        </div>
+      )}
       <div className="stack" style={{ gap: "var(--space-2)", marginTop: "var(--space-3)" }}>
-        {rows.map((row, i) => (
-          <div key={row.id ?? `new-${i}`} className="row" style={{ gap: "var(--space-2)" }}>
-            <input
-              className="input"
-              aria-label={t("projectPlan.toolLabel")}
-              placeholder={t("projectPlan.toolLabel")}
-              value={row.label}
-              maxLength={100}
-              onChange={(e) => update(i, { label: e.target.value })}
-            />
-            <input
-              className="input"
-              style={{ flex: 2 }}
-              aria-label={t("projectPlan.toolUrl")}
-              placeholder="https://…"
-              value={row.url}
-              maxLength={2000}
-              onChange={(e) => update(i, { url: e.target.value })}
-            />
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => move(i, -1)}
-              title={t("projectPlan.moveUp")}
-            >
-              ↑
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => move(i, 1)}
-              title={t("projectPlan.moveDown")}
-            >
-              ↓
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => {
-                setSaved(false);
-                setRows((r) => r.filter((_, idx) => idx !== i));
-              }}
-            >
-              {t("projectPlan.delete")}
-            </button>
-          </div>
-        ))}
+        {q.isSuccess &&
+          rows.map((row, i) => (
+            <div key={row.id ?? `new-${i}`} className="row" style={{ gap: "var(--space-2)" }}>
+              <input
+                className="input"
+                aria-label={t("projectPlan.toolLabel")}
+                placeholder={t("projectPlan.toolLabel")}
+                value={row.label}
+                maxLength={100}
+                onChange={(e) => update(i, { label: e.target.value })}
+              />
+              <input
+                className="input"
+                style={{ flex: 2 }}
+                aria-label={t("projectPlan.toolUrl")}
+                placeholder="https://…"
+                value={row.url}
+                maxLength={2000}
+                onChange={(e) => update(i, { url: e.target.value })}
+              />
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => move(i, -1)}
+                title={t("projectPlan.moveUp")}
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => move(i, 1)}
+                title={t("projectPlan.moveDown")}
+              >
+                ↓
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  setSaved(false);
+                  setRows((r) => r.filter((_, idx) => idx !== i));
+                }}
+              >
+                {t("projectPlan.delete")}
+              </button>
+            </div>
+          ))}
       </div>
       <div className="row" style={{ gap: "var(--space-2)", marginTop: "var(--space-3)" }}>
         <button
           type="button"
           className="btn btn-outline btn-sm"
+          disabled={!q.isSuccess}
           onClick={() => {
             setSaved(false);
             setRows((r) => [...r, { label: "", url: "https://" }]);
@@ -112,7 +122,7 @@ export function ToolsPanel() {
         <button
           type="button"
           className="btn btn-primary btn-sm"
-          disabled={saveMut.isPending}
+          disabled={!q.isSuccess || saveMut.isPending}
           onClick={() => saveMut.mutate(rows)}
         >
           {t("projectPlan.save")}

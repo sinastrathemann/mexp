@@ -388,6 +388,8 @@
     }
   },
   "projectPlan": {
+    "loading": "Loading …",
+    "loadError": "Could not be loaded: {{message}}",
     "phaseDraft": "Draft",
     "phasePlanned": "Planned",
     "phaseOpen": "Registration open",

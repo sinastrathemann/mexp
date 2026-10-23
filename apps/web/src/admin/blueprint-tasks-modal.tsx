@@ -84,11 +84,20 @@ export function BlueprintTasksModal({ blueprintId, name, onClose }: Props) {
         style={{ maxWidth: 900 }}
         onSubmit={(e) => {
           e.preventDefault();
+          if (!q.isSuccess) return;
           saveMut.mutate();
         }}
       >
         <h2 className="card-title">{t("projectPlan.blueprintTasksTitle", { name })}</h2>
         <p className="muted">{t("projectPlan.blueprintTasksHint")}</p>
+        {q.isPending && <p className="muted">{t("projectPlan.loading")}</p>}
+        {q.isError && (
+          <div className="alert alert-error" style={{ marginTop: "var(--space-3)" }}>
+            {t("projectPlan.loadError", {
+              message: q.error instanceof Error ? q.error.message : String(q.error),
+            })}
+          </div>
+        )}
         <div
           style={{
             display: "flex",
@@ -97,61 +106,63 @@ export function BlueprintTasksModal({ blueprintId, name, onClose }: Props) {
             marginTop: "var(--space-3)",
           }}
         >
-          {rows.map((row, i) => (
-            <div key={row.id ?? `new-${i}`} className="row" style={{ gap: "var(--space-2)" }}>
-              <input
-                className="input"
-                style={{ flex: 2 }}
-                required
-                maxLength={200}
-                placeholder={t("projectPlan.taskTitle")}
-                aria-label={t("projectPlan.taskTitle")}
-                value={row.title}
-                onChange={(e) => update(i, { title: e.target.value })}
-              />
-              <input
-                className="input"
-                style={{ width: 90 }}
-                type="number"
-                min={0}
-                max={365}
-                placeholder={t("projectPlan.daysBefore")}
-                aria-label={t("projectPlan.daysBefore")}
-                value={row.daysBefore}
-                onChange={(e) => update(i, { daysBefore: e.target.value })}
-              />
-              <input
-                className="input"
-                maxLength={100}
-                placeholder={t("projectPlan.taskLinkLabel")}
-                aria-label={t("projectPlan.taskLinkLabel")}
-                value={row.linkLabel}
-                onChange={(e) => update(i, { linkLabel: e.target.value })}
-              />
-              <input
-                className="input"
-                type="url"
-                pattern="https://.*"
-                maxLength={2000}
-                placeholder={t("projectPlan.taskLinkUrl")}
-                aria-label={t("projectPlan.taskLinkUrl")}
-                value={row.linkUrl}
-                onChange={(e) => update(i, { linkUrl: e.target.value })}
-              />
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))}
-              >
-                {t("projectPlan.delete")}
-              </button>
-            </div>
-          ))}
+          {q.isSuccess &&
+            rows.map((row, i) => (
+              <div key={row.id ?? `new-${i}`} className="row" style={{ gap: "var(--space-2)" }}>
+                <input
+                  className="input"
+                  style={{ flex: 2 }}
+                  required
+                  maxLength={200}
+                  placeholder={t("projectPlan.taskTitle")}
+                  aria-label={t("projectPlan.taskTitle")}
+                  value={row.title}
+                  onChange={(e) => update(i, { title: e.target.value })}
+                />
+                <input
+                  className="input"
+                  style={{ width: 90 }}
+                  type="number"
+                  min={0}
+                  max={365}
+                  placeholder={t("projectPlan.daysBefore")}
+                  aria-label={t("projectPlan.daysBefore")}
+                  value={row.daysBefore}
+                  onChange={(e) => update(i, { daysBefore: e.target.value })}
+                />
+                <input
+                  className="input"
+                  maxLength={100}
+                  placeholder={t("projectPlan.taskLinkLabel")}
+                  aria-label={t("projectPlan.taskLinkLabel")}
+                  value={row.linkLabel}
+                  onChange={(e) => update(i, { linkLabel: e.target.value })}
+                />
+                <input
+                  className="input"
+                  type="url"
+                  pattern="https://.*"
+                  maxLength={2000}
+                  placeholder={t("projectPlan.taskLinkUrl")}
+                  aria-label={t("projectPlan.taskLinkUrl")}
+                  value={row.linkUrl}
+                  onChange={(e) => update(i, { linkUrl: e.target.value })}
+                />
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))}
+                >
+                  {t("projectPlan.delete")}
+                </button>
+              </div>
+            ))}
         </div>
         <button
           type="button"
           className="btn btn-outline btn-sm"
           style={{ marginTop: "var(--space-3)" }}
+          disabled={!q.isSuccess}
           onClick={() =>
             setRows((r) => [...r, { title: "", daysBefore: "", linkLabel: "", linkUrl: "" }])
           }
@@ -170,7 +181,11 @@ export function BlueprintTasksModal({ blueprintId, name, onClose }: Props) {
           <button type="button" className="btn btn-ghost" onClick={onClose}>
             {t("projectPlan.cancel")}
           </button>
-          <button type="submit" className="btn btn-primary" disabled={saveMut.isPending}>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={!q.isSuccess || saveMut.isPending}
+          >
             {t("projectPlan.save")}
           </button>
         </div>
