@@ -13,3 +13,10 @@ Alle nennenswerten Änderungen an mEXP. Format: [Keep a Changelog](https://keepa
 - Dokumentations-Gerüst: architecture.md, api.md, data-classification.md, runbook.md
 - Specs-Gerüst (Mermaid) für workflows / sequences / states / domain
 - i18n (DE/EN) im Web mit react-i18next
+- Projektplan auf der Event-Detailseite (Team-Rollen): Phasen-Leiste, Aufgaben-Checkliste mit Verantwortlichen, Fälligkeit und Links, Tools-Kasten, Kennzahlen.
+- Aufgaben-Vorlagen je Blueprint; werden beim Anlegen eines Events übernommen.
+- Admin-Reiter „Tools“ für zentrale Links (vorbelegt: Coworking-Copilot, Budget-Control-Agent).
+
+### Changed
+- Budget-Bereich auf der Event-Seite durch Link zum Budget-Control-Agent ersetzt (keine Doppelerfassung).
+- Werkstudent:innen können Vorlagen in der Oberfläche bearbeiten.
