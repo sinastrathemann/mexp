@@ -14,7 +14,7 @@ Die Event-Detailseite soll für das interne Team wie ein Projektplan funktionier
 |---|---|---|---|---|
 | Projektplan sehen, Aufgaben anlegen/bearbeiten/abhaken | ✓ | ✓ | ✓ | ✓ |
 | Aufgaben löschen | ✓ | – | – | – |
-| Blueprint-Aufgaben pflegen | ✓ | ✓ | ✓ | – |
+| Blueprints und Blueprint-Aufgaben pflegen | ✓ | ✓ | ✓ | ✓ |
 | Tools-Liste pflegen | ✓ | – | – | – |
 
 Teilnehmende und andere Rollen sehen die Event-Seite unverändert.
@@ -53,7 +53,7 @@ Teilnehmende und andere Rollen sehen die Event-Seite unverändert.
 
 ### Nebenänderung
 
-- `apps/api/src/routes/blueprints.ts`: Schreibrechte von `admin, manager, event_office, werkstudent` auf `admin, manager, event_office` reduzieren, so wie es die Oberfläche bereits handhabt. Dafür gibt es einen eigenen Commit.
+- `apps/web/src/pages/blueprints.tsx`: `canWrite` um `werkstudent` ergänzen. Damit passen Oberfläche, API (`WRITE_ROLES` in `blueprints.ts`) und Rollen-Legende („Werkstudent: legt Events an und pflegt Vorlagen“) wieder zusammen. Dafür gibt es einen eigenen Commit.
 
 ## Nicht enthalten
 
@@ -99,14 +99,14 @@ interface ToolLink { id: string; label: string; url: string; }
 | PATCH | `/events/:eventId/tasks/:taskId` | dto. |
 | DELETE | `/events/:eventId/tasks/:taskId` | admin |
 | GET | `/blueprints/:id/tasks` | admin, manager, event_office, werkstudent |
-| PUT | `/blueprints/:id/tasks` (ganze Liste) | admin, manager, event_office |
+| PUT | `/blueprints/:id/tasks` (ganze Liste) | admin, manager, event_office, werkstudent |
 | GET | `/tools` | admin, manager, event_office, werkstudent |
 | PUT | `/tools` (ganze Liste) | admin |
 
 - URL-Validierung: `z.string().url().startsWith("https://")`, max. 2000 Zeichen. Linktext max. 100 Zeichen.
-- Eine unbekannte eventId bzw. blueprintId liefert 404.
+- Eine unbekannte blueprintId liefert 404. Die eventId wird nicht geprüft: Events stammen im Datei-Modus aus drei Quellen (Mock, OneNote-Import, angelegte Events), eine einheitliche Prüfung gibt es nicht. Aufgaben zu einer unbekannten eventId sind harmlos, weil sie nirgends angezeigt werden.
 - `assigneeId` muss eine Nutzer:in mit einer der vier Rollen sein, sonst 400 `INVALID_ASSIGNEE`. Das Muster ist dasselbe wie bei den Event-Anfragen.
-- Jede schreibende Aktion erzeugt einen Audit-Eintrag.
+- Kein Audit-Log: Es existiert nur im Datenbank-Modus, und die Datei-basierten Funktionen (Event-Anfragen, Anmeldeformular) schreiben ebenfalls keins. Nachvollziehbarkeit entsteht über `createdBy`/`createdAt` und `doneBy`/`doneAt` an der Aufgabe sowie `updatedBy`/`updatedAt` an der Tools-Liste.
 - `POST /blueprints/:id/apply` kopiert zusätzlich die Blueprint-Aufgaben in den Store `event-tasks`.
 
 ### Frontend (`apps/web/src/events/` bzw. `pages/`)
@@ -120,12 +120,12 @@ interface ToolLink { id: string; label: string; url: string; }
 
 ### Tests (Vitest)
 
-- API: Rollenmatrix je Endpunkt, Ablehnung von Nicht-https-URLs, Berechnung der Fälligkeit beim Anwenden eines Blueprints, Vorbelegung der Tools-Liste, 404 bei unbekanntem Event
-- Frontend: Abhaken aktualisiert den Fortschritt, überfällige Aufgaben werden rot markiert
+- API: Rollenmatrix je Endpunkt, Ablehnung von Nicht-https-URLs, Berechnung der Fälligkeit beim Anwenden eines Blueprints, Vorbelegung der Tools-Liste, 404 bei unbekanntem Blueprint
+- Frontend: Es gibt im Projekt keine React-Testumgebung. Sortierung, Fortschritt und die Erkennung überfälliger Aufgaben liegen deshalb als reine Funktionen in `task-utils.ts` und werden dort getestet.
 
 ## Umsetzungsreihenfolge
 
-1. Blueprint-Schreibrechte in der API korrigieren
+1. Blueprint-Schreibrechte in der Oberfläche für Werkstudenten freischalten
 2. Tools-Liste (API, Admin-Reiter, Tools-Kasten) und Budget-Link-Kasten
 3. Event-Aufgaben, Phasen-Leiste, Kennzahlen-Kasten
 4. Blueprint-Aufgaben inklusive Kopieren beim Anwenden
