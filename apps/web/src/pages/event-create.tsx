@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ApiRequestError, apiFetch } from "../api/client";
+import { AutoGrowTextarea } from "../components/auto-grow-textarea";
 import {
   EVENT_TYPES,
   EVENT_VISIBILITIES,
@@ -199,12 +200,12 @@ export default function EventCreatePage() {
           <label className="label" htmlFor="ev-desc">
             {t("events.fieldDescription")}
           </label>
-          <textarea
+          <AutoGrowTextarea
             id="ev-desc"
             className="textarea"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            rows={4}
+            rows={6}
             maxLength={5000}
           />
         </div>

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../api/client";
+import { AutoGrowTextarea } from "../components/auto-grow-textarea";
 import {
   EVENT_TYPES,
   EVENT_VISIBILITIES,
@@ -195,12 +196,12 @@ export function EventEditModal({
             <label className="label" htmlFor="ee-desc">
               {t("events.fieldDescription")}
             </label>
-            <textarea
+            <AutoGrowTextarea
               id="ee-desc"
               className="textarea"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              rows={4}
+              rows={6}
             />
           </div>
 
