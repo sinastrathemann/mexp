@@ -11,7 +11,8 @@ interface Props {
   previewMode?: boolean;
   initialPersonalNote?: string;
   // "edit": Admin/Werkstudent:in bearbeitet eine bestehende Anmeldung
-  mode?: "register" | "edit";
+  // "self-edit": Teilnehmende ändern ihre eigenen Angaben
+  mode?: "register" | "edit" | "self-edit";
   subtitle?: string;
   initialAnswers?: RegistrationAnswer[];
   onCancel: () => void;
@@ -40,6 +41,8 @@ export function RegistrationModal({
     ),
   );
   const isEdit = mode === "edit";
+  const isSelfEdit = mode === "self-edit";
+  const isUpdate = isEdit || isSelfEdit;
   const [personalNote, setPersonalNote] = useState<string>(initialPersonalNote);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -85,7 +88,9 @@ export function RegistrationModal({
                 ? "Vorschau · Anmelde-Formular"
                 : isEdit
                   ? "Anmeldung bearbeiten"
-                  : "Anmeldung"}
+                  : isSelfEdit
+                    ? "Angaben ändern"
+                    : "Anmeldung"}
             </div>
             <h2 className="card-title" style={{ marginTop: 4 }}>
               {eventTitle}
@@ -100,7 +105,9 @@ export function RegistrationModal({
             ? "So sieht das Formular aus, wenn Teilnehmer sich anmelden. Eingaben werden nicht gespeichert."
             : isEdit
               ? (subtitle ?? "Änderungen werden direkt in der Teilnehmerliste übernommen.")
-              : "Bitte beantworte die folgenden Fragen, um deine Anmeldung abzuschließen."}
+              : isSelfEdit
+                ? "Passe deine Antworten an. Deine Anmeldung und dein Platz bleiben erhalten."
+                : "Bitte beantworte die folgenden Fragen, um deine Anmeldung abzuschließen."}
         </p>
 
         <form onSubmit={handleSubmit} style={{ marginTop: "var(--space-4)" }}>
@@ -148,7 +155,7 @@ export function RegistrationModal({
             <p className="help-text" style={{ marginTop: 4 }}>
               {isEdit
                 ? "Notiz der teilnehmenden Person."
-                : "Nach dem Absenden kannst du deine Anmeldung nicht mehr ändern, dich aber jederzeit wieder abmelden. Für Änderungen wende dich an das Event-Team."}
+                : "Solange die Anmeldung offen ist, kannst du deine Angaben noch ändern oder dich wieder abmelden."}
             </p>
           </fieldset>
 
@@ -162,10 +169,10 @@ export function RegistrationModal({
             {!previewMode && (
               <button type="submit" disabled={pending} className="btn btn-primary">
                 {pending
-                  ? isEdit
+                  ? isUpdate
                     ? "Speichere…"
                     : "Melde an…"
-                  : isEdit
+                  : isUpdate
                     ? "Änderungen speichern"
                     : "Anmeldung absenden"}
               </button>

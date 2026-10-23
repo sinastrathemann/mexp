@@ -268,6 +268,8 @@
     "registering": "Registering …",
     "withdraw": "Withdraw",
     "withdrawing": "Withdrawing …",
+    "selfEdit": "Edit my answers",
+    "selfEditHint": "You can change your answers while registration is open.",
     "promoteWaitlist": "Promote first waitlisted person",
     "promoting": "Promoting …",
     "yourStatusRegistered": "You are registered for this event.",

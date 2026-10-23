@@ -874,15 +874,18 @@ eventRoutes.get("/:id/my-participation", async (c) => {
   const actorIdSession = getHubUser(c).id;
   if (!env.DATABASE_URL) {
     const found = getDevParticipants(id).find((p) => p.userId === actorIdSession);
-    return c.json({ participation: found ?? null });
+    // Eigene Antworten mitliefern, damit die Person sie selbst bearbeiten kann
+    return c.json({
+      participation: found ? { ...found, answers: devAnswerStore.get(found.id) ?? [] } : null,
+    });
   }
   const actorId = actorIdSession;
   const participation = await getOwnParticipation(id, actorId, { events, participations });
   return c.json({ participation });
 });
 
-// Teilnehmende können ihre Anmeldung nachträglich nicht ändern — nur einmalig
-// anmelden und wieder abmelden. Änderungen übernehmen Admin/Werkstudent:innen über
+// Teilnehmende ändern ihre Angaben selbst über PATCH /:id/my-registration, solange die
+// Anmeldung offen ist; danach übernehmen Admin/Werkstudent:innen über
 // PATCH /:eventId/participants/:participationId.
 
 // Dev-Mode (file-store — Design-Spec §3.4): Override-Store für Teilnahmen
@@ -1246,6 +1249,81 @@ eventRoutes.post("/:id/withdraw", async (c) => {
     audit,
   });
   return c.json({ participation });
+});
+
+const selfEditSchema = z.object({
+  answers: z
+    .array(
+      z.object({
+        questionId: z.string().min(1),
+        value: z.union([z.boolean(), z.string().max(2000), z.array(z.string()), z.null()]),
+        otherText: z.string().max(OTHER_TEXT_MAX).nullable().optional(),
+      }),
+    )
+    .default([]),
+  personalNote: z.string().max(2000).nullable().optional(),
+});
+
+// Teilnehmende ändern Antworten und Notiz ihrer eigenen Anmeldung, solange die
+// Anmeldung offen ist. Status und Wartelistenplatz bleiben unverändert.
+eventRoutes.patch("/:id/my-registration", zValidator("json", selfEditSchema), async (c) => {
+  if (env.DATABASE_URL) {
+    return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Dev-only" } }, 501);
+  }
+  const id = c.req.param("id");
+  const actorId = getHubUser(c).id;
+  const input = c.req.valid("json");
+
+  const own = getDevParticipants(id).find((p) => p.userId === actorId);
+  if (!own || (own.status !== "registered" && own.status !== "waitlisted")) {
+    return c.json(
+      { error: { code: "NOT_REGISTERED", message: "Du bist nicht für dieses Event angemeldet." } },
+      404,
+    );
+  }
+
+  const base = findDevBaseEvent(id);
+  const event = base ? applyOverride(base) : undefined;
+  const deadline = event?.registrationDeadline;
+  const deadlinePassed =
+    typeof deadline === "string" &&
+    Number.isFinite(new Date(deadline).getTime()) &&
+    new Date(deadline).getTime() < Date.now();
+  if (event?.status !== "open" || deadlinePassed) {
+    return c.json(
+      {
+        error: {
+          code: "REGISTRATION_CLOSED",
+          message:
+            "Die Anmeldung ist geschlossen. Für Änderungen wende dich bitte an das Event-Team.",
+        },
+      },
+      409,
+    );
+  }
+
+  const questions = devFormStore.get(id) ?? [];
+  if (questions.length > 0) {
+    const validation = validateAnswers(questions, input.answers);
+    if (!validation.ok) {
+      return c.json({ error: { code: "INVALID_ANSWERS", message: validation.message } }, 400);
+    }
+  }
+  devAnswerStore.set(own.id, normalizeAnswers(input.answers));
+
+  let personalNote = own.personalNote ?? null;
+  if (input.personalNote !== undefined) {
+    const trimmed = input.personalNote?.trim() ?? "";
+    personalNote = trimmed === "" ? null : trimmed;
+    devParticipationOverrideStore.set(own.id, {
+      ...devParticipationOverrideStore.get(own.id),
+      personalNote,
+    });
+  }
+
+  return c.json({
+    participation: { ...own, personalNote, answers: devAnswerStore.get(own.id) ?? [] },
+  });
 });
 
 eventRoutes.post(

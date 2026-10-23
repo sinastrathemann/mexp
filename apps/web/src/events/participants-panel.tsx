@@ -33,6 +33,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [addParticipantOpen, setAddParticipantOpen] = useState(false);
   const [editing, setEditing] = useState<ParticipantDto | null>(null);
+  const [selfEditOpen, setSelfEditOpen] = useState(false);
 
   // Anmelde-Formular-Fragen für dieses Event
   const formQ = useQuery({
@@ -71,6 +72,19 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
       }),
     onSuccess: () => {
       setModalOpen(false);
+      invalidateAll();
+    },
+  });
+
+  // Teilnehmende ändern ihre eigenen Angaben, solange die Anmeldung offen ist
+  const selfEditMut = useMutation({
+    mutationFn: (input: { answers: RegistrationAnswer[]; personalNote: string | null }) =>
+      apiFetch<{ participation: ParticipationDto }>(`/events/${event.id}/my-registration`, {
+        method: "PATCH",
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => {
+      setSelfEditOpen(false);
       invalidateAll();
     },
   });
@@ -189,6 +203,11 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
     });
 
   const ownForSelfActions = own;
+  const canSelfEdit =
+    own !== undefined &&
+    (own.status === "registered" || own.status === "waitlisted") &&
+    registrationOpen &&
+    deadlineOpen;
 
   return (
     <section className="card" ref={sectionRef}>
@@ -232,6 +251,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
         withdrawError={withdrawMut.error}
         onRegister={handleRegisterClick}
         onWithdraw={() => withdrawMut.mutate()}
+        onEdit={canSelfEdit ? () => setSelfEditOpen(true) : undefined}
       />
 
       {own && own.status !== "cancelled" && own.status !== "no_show" && (
@@ -241,8 +261,22 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
               <strong>{t("participants.yourNote")}:</strong> {own.personalNote}
             </div>
           )}
-          {t("participants.noChangesHint")}
+          {canSelfEdit ? t("participants.selfEditHint") : t("participants.noChangesHint")}
         </div>
+      )}
+
+      {selfEditOpen && own && (
+        <RegistrationModal
+          mode="self-edit"
+          eventTitle={event.title}
+          questions={questions}
+          initialAnswers={own.answers ?? []}
+          initialPersonalNote={own.personalNote ?? ""}
+          pending={selfEditMut.isPending}
+          error={selfEditMut.error instanceof Error ? selfEditMut.error.message : null}
+          onCancel={() => setSelfEditOpen(false)}
+          onSubmit={(answers, personalNote) => selfEditMut.mutate({ answers, personalNote })}
+        />
       )}
 
       {editing && (
@@ -483,6 +517,7 @@ interface SelfActionsProps {
   withdrawError: unknown;
   onRegister: () => void;
   onWithdraw: () => void;
+  onEdit: (() => void) | undefined;
 }
 
 function SelfActions(props: SelfActionsProps) {
@@ -498,6 +533,7 @@ function SelfActions(props: SelfActionsProps) {
     withdrawError,
     onRegister,
     onWithdraw,
+    onEdit,
   } = props;
 
   const deadlinePassed = registrationDeadline
@@ -525,6 +561,16 @@ function SelfActions(props: SelfActionsProps) {
               {t("participants.yourStatusWaitlisted", { position: own.waitlistPosition ?? "?" })}
             </span>
           </output>
+        )}
+        {onEdit && (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="btn btn-outline"
+            style={{ marginRight: "var(--space-2)" }}
+          >
+            {t("participants.selfEdit")}
+          </button>
         )}
         <button
           type="button"

@@ -86,6 +86,8 @@ export interface ParticipationDto {
   checkedInAt: string | null;
   // Freitext-Notiz des Teilnehmers (z.B. "komme mit Partner")
   personalNote?: string | null;
+  // Formularantworten (eigene Anmeldung bzw. Sicht mit Schreibrolle)
+  answers?: RegistrationAnswer[];
 }
 
 // userEmail/answers fehlen in der reduzierten Sicht für Nutzer ohne Schreibrolle.

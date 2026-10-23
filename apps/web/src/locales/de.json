@@ -268,6 +268,8 @@
     "registering": "Wird angemeldet …",
     "withdraw": "Abmelden",
     "withdrawing": "Wird abgemeldet …",
+    "selfEdit": "Angaben ändern",
+    "selfEditHint": "Du kannst deine Angaben ändern, solange die Anmeldung offen ist.",
     "promoteWaitlist": "Erste Person von Warteliste nachrücken",
     "promoting": "Wird nachgerückt …",
     "yourStatusRegistered": "Du bist für dieses Event angemeldet.",
