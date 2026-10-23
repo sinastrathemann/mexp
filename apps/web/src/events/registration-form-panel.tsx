@@ -70,6 +70,38 @@ const QUESTION_TEMPLATES: { label: string; build: () => Omit<RegistrationQuestio
   },
 ];
 
+// Leere Fragen: Text und Antwortmöglichkeiten legt das Event-Team selbst fest
+const BLANK_QUESTIONS: { label: string; build: () => Omit<RegistrationQuestion, "id"> }[] = [
+  {
+    label: "+ Einfachauswahl",
+    build: () => ({
+      order: 0,
+      type: "single_choice",
+      label: "",
+      required: false,
+      options: ["", ""],
+    }),
+  },
+  {
+    label: "+ Mehrfachauswahl",
+    build: () => ({
+      order: 0,
+      type: "multi_choice",
+      label: "",
+      required: false,
+      options: ["", ""],
+    }),
+  },
+  {
+    label: "+ Ja / Nein",
+    build: () => ({ order: 0, type: "yes_no", label: "", required: false, options: [] }),
+  },
+  {
+    label: "+ Terminabstimmung",
+    build: () => ({ order: 0, type: "date_pick", label: "", required: false, options: [""] }),
+  },
+];
+
 export function RegistrationFormPanel({ event }: Props) {
   const { hasRole } = useAuth();
   const qc = useQueryClient();
@@ -117,7 +149,7 @@ export function RegistrationFormPanel({ event }: Props) {
         return `"${q.label}": Mindestens eine Option erforderlich`;
       }
       if (
-        (q.type === "single_choice" || q.type === "multi_choice") &&
+        (q.type === "single_choice" || q.type === "multi_choice" || q.type === "date_pick") &&
         q.options.some((o) => !o.trim())
       ) {
         return `"${q.label}": Leere Option entfernen oder ausfüllen`;
@@ -136,7 +168,7 @@ export function RegistrationFormPanel({ event }: Props) {
     setDirty(true);
   };
 
-  const addQuestion = (template: (typeof QUESTION_TEMPLATES)[number]) => {
+  const addQuestion = (template: { build: () => Omit<RegistrationQuestion, "id"> }) => {
     const base = template.build();
     const newQ: RegistrationQuestion = {
       ...base,
@@ -252,6 +284,24 @@ export function RegistrationFormPanel({ event }: Props) {
           borderTop: "1px solid var(--border-default)",
         }}
       >
+        <div className="label" style={{ marginBottom: "var(--space-2)" }}>
+          Eigene Frage
+        </div>
+        <div className="muted text-xs" style={{ marginBottom: 6 }}>
+          Leere Frage – Text und Antwortmöglichkeiten selbst festlegen
+        </div>
+        <div className="row" style={{ gap: 8, flexWrap: "wrap", marginBottom: "var(--space-4)" }}>
+          {BLANK_QUESTIONS.map((tpl) => (
+            <button
+              key={tpl.label}
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={() => addQuestion(tpl)}
+            >
+              {tpl.label}
+            </button>
+          ))}
+        </div>
         <div className="label" style={{ marginBottom: "var(--space-2)" }}>
           Schnell hinzufügen
         </div>
