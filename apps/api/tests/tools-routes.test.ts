@@ -84,4 +84,56 @@ describe("Tools-API", () => {
     });
     expect(res.status).toBe(400);
   });
+  const put = (body: unknown) =>
+    app().request("/api/tools", {
+      method: "PUT",
+      body: JSON.stringify(body),
+      headers: asUser("adm", ["admin"]),
+    });
+
+  it("lehnt doppelte IDs ab", async () => {
+    const res = await put({
+      tools: [
+        { id: "a", label: "Eins", url: "https://a.de" },
+        { id: "a", label: "Zwei", url: "https://b.de" },
+      ],
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("PUT und danach GET liefern genau die gespeicherte Liste", async () => {
+    const tools = [
+      { id: "a", label: "Eins", url: "https://a.de" },
+      { id: "b", label: "Zwei", url: "https://b.de" },
+    ];
+    expect((await put({ tools })).status).toBe(200);
+    const get = await app().request("/api/tools", { headers: asUser("ws", ["werkstudent"]) });
+    expect(((await get.json()) as { tools: unknown[] }).tools).toEqual(tools);
+  });
+
+  it("lehnt zu lange Labels und URLs ab", async () => {
+    expect((await put({ tools: [{ label: "x".repeat(101), url: "https://a.de" }] })).status).toBe(
+      400,
+    );
+    expect(
+      (await put({ tools: [{ label: "Ok", url: `https://a.de/${"x".repeat(1995)}` }] })).status,
+    ).toBe(400);
+  });
+
+  it("lehnt javascript:-Links ab", async () => {
+    expect((await put({ tools: [{ label: "XSS", url: "javascript:alert(1)" }] })).status).toBe(400);
+  });
+
+  it("manager und event_office dürfen lesen", async () => {
+    for (const role of ["manager", "event_office"]) {
+      const res = await app().request("/api/tools", { headers: asUser(role, [role]) });
+      expect(res.status).toBe(200);
+    }
+  });
+
+  it("leere Liste bleibt leer (keine Rückkehr zur Vorbelegung)", async () => {
+    expect((await put({ tools: [] })).status).toBe(200);
+    const get = await app().request("/api/tools", { headers: asUser("ws", ["werkstudent"]) });
+    expect(((await get.json()) as { tools: unknown[] }).tools).toEqual([]);
+  });
 });

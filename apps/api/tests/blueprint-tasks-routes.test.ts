@@ -94,4 +94,45 @@ describe("Blueprint-Aufgaben-API", () => {
     });
     expect(res.status).toBe(400);
   });
+  const put = (id: string, task: object) =>
+    app().request(`/api/blueprints/${id}/tasks`, {
+      method: "PUT",
+      headers: asUser("ws", ["werkstudent"]),
+      body: JSON.stringify({ tasks: [task] }),
+    });
+
+  it("PUT auf unbekannten Blueprint gibt 404", async () => {
+    const res = await put("bp-x", { title: "X", daysBefore: null, linkLabel: null, linkUrl: null });
+    expect(res.status).toBe(404);
+  });
+
+  it("lehnt http-Links ab", async () => {
+    const res = await put("bp1", {
+      title: "X",
+      daysBefore: null,
+      linkLabel: "A",
+      linkUrl: "http://a.de",
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("lehnt Titel mit 201 Zeichen ab", async () => {
+    const res = await put("bp1", {
+      title: "x".repeat(201),
+      daysBefore: null,
+      linkLabel: null,
+      linkUrl: null,
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("lehnt Link-Text ohne URL ab", async () => {
+    const res = await put("bp1", {
+      title: "X",
+      daysBefore: null,
+      linkLabel: "Nur Text",
+      linkUrl: null,
+    });
+    expect(res.status).toBe(400);
+  });
 });

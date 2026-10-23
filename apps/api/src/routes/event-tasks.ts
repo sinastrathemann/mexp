@@ -13,6 +13,8 @@ import {
 } from "../project-plan/model.js";
 import { mexpUserStore, requireMexpRole } from "./_user-resolution.js";
 
+const MAX_TASKS_PER_EVENT = 200;
+
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 // Link nur komplett (Text + URL) oder gar nicht.
@@ -46,8 +48,7 @@ const updateSchema = z
     linkUrl: httpsUrlSchema.nullable().optional(),
     done: z.boolean().optional(),
   })
-  .refine((v) => Object.keys(v).length > 0, { message: "Leeres Update." })
-  .refine(linkPairOk, linkPairMessage);
+  .refine((v) => Object.keys(v).length > 0, { message: "Leeres Update." });
 
 function teamMember(id: string) {
   const user = mexpUserStore.get(id);
@@ -74,7 +75,7 @@ eventTaskRoutes.get("/events/:eventId/tasks", requireMexpRole(...TEAM_ROLES), (c
   c.json({ tasks: eventTaskStore.get(c.req.param("eventId")) ?? [] }),
 );
 
-eventTaskRoutes.get("/events/:eventId/task-assignees", requireMexpRole(...TEAM_ROLES), (c) => {
+eventTaskRoutes.get("/task-assignees", requireMexpRole(...TEAM_ROLES), (c) => {
   const assignees = Array.from(mexpUserStore.values())
     .map((u) => teamMember(u.id))
     .filter((u): u is { id: string; displayName: string } => u !== null)
@@ -89,6 +90,12 @@ eventTaskRoutes.post(
   (c) => {
     const eventId = c.req.param("eventId");
     const input = c.req.valid("json");
+    if ((eventTaskStore.get(eventId) ?? []).length >= MAX_TASKS_PER_EVENT) {
+      return c.json(
+        { error: { code: "TOO_MANY_TASKS", message: "Maximal 200 Aufgaben je Event." } },
+        400,
+      );
+    }
     let assignee: { id: string; displayName: string } | null = null;
     if (input.assigneeId) {
       assignee = teamMember(input.assigneeId);

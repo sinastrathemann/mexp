@@ -80,13 +80,16 @@ export function getTools(): ToolLink[] {
 /** Fälligkeit = Event-Start minus N Kalendertage; der Event-Tag gilt in deutscher Zeit (Europe/Berlin). */
 export function computeDueDate(startAtIso: string, daysBefore: number | null): string | null {
   if (daysBefore === null) return null;
-  // en-CA liefert "YYYY-MM-DD"; dieser Kalendertag wird als UTC-Mitternacht gerechnet.
-  const berlinDay = new Intl.DateTimeFormat("en-CA", {
+  // Jahr/Monat/Tag per formatToParts lesen (unabhängig vom Format-String der Locale);
+  // dieser Kalendertag wird als UTC-Mitternacht gerechnet.
+  const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Berlin",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).format(new Date(startAtIso));
+  }).formatToParts(new Date(startAtIso));
+  const part = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  const berlinDay = `${part("year")}-${part("month")}-${part("day")}`;
   const due = new Date(new Date(`${berlinDay}T00:00:00.000Z`).getTime() - daysBefore * 86_400_000);
   return due.toISOString().slice(0, 10);
 }

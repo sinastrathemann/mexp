@@ -153,8 +153,98 @@ describe("Event-Aufgaben-API", () => {
   it("listet mögliche Verantwortliche", async () => {
     const ws = asUser("ws", ["werkstudent"]);
     asUser("p", ["participant"]);
-    const res = await app().request("/api/events/evt1/task-assignees", { headers: ws });
+    const res = await app().request("/api/task-assignees", { headers: ws });
     const body = (await res.json()) as { assignees: { id: string }[] };
     expect(body.assignees.map((a) => a.id)).toEqual(["ws"]);
+  });
+
+  it("PATCH: nur Link-Text ändern lässt die URL stehen", async () => {
+    const ws = asUser("ws", ["werkstudent"]);
+    const { task } = (await (
+      await createTask(ws, { title: "X", linkLabel: "Wiki", linkUrl: "https://wiki.mindsquare.de" })
+    ).json()) as { task: { id: string } };
+    const res = await app().request(`${URL_BASE}/${task.id}`, {
+      method: "PATCH",
+      headers: ws,
+      body: JSON.stringify({ linkLabel: "Neu" }),
+    });
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { task: object }).task).toMatchObject({
+      linkLabel: "Neu",
+      linkUrl: "https://wiki.mindsquare.de",
+    });
+  });
+
+  it("PATCH: assigneeId null räumt auch den Namen ab", async () => {
+    const eo = asUser("eo", ["event_office"]);
+    asUser("ws", ["werkstudent"]);
+    const { task } = (await (await createTask(eo, { title: "X", assigneeId: "ws" })).json()) as {
+      task: { id: string };
+    };
+    const res = await app().request(`${URL_BASE}/${task.id}`, {
+      method: "PATCH",
+      headers: eo,
+      body: JSON.stringify({ assigneeId: null }),
+    });
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { task: object }).task).toMatchObject({
+      assigneeId: null,
+      assigneeName: null,
+    });
+  });
+
+  it("PATCH: ungültige assigneeId gibt 400 INVALID_ASSIGNEE", async () => {
+    const eo = asUser("eo", ["event_office"]);
+    const { task } = (await (await createTask(eo, { title: "X" })).json()) as {
+      task: { id: string };
+    };
+    const res = await app().request(`${URL_BASE}/${task.id}`, {
+      method: "PATCH",
+      headers: eo,
+      body: JSON.stringify({ assigneeId: "gibt-es-nicht" }),
+    });
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe("INVALID_ASSIGNEE");
+  });
+
+  it("PATCH: leeres Update gibt 400", async () => {
+    const ws = asUser("ws", ["werkstudent"]);
+    const { task } = (await (await createTask(ws, { title: "X" })).json()) as {
+      task: { id: string };
+    };
+    const res = await app().request(`${URL_BASE}/${task.id}`, {
+      method: "PATCH",
+      headers: ws,
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("begrenzt auf 200 Aufgaben je Event (TOO_MANY_TASKS)", async () => {
+    const ws = asUser("ws", ["werkstudent"]);
+    const now = new Date().toISOString();
+    eventTaskStore.set(
+      "evt1",
+      Array.from({ length: 200 }, (_, i) => ({
+        id: `t${i}`,
+        title: `Aufgabe ${i}`,
+        dueDate: null,
+        assigneeId: null,
+        assigneeName: null,
+        linkLabel: null,
+        linkUrl: null,
+        done: false,
+        doneBy: null,
+        doneAt: null,
+        createdBy: "ws",
+        createdAt: now,
+      })),
+    );
+    const res = await createTask(ws, { title: "Zu viel" });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({
+      error: { code: "TOO_MANY_TASKS", message: "Maximal 200 Aufgaben je Event." },
+    });
+    expect(eventTaskStore.get("evt1")).toHaveLength(200);
   });
 });

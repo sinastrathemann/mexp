@@ -21,7 +21,18 @@ const putSchema = z.object({
         url: httpsUrlSchema,
       }),
     )
-    .max(50),
+    .max(50)
+    .superRefine((list, ctx) => {
+      // Doppelte IDs würden sich in der Oberfläche gegenseitig überschreiben.
+      const seen = new Set<string>();
+      for (const [index, t] of list.entries()) {
+        if (t.id === undefined) continue;
+        if (seen.has(t.id)) {
+          ctx.addIssue({ code: "custom", message: "Doppelte id.", path: [index, "id"] });
+        }
+        seen.add(t.id);
+      }
+    }),
 });
 
 // Zentrale Link-Liste externer Tools (Coworking-Copilot, Budget-Control-Agent, …).

@@ -81,6 +81,8 @@ export interface DevBlueprint {
   updatedAt: string;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const devBlueprintStore = persistentMap<DevBlueprint>("blueprints");
 
 export const blueprintRoutes = new Hono();
@@ -89,7 +91,10 @@ export const blueprintRoutes = new Hono();
 blueprintRoutes.route(
   "/",
   createBlueprintTaskRoutes(async (id) =>
-    env.DATABASE_URL ? (await blueprints.findById(id)) !== null : devBlueprintStore.has(id),
+    env.DATABASE_URL
+      ? // Postgres-Spalte ist uuid: Nicht-UUIDs würden sonst einen 500 statt 404 auslösen.
+        UUID_RE.test(id) && (await blueprints.findById(id)) !== null
+      : devBlueprintStore.has(id),
   ),
 );
 
