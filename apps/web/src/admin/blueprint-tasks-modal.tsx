@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../api/client";
 import type { BlueprintTaskDto } from "../events/project-plan-types";
 
 interface Row {
+  // Nur für React: stabiler Schlüssel (bei Serverdaten = id), wird nicht gespeichert.
+  key: string;
   id?: string | undefined;
   title: string;
   daysBefore: string;
@@ -14,6 +16,7 @@ interface Row {
 
 function toRow(t: BlueprintTaskDto): Row {
   return {
+    key: t.id ?? crypto.randomUUID(),
     id: t.id,
     title: t.title,
     daysBefore: t.daysBefore === null ? "" : String(t.daysBefore),
@@ -50,16 +53,23 @@ export function BlueprintTasksModal({ blueprintId, name, onClose }: Props) {
     queryFn: () => apiFetch<{ tasks: BlueprintTaskDto[] }>(`/blueprints/${blueprintId}/tasks`),
     refetchOnWindowFocus: false, // Editor: ungespeicherte Eingaben nicht überschreiben
   });
-  const [rows, setRows] = useState<Row[]>([]);
+  // null = noch nicht aus den Serverdaten übernommen
+  const [rows, setRows] = useState<Row[] | null>(null);
   useEffect(() => {
-    if (q.data) setRows(q.data.tasks.map(toRow));
-  }, [q.data]);
+    if (rows === null && q.data) setRows(q.data.tasks.map(toRow));
+  }, [rows, q.data]);
+
+  const headingId = useId();
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
 
   const saveMut = useMutation({
     mutationFn: () =>
       apiFetch<{ tasks: BlueprintTaskDto[] }>(`/blueprints/${blueprintId}/tasks`, {
         method: "PUT",
-        body: JSON.stringify({ tasks: rows.map(toDto) }),
+        body: JSON.stringify({ tasks: (rows ?? []).map(toDto) }),
       }),
     onSuccess: (data) => {
       qc.setQueryData(key, data);
@@ -68,7 +78,7 @@ export function BlueprintTasksModal({ blueprintId, name, onClose }: Props) {
   });
 
   const update = (i: number, patch: Partial<Row>) =>
-    setRows((r) => r.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
+    setRows((r) => r?.map((row, idx) => (idx === i ? { ...row, ...patch } : row)) ?? null);
 
   return (
     <div
@@ -82,16 +92,22 @@ export function BlueprintTasksModal({ blueprintId, name, onClose }: Props) {
     >
       <form
         className="modal"
+        // biome-ignore lint/a11y/useSemanticElements: <dialog> brächte UA-Styles/Positionierung, das bestehende .modal-Layout bleibt
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={headingId}
         style={{ maxWidth: 900 }}
         onSubmit={(e) => {
           e.preventDefault();
-          if (!q.isSuccess) return;
+          if (rows === null) return;
           saveMut.mutate();
         }}
       >
-        <h2 className="card-title">{t("projectPlan.blueprintTasksTitle", { name })}</h2>
+        <h2 id={headingId} ref={headingRef} tabIndex={-1} className="card-title">
+          {t("projectPlan.blueprintTasksTitle", { name })}
+        </h2>
         <p className="muted">{t("projectPlan.blueprintTasksHint")}</p>
-        {q.isPending && <p className="muted">{t("projectPlan.loading")}</p>}
+        {rows === null && !q.isError && <p className="muted">{t("projectPlan.loading")}</p>}
         {q.isError && (
           <div className="alert alert-error" style={{ marginTop: "var(--space-3)" }}>
             {t("projectPlan.loadError", {
@@ -107,65 +123,69 @@ export function BlueprintTasksModal({ blueprintId, name, onClose }: Props) {
             marginTop: "var(--space-3)",
           }}
         >
-          {q.isSuccess &&
-            rows.map((row, i) => (
-              <div key={row.id ?? `new-${i}`} className="row" style={{ gap: "var(--space-2)" }}>
-                <input
-                  className="input"
-                  style={{ flex: 2 }}
-                  required
-                  maxLength={200}
-                  placeholder={t("projectPlan.taskTitle")}
-                  aria-label={t("projectPlan.taskTitle")}
-                  value={row.title}
-                  onChange={(e) => update(i, { title: e.target.value })}
-                />
-                <input
-                  className="input"
-                  style={{ width: 90 }}
-                  type="number"
-                  min={0}
-                  max={365}
-                  placeholder={t("projectPlan.daysBefore")}
-                  aria-label={t("projectPlan.daysBefore")}
-                  value={row.daysBefore}
-                  onChange={(e) => update(i, { daysBefore: e.target.value })}
-                />
-                <input
-                  className="input"
-                  maxLength={100}
-                  placeholder={t("projectPlan.taskLinkLabel")}
-                  aria-label={t("projectPlan.taskLinkLabel")}
-                  value={row.linkLabel}
-                  onChange={(e) => update(i, { linkLabel: e.target.value })}
-                />
-                <input
-                  className="input"
-                  type="url"
-                  pattern="https://.*"
-                  maxLength={2000}
-                  placeholder={t("projectPlan.taskLinkUrl")}
-                  aria-label={t("projectPlan.taskLinkUrl")}
-                  value={row.linkUrl}
-                  onChange={(e) => update(i, { linkUrl: e.target.value })}
-                />
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => setRows((r) => r.filter((_, idx) => idx !== i))}
-                >
-                  {t("projectPlan.delete")}
-                </button>
-              </div>
-            ))}
+          {rows?.map((row, i) => (
+            <div key={row.key} className="row" style={{ gap: "var(--space-2)" }}>
+              <input
+                className="input"
+                style={{ flex: 2 }}
+                required
+                maxLength={200}
+                placeholder={t("projectPlan.taskTitle")}
+                aria-label={t("projectPlan.taskTitle")}
+                value={row.title}
+                onChange={(e) => update(i, { title: e.target.value })}
+              />
+              <input
+                className="input"
+                style={{ width: 90 }}
+                type="number"
+                min={0}
+                max={365}
+                placeholder={t("projectPlan.daysBefore")}
+                aria-label={t("projectPlan.daysBefore")}
+                value={row.daysBefore}
+                onChange={(e) => update(i, { daysBefore: e.target.value })}
+              />
+              <input
+                className="input"
+                required={row.linkUrl.trim() !== ""}
+                maxLength={100}
+                placeholder={t("projectPlan.taskLinkLabel")}
+                aria-label={t("projectPlan.taskLinkLabel")}
+                value={row.linkLabel}
+                onChange={(e) => update(i, { linkLabel: e.target.value })}
+              />
+              <input
+                className="input"
+                type="url"
+                pattern="https://.*"
+                required={row.linkLabel.trim() !== ""}
+                maxLength={2000}
+                placeholder={t("projectPlan.taskLinkUrl")}
+                aria-label={t("projectPlan.taskLinkUrl")}
+                value={row.linkUrl}
+                onChange={(e) => update(i, { linkUrl: e.target.value })}
+              />
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setRows((r) => r?.filter((_, idx) => idx !== i) ?? null)}
+              >
+                {t("projectPlan.delete")}
+              </button>
+            </div>
+          ))}
         </div>
         <button
           type="button"
           className="btn btn-outline btn-sm"
           style={{ marginTop: "var(--space-3)" }}
-          disabled={!q.isSuccess}
+          disabled={rows === null}
           onClick={() =>
-            setRows((r) => [...r, { title: "", daysBefore: "", linkLabel: "", linkUrl: "" }])
+            setRows((r) => [
+              ...(r ?? []),
+              { key: crypto.randomUUID(), title: "", daysBefore: "", linkLabel: "", linkUrl: "" },
+            ])
           }
         >
           + {t("projectPlan.addTask")}
@@ -185,7 +205,7 @@ export function BlueprintTasksModal({ blueprintId, name, onClose }: Props) {
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={!q.isSuccess || saveMut.isPending}
+            disabled={rows === null || saveMut.isPending}
           >
             {t("projectPlan.save")}
           </button>

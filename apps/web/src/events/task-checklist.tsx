@@ -37,12 +37,13 @@ function toPayload(d: Draft) {
   };
 }
 
-function fmtDay(iso: string) {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString("de-DE");
+function fmtDay(iso: string, language: string) {
+  const locale = language.startsWith("de") ? "de-DE" : "en-GB";
+  return new Date(`${iso}T00:00:00`).toLocaleDateString(locale);
 }
 
 export function TaskChecklist({ eventId }: { eventId: string }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { hasRole } = useAuth();
   const canDelete = hasRole("admin");
   const qc = useQueryClient();
@@ -54,8 +55,8 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
     queryFn: () => apiFetch<{ tasks: EventTaskDto[] }>(`/events/${eventId}/tasks`),
   });
   const assigneesQ = useQuery({
-    queryKey: ["events", eventId, "task-assignees"],
-    queryFn: () => apiFetch<{ assignees: AssigneeDto[] }>(`/events/${eventId}/task-assignees`),
+    queryKey: ["task-assignees"],
+    queryFn: () => apiFetch<{ assignees: AssigneeDto[] }>("/task-assignees"),
   });
 
   const [editingId, setEditingId] = useState<string | "new" | null>(null);
@@ -129,6 +130,7 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
       </select>
       <input
         className="input"
+        required={draft.linkUrl.trim() !== ""}
         maxLength={100}
         placeholder={t("projectPlan.taskLinkLabel")}
         aria-label={t("projectPlan.taskLinkLabel")}
@@ -138,6 +140,7 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
       <input
         className="input"
         type="url"
+        required={draft.linkLabel.trim() !== ""}
         maxLength={2000}
         pattern="https://.*"
         placeholder={t("projectPlan.taskLinkUrl")}
@@ -191,9 +194,12 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
               <input
                 type="checkbox"
                 checked={task.done}
-                aria-label={t("projectPlan.markDone")}
+                aria-label={`${t("projectPlan.markDone")}: ${task.title}`}
                 disabled={toggleMut.isPending}
-                onChange={() => toggleMut.mutate(task)}
+                onChange={() => {
+                  deleteMut.reset();
+                  toggleMut.mutate(task);
+                }}
               />
               <div className="task-main">
                 <span className="task-title">{task.title}</span>
@@ -202,7 +208,7 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
                   {task.assigneeName && task.dueDate ? " · " : ""}
                   {task.dueDate && (
                     <span className={isOverdue(task, today) ? "task-overdue" : undefined}>
-                      {t("projectPlan.taskDueOn", { date: fmtDay(task.dueDate) })}
+                      {t("projectPlan.taskDueOn", { date: fmtDay(task.dueDate, i18n.language) })}
                       {isOverdue(task, today) ? ` · ${t("projectPlan.taskOverdue")}` : ""}
                     </span>
                   )}
@@ -221,6 +227,7 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
+                aria-label={`${t("projectPlan.edit")}: ${task.title}`}
                 onClick={() => {
                   saveMut.reset();
                   setDraft(toDraft(task));
@@ -233,9 +240,12 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
+                  aria-label={`${t("projectPlan.delete")}: ${task.title}`}
                   onClick={() => {
-                    if (window.confirm(t("projectPlan.confirmDeleteTask")))
+                    if (window.confirm(t("projectPlan.confirmDeleteTask"))) {
+                      toggleMut.reset();
                       deleteMut.mutate(task.id);
+                    }
                   }}
                 >
                   {t("projectPlan.delete")}
@@ -248,10 +258,30 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
       </ul>
 
       {toggleMut.error instanceof Error && (
-        <div className="alert alert-error">{toggleMut.error.message}</div>
+        <div className="alert alert-error row" style={{ justifyContent: "space-between" }}>
+          <span>{toggleMut.error.message}</span>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            aria-label={t("projectPlan.dismiss")}
+            onClick={() => toggleMut.reset()}
+          >
+            ×
+          </button>
+        </div>
       )}
       {deleteMut.error instanceof Error && (
-        <div className="alert alert-error">{deleteMut.error.message}</div>
+        <div className="alert alert-error row" style={{ justifyContent: "space-between" }}>
+          <span>{deleteMut.error.message}</span>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            aria-label={t("projectPlan.dismiss")}
+            onClick={() => deleteMut.reset()}
+          >
+            ×
+          </button>
+        </div>
       )}
 
       {editingId === null && (

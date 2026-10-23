@@ -419,6 +419,7 @@
     "delete": "Delete",
     "confirmDeleteTask": "Really delete this task?",
     "markDone": "Mark as done",
+    "dismiss": "Dismiss",
     "toolsTitle": "Tools",
     "toolsEmpty": "No tools configured.",
     "keyFiguresTitle": "Key figures",
