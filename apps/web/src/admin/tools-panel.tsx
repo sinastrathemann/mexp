@@ -42,6 +42,8 @@ export function ToolsPanel() {
       }),
     onSuccess: (data) => {
       qc.setQueryData(["tools"], data);
+      // Server-IDs für neue Zeilen übernehmen, sonst vergibt jedes Speichern neue IDs
+      setRows(data.tools.map(toRow));
       setSaved(true);
     },
   });

@@ -20,10 +20,10 @@ import {
   EVENT_STATUSES,
   EVENT_TYPES,
   EVENT_VISIBILITIES,
-  type EventStatus,
   InvalidEventDatesError,
   InvalidEventStatusTransitionError,
   canTransition,
+  isEventStatus,
 } from "@mexp/domain";
 import { Hono } from "hono";
 import { z } from "zod";
@@ -836,7 +836,19 @@ eventRoutes.patch(
       if (!base) {
         return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
       }
-      const currentStatus = applyOverride(base).status as EventStatus;
+      const currentStatus = applyOverride(base).status;
+      // Kaputter Status im Override-Store: als ungültigen Übergang melden statt mit 500 abzustürzen
+      if (!isEventStatus(currentStatus)) {
+        return c.json(
+          {
+            error: {
+              code: "EVENT_STATUS_TRANSITION_INVALID",
+              message: "Aktueller Status des Events ist ungültig.",
+            },
+          },
+          409,
+        );
+      }
       if (!canTransition(currentStatus, status)) {
         throw new InvalidEventStatusTransitionError(currentStatus, status);
       }
