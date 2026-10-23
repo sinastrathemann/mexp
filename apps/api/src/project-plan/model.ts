@@ -74,13 +74,20 @@ export const DEFAULT_TOOLS: ToolLink[] = [
 
 /** Gespeicherte Liste — oder die Vorbelegung, solange der Admin nie gespeichert hat. */
 export function getTools(): ToolLink[] {
-  return toolStore.get("default")?.tools ?? DEFAULT_TOOLS;
+  return toolStore.get("default")?.tools ?? DEFAULT_TOOLS.map((t) => ({ ...t }));
 }
 
-/** Fälligkeit = Event-Start minus N Tage, als Kalenderdatum (UTC). */
+/** Fälligkeit = Event-Start minus N Kalendertage; der Event-Tag gilt in deutscher Zeit (Europe/Berlin). */
 export function computeDueDate(startAtIso: string, daysBefore: number | null): string | null {
   if (daysBefore === null) return null;
-  const due = new Date(new Date(startAtIso).getTime() - daysBefore * 86_400_000);
+  // en-CA liefert "YYYY-MM-DD"; dieser Kalendertag wird als UTC-Mitternacht gerechnet.
+  const berlinDay = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Berlin",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(startAtIso));
+  const due = new Date(new Date(`${berlinDay}T00:00:00.000Z`).getTime() - daysBefore * 86_400_000);
   return due.toISOString().slice(0, 10);
 }
 

@@ -24,6 +24,13 @@ describe("computeDueDate", () => {
   it("liefert den Event-Tag bei 0 Tagen", () => {
     expect(computeDueDate("2027-06-20T16:00:00.000Z", 0)).toBe("2027-06-20");
   });
+  it("rechnet den Kalendertag in deutscher Zeit (Sommerzeit)", () => {
+    expect(computeDueDate("2027-06-19T22:30:00.000Z", 0)).toBe("2027-06-20");
+    expect(computeDueDate("2027-06-19T22:30:00.000Z", 14)).toBe("2027-06-06");
+  });
+  it("rechnet den Kalendertag in deutscher Zeit (Winterzeit)", () => {
+    expect(computeDueDate("2027-01-09T23:30:00.000Z", 0)).toBe("2027-01-10");
+  });
   it("liefert null ohne Tageswert", () => {
     expect(computeDueDate("2027-06-20T16:00:00.000Z", null)).toBeNull();
   });
@@ -76,6 +83,21 @@ describe("copyBlueprintTasksToEvent", () => {
         linkUrl: null,
       },
     ]);
+    const existing = {
+      id: "vorhanden",
+      title: "Bestehende Aufgabe",
+      dueDate: null,
+      assigneeId: null,
+      assigneeName: null,
+      linkLabel: null,
+      linkUrl: null,
+      done: false,
+      doneBy: null,
+      doneAt: null,
+      createdBy: "u0",
+      createdAt: "2026-10-23T00:00:00.000Z",
+    };
+    eventTaskStore.set("evt1", [existing]);
     const copied = copyBlueprintTasksToEvent("bp1", "evt1", "2027-06-20T16:00:00.000Z", "u1");
     expect(copied).toHaveLength(2);
     expect(copied[0]).toMatchObject({
@@ -87,7 +109,8 @@ describe("copyBlueprintTasksToEvent", () => {
     });
     expect(copied[1]).toMatchObject({ title: "Einladung verschicken", dueDate: null });
     expect(copied[0]?.id).not.toBe("b1");
-    expect(eventTaskStore.get("evt1")).toHaveLength(2);
+    expect(eventTaskStore.get("evt1")).toHaveLength(3);
+    expect(eventTaskStore.get("evt1")?.[0]?.id).toBe("vorhanden");
   });
   it("macht nichts ohne Blueprint-Aufgaben", () => {
     expect(copyBlueprintTasksToEvent("bp-x", "evt1", "2027-06-20T16:00:00.000Z", "u1")).toEqual([]);

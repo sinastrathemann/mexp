@@ -9,6 +9,7 @@ import {
 } from "@mexp/application";
 import { getHubUser } from "@mexp/auth";
 import { EVENT_TYPES, EVENT_VISIBILITIES } from "@mexp/domain";
+import { rootLogger } from "@mexp/shared";
 import { Hono } from "hono";
 import { z } from "zod";
 import { events, audit, blueprints, env } from "../deps.js";
@@ -17,6 +18,8 @@ import { blueprintTaskStore, copyBlueprintTasksToEvent } from "../project-plan/m
 import { requireMexpRole } from "./_user-resolution.js";
 import { createBlueprintTaskRoutes } from "./blueprint-tasks.js";
 import { createDevEvent } from "./events.js";
+
+const log = rootLogger.child({ module: "api/blueprints" });
 
 const eventTypeSchema = z.enum(EVENT_TYPES);
 const visibilitySchema = z.enum(EVENT_VISIBILITIES);
@@ -235,7 +238,12 @@ blueprintRoutes.post(
         ownerId: actorId,
       });
       // Vorlagen-Aufgaben in das neue Event kopieren (Fälligkeit = Start minus N Tage)
-      copyBlueprintTasksToEvent(id, event.id, startAt.toISOString(), actorId);
+      try {
+        copyBlueprintTasksToEvent(id, event.id, startAt.toISOString(), actorId);
+      } catch (err) {
+        // Event existiert bereits — ein Kopierfehler darf kein Duplikat durch Retry erzeugen.
+        log.warn({ err, blueprintId: id, eventId: event.id }, "Vorlagen-Aufgaben nicht kopiert");
+      }
       return c.json({ event }, 201);
     }
 
@@ -245,7 +253,12 @@ blueprintRoutes.post(
       { blueprints, events, audit },
     );
     // Vorlagen-Aufgaben in das neue Event kopieren (Fälligkeit = Start minus N Tage)
-    copyBlueprintTasksToEvent(id, event.id, new Date(input.startAt).toISOString(), actorId);
+    try {
+      copyBlueprintTasksToEvent(id, event.id, new Date(input.startAt).toISOString(), actorId);
+    } catch (err) {
+      // Event existiert bereits — ein Kopierfehler darf kein Duplikat durch Retry erzeugen.
+      log.warn({ err, blueprintId: id, eventId: event.id }, "Vorlagen-Aufgaben nicht kopiert");
+    }
     return c.json({ event }, 201);
   },
 );
