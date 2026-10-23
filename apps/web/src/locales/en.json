@@ -134,6 +134,7 @@
     "fieldType": "Event type",
     "fieldVisibility": "Visibility",
     "fieldStart": "Start",
+    "fieldTimeTbd": "Time not fixed yet",
     "fieldEnd": "End",
     "fieldLocation": "Location",
     "fieldCapacity": "Capacity",

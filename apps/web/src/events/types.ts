@@ -31,6 +31,8 @@ export interface EventDto {
   visibility: EventVisibility;
   startAt: string;
   endAt: string;
+  // Uhrzeit steht noch nicht fest: nur das Datum anzeigen
+  timeTbd?: boolean;
   location: string | null;
   // Zusatz-Infos zur Location: Adresse, Parkmöglichkeiten, Besonderheiten
   locationDetails?: string | null;

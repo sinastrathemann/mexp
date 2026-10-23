@@ -4,6 +4,8 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../api/client";
 import { AutoGrowTextarea } from "../components/auto-grow-textarea";
+import { tbdDateInput, tbdIso } from "./event-date";
+import { EventDateFields } from "./event-date-fields";
 import {
   EVENT_TYPES,
   EVENT_VISIBILITIES,
@@ -27,6 +29,7 @@ interface Props {
     visibility?: EventVisibility;
     startAt?: string;
     endAt?: string;
+    timeTbd?: boolean;
     location?: string | null;
     locationDetails?: string | null;
     capacity?: number | null;
@@ -68,8 +71,13 @@ export function EventEditModal({
   const [description, setDescription] = useState(event.description);
   const [eventType, setEventType] = useState<EventType>(event.eventType);
   const [visibility, setVisibility] = useState<EventVisibility>(event.visibility);
-  const [startAt, setStartAt] = useState(toLocalInput(event.startAt));
-  const [endAt, setEndAt] = useState(toLocalInput(event.endAt));
+  const [timeTbd, setTimeTbd] = useState(event.timeTbd === true);
+  const [startAt, setStartAt] = useState(
+    event.timeTbd ? tbdDateInput(event.startAt) : toLocalInput(event.startAt),
+  );
+  const [endAt, setEndAt] = useState(
+    event.timeTbd ? tbdDateInput(event.endAt) : toLocalInput(event.endAt),
+  );
   const [location, setLocation] = useState(event.location ?? "");
   const [locationDetails, setLocationDetails] = useState(event.locationDetails ?? "");
   const [capacity, setCapacity] = useState(event.capacity?.toString() ?? "");
@@ -106,8 +114,9 @@ export function EventEditModal({
       description: description,
       eventType,
       visibility,
-      startAt: toIso(startAt),
-      endAt: toIso(endAt),
+      startAt: timeTbd ? tbdIso(startAt, "start") : toIso(startAt),
+      endAt: timeTbd ? tbdIso(endAt, "end") : toIso(endAt),
+      timeTbd,
       location: location.trim() === "" ? null : location.trim(),
       locationDetails: locationDetails.trim() === "" ? null : locationDetails.trim(),
       capacity: capNum,
@@ -242,34 +251,15 @@ export function EventEditModal({
             </div>
           </div>
 
-          <div className="field-row">
-            <div className="field">
-              <label className="label" htmlFor="ee-start">
-                {t("events.fieldStart")}
-              </label>
-              <input
-                id="ee-start"
-                className="input"
-                type="datetime-local"
-                value={startAt}
-                onChange={(e) => setStartAt(e.target.value)}
-                required
-              />
-            </div>
-            <div className="field">
-              <label className="label" htmlFor="ee-end">
-                {t("events.fieldEnd")}
-              </label>
-              <input
-                id="ee-end"
-                className="input"
-                type="datetime-local"
-                value={endAt}
-                onChange={(e) => setEndAt(e.target.value)}
-                required
-              />
-            </div>
-          </div>
+          <EventDateFields
+            idPrefix="ee"
+            timeTbd={timeTbd}
+            startAt={startAt}
+            endAt={endAt}
+            onTimeTbdChange={setTimeTbd}
+            onStartChange={setStartAt}
+            onEndChange={setEndAt}
+          />
 
           <div className="field-row">
             <div className="field">

@@ -15,6 +15,7 @@ interface MyEventShort {
   status: string;
   startAt: string;
   endAt: string;
+  timeTbd?: boolean;
   location: string | null;
 }
 
@@ -449,10 +450,12 @@ function EventCardBig({
     day: "2-digit",
     month: "short",
   });
-  const timeStr = date.toLocaleTimeString("de-DE", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const timeStr = event.timeTbd
+    ? "Uhrzeit folgt"
+    : date.toLocaleTimeString("de-DE", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
   const relStr =
     daysFromNow === undefined
       ? null
@@ -529,10 +532,12 @@ function MyEventCard({ event, compact }: { event: MyEventShort; compact?: boolea
     month: "short",
     year: "2-digit",
   });
-  const timeStr = date.toLocaleTimeString("de-DE", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const timeStr = event.timeTbd
+    ? "Uhrzeit folgt"
+    : date.toLocaleTimeString("de-DE", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
   return (
     <div
       className="event-card"

@@ -134,6 +134,7 @@
     "fieldType": "Eventtyp",
     "fieldVisibility": "Sichtbarkeit",
     "fieldStart": "Beginn",
+    "fieldTimeTbd": "Uhrzeit steht noch nicht fest",
     "fieldEnd": "Ende",
     "fieldLocation": "Ort",
     "fieldCapacity": "Teilnehmerlimit",

@@ -5,6 +5,8 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ApiRequestError, apiFetch } from "../api/client";
 import { AutoGrowTextarea } from "../components/auto-grow-textarea";
+import { tbdIso } from "../events/event-date";
+import { EventDateFields } from "../events/event-date-fields";
 import {
   EVENT_TYPES,
   EVENT_VISIBILITIES,
@@ -50,6 +52,7 @@ export default function EventCreatePage() {
   const [visibility, setVisibility] = useState<EventVisibility>("internal");
   const [startAt, setStartAt] = useState("");
   const [endAt, setEndAt] = useState("");
+  const [timeTbd, setTimeTbd] = useState(false);
   const [location, setLocation] = useState("");
   const [locationDetails, setLocationDetails] = useState("");
   const [capacity, setCapacity] = useState("");
@@ -150,8 +153,9 @@ export default function EventCreatePage() {
       description,
       eventType,
       visibility,
-      startAt: new Date(startAt).toISOString(),
-      endAt: new Date(endAt).toISOString(),
+      startAt: timeTbd ? tbdIso(startAt, "start") : new Date(startAt).toISOString(),
+      endAt: timeTbd ? tbdIso(endAt, "end") : new Date(endAt).toISOString(),
+      timeTbd,
       location: location || null,
       locationDetails: locationDetails.trim() === "" ? null : locationDetails.trim(),
       capacity: capacity ? Number.parseInt(capacity, 10) : null,
@@ -245,34 +249,15 @@ export default function EventCreatePage() {
             </select>
           </div>
         </div>
-        <div className="field-row">
-          <div className="field">
-            <label className="label" htmlFor="ev-start">
-              {t("events.fieldStart")}
-            </label>
-            <input
-              id="ev-start"
-              className="input"
-              type="datetime-local"
-              required
-              value={startAt}
-              onChange={(e) => setStartAt(e.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="ev-end">
-              {t("events.fieldEnd")}
-            </label>
-            <input
-              id="ev-end"
-              className="input"
-              type="datetime-local"
-              required
-              value={endAt}
-              onChange={(e) => setEndAt(e.target.value)}
-            />
-          </div>
-        </div>
+        <EventDateFields
+          idPrefix="ev"
+          timeTbd={timeTbd}
+          startAt={startAt}
+          endAt={endAt}
+          onTimeTbdChange={setTimeTbd}
+          onStartChange={setStartAt}
+          onEndChange={setEndAt}
+        />
         <div className="field-row">
           <div className="field">
             <label className="label" htmlFor="ev-location">
