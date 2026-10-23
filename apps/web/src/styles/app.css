@@ -2012,3 +2012,94 @@ legend {
   font-size: var(--text-md);
   margin: 0 0 var(--space-3);
 }
+
+/* Projektplan (Event-Detail, interne Ansicht) */
+.project-plan-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+.project-plan-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+@media (max-width: 900px) {
+  .project-plan-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.phase-bar {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.phase-step {
+  flex: 1 1 120px;
+  padding: var(--space-2);
+  border-radius: 6px;
+  border: none;
+  font: inherit;
+  text-align: center;
+  background: var(--bg-muted);
+  color: inherit;
+}
+.phase-step--done {
+  background: var(--color-success);
+  color: #fff;
+}
+.phase-step--current {
+  background: var(--brand-orange);
+  color: #fff;
+  font-weight: 600;
+}
+.phase-step:enabled {
+  cursor: pointer;
+  outline: 1px dashed currentColor;
+}
+.task-progress {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-muted);
+  margin: var(--space-2) 0 var(--space-3);
+}
+.task-progress-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--brand-orange);
+}
+.task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-default);
+}
+.task-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.task-item--done .task-title {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+.task-overdue {
+  color: #b42318;
+  font-weight: 600;
+}
+.task-form {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+}
+
+output.alert {
+  display: block;
+}
