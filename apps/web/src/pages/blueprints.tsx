@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { BlueprintTasksModal } from "../admin/blueprint-tasks-modal";
 import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
 import {
@@ -49,6 +50,7 @@ export default function BlueprintsPage() {
   const [applyFor, setApplyFor] = useState<string | null>(null);
   const [applyTitle, setApplyTitle] = useState("");
   const [applyStart, setApplyStart] = useState("");
+  const [tasksFor, setTasksFor] = useState<{ id: string; name: string } | null>(null);
 
   const listQ = useQuery({
     queryKey: ["blueprints"],
@@ -301,17 +303,26 @@ export default function BlueprintsPage() {
                     {(canWrite || canDelete) && (
                       <div className="row" style={{ gap: "var(--space-2)" }}>
                         {canWrite && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setApplyFor(bp.id);
-                              setApplyTitle(bp.name);
-                              setApplyStart("");
-                            }}
-                            className="btn btn-primary btn-sm"
-                          >
-                            {t("blueprints.apply")}
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setApplyFor(bp.id);
+                                setApplyTitle(bp.name);
+                                setApplyStart("");
+                              }}
+                              className="btn btn-primary btn-sm"
+                            >
+                              {t("blueprints.apply")}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setTasksFor({ id: bp.id, name: bp.name })}
+                              className="btn btn-outline btn-sm"
+                            >
+                              {t("projectPlan.blueprintTasks")}
+                            </button>
+                          </>
                         )}
                         {canDelete && (
                           <button
@@ -390,6 +401,14 @@ export default function BlueprintsPage() {
             )}
           </form>
         </div>
+      )}
+
+      {tasksFor && (
+        <BlueprintTasksModal
+          blueprintId={tasksFor.id}
+          name={tasksFor.name}
+          onClose={() => setTasksFor(null)}
+        />
       )}
     </>
   );
