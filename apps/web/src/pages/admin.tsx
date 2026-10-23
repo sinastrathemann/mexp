@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
 import { ImportPanel } from "../admin/import-panel";
 import { ADMIN_AREA_ROLES } from "../admin/role-order";
+import { ToolsPanel } from "../admin/tools-panel";
 import { UsersPanel } from "../admin/users-panel";
 import { useAuth } from "../auth/auth-context";
 import BlueprintsPage from "./blueprints";
@@ -45,6 +46,11 @@ export default function AdminPage() {
             {t("admin.tabImport")}
           </NavLink>
         )}
+        {isAdmin && (
+          <NavLink to="/admin/tools" className={tabClass}>
+            {t("admin.tabTools")}
+          </NavLink>
+        )}
       </nav>
 
       <Routes>
@@ -52,6 +58,7 @@ export default function AdminPage() {
         {isAdmin && <Route path="users" element={<UsersPanel />} />}
         {mayBlueprints && <Route path="blueprints" element={<BlueprintsPage />} />}
         {isAdmin && <Route path="import" element={<ImportPanel />} />}
+        {isAdmin && <Route path="tools" element={<ToolsPanel />} />}
         <Route path="*" element={<Navigate to={isAdmin ? "users" : "blueprints"} replace />} />
       </Routes>
     </div>
