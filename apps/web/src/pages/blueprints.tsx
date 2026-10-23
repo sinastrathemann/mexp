@@ -40,7 +40,8 @@ export default function BlueprintsPage() {
   const { hasRole } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const canWrite = hasRole("admin", "manager", "event_office");
+  // Werkstudent:innen pflegen Vorlagen (Rollen-Legende, admin.tsx) — API erlaubt es bereits.
+  const canWrite = hasRole("admin", "manager", "event_office", "werkstudent");
   // Löschen nur Admin (Sina's Regel: Anlegen/Anwenden dürfen mehr Rollen, Löschen nicht).
   const canDelete = hasRole("admin");
   const [form, setForm] = useState<CreateFormState>(initialCreate);
