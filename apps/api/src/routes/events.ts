@@ -37,9 +37,12 @@ import {
 } from "../participants-export.js";
 import { mexpUserStore, requireMexpRole, resolveMexpRoles } from "./_user-resolution.js";
 import {
+  type DevAnswer,
+  OTHER_TEXT_MAX,
   devAnswerStore,
   devFormStore,
   devLiveParticipantsStore,
+  normalizeAnswers,
   validateAnswers,
 } from "./registration-form.js";
 
@@ -1085,7 +1088,7 @@ eventRoutes.post("/:id/register", async (c) => {
     }
 
     // Optional: Antworten + persönliche Notiz lesen
-    let answers: { questionId: string; value: boolean | string | string[] | null }[] = [];
+    let answers: DevAnswer[] = [];
     let personalNote: string | null = null;
     try {
       const text = await c.req.text();
@@ -1125,7 +1128,7 @@ eventRoutes.post("/:id/register", async (c) => {
         409,
       );
     }
-    devAnswerStore.set(participationId, answers);
+    devAnswerStore.set(participationId, normalizeAnswers(answers));
     // Nach einer Abmeldung neu anmelden: alten Status-Override (cancelled) verwerfen
     devParticipationOverrideStore.delete(participationId);
 
@@ -1306,6 +1309,7 @@ const editParticipationSchema = z.object({
       z.object({
         questionId: z.string().min(1),
         value: z.union([z.boolean(), z.string(), z.array(z.string()), z.null()]),
+        otherText: z.string().max(OTHER_TEXT_MAX).nullable().optional(),
       }),
     )
     .optional(),
@@ -1358,7 +1362,7 @@ eventRoutes.patch(
       });
     }
     if (input.answers) {
-      devAnswerStore.set(participationId, input.answers);
+      devAnswerStore.set(participationId, normalizeAnswers(input.answers));
     }
 
     return c.json({

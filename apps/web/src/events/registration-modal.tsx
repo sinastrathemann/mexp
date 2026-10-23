@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
+import { type AnswerValues, type OtherTexts, buildAnswers, checkAnswers } from "./answer-utils";
 import type { RegistrationAnswer, RegistrationQuestion } from "./types";
 
 interface Props {
@@ -30,8 +31,13 @@ export function RegistrationModal({
   onCancel,
   onSubmit,
 }: Props) {
-  const [values, setValues] = useState<Record<string, boolean | string | string[] | null>>(() =>
+  const [values, setValues] = useState<AnswerValues>(() =>
     Object.fromEntries(initialAnswers.map((a) => [a.questionId, a.value])),
+  );
+  const [others, setOthers] = useState<OtherTexts>(() =>
+    Object.fromEntries(
+      initialAnswers.filter((a) => a.otherText).map((a) => [a.questionId, a.otherText ?? ""]),
+    ),
   );
   const isEdit = mode === "edit";
   const [personalNote, setPersonalNote] = useState<string>(initialPersonalNote);
@@ -40,24 +46,19 @@ export function RegistrationModal({
   const setValue = (id: string, v: boolean | string | string[] | null) => {
     setValues((s) => ({ ...s, [id]: v }));
   };
+  const setOther = (id: string, text: string | undefined) => {
+    setOthers((s) => ({ ...s, [id]: text }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError(null);
-    // Client-Side Validation: Pflichtfelder
-    for (const q of questions) {
-      const v = values[q.id];
-      const empty =
-        v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0);
-      if (q.required && empty) {
-        setValidationError(`Bitte beantworte: "${q.label}"`);
-        return;
-      }
+    const problem = checkAnswers(questions, values, others);
+    if (problem) {
+      setValidationError(problem);
+      return;
     }
-    const answers: RegistrationAnswer[] = questions.map((q) => ({
-      questionId: q.id,
-      value: (values[q.id] ?? defaultValue(q)) as boolean | string | string[] | null,
-    }));
+    const answers = buildAnswers(questions, values, others);
     onSubmit(answers, personalNote.trim() === "" ? null : personalNote.trim());
   };
 
@@ -110,6 +111,8 @@ export function RegistrationModal({
                 question={q}
                 value={values[q.id]}
                 onChange={(v) => setValue(q.id, v)}
+                other={others[q.id]}
+                onOtherChange={(text) => setOther(q.id, text)}
               />
             ))}
           </div>
@@ -178,19 +181,16 @@ export function RegistrationModal({
   );
 }
 
-function defaultValue(q: RegistrationQuestion): boolean | string | string[] | null {
-  if (q.type === "yes_no") return null;
-  if (q.type === "single_choice" || q.type === "free_text") return null;
-  return [];
-}
-
 interface FieldProps {
   question: RegistrationQuestion;
   value: boolean | string | string[] | null | undefined;
   onChange: (v: boolean | string | string[] | null) => void;
+  other: string | undefined;
+  onOtherChange: (text: string | undefined) => void;
 }
 
-function QuestionField({ question, value, onChange }: FieldProps) {
+function QuestionField({ question, value, onChange, other, onOtherChange }: FieldProps) {
+  const allowOther = question.allowOther === true;
   return (
     <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
       <legend className="label" style={{ marginBottom: 8 }}>
@@ -205,7 +205,19 @@ function QuestionField({ question, value, onChange }: FieldProps) {
         <SingleChoiceField
           options={question.options}
           value={(value ?? null) as string | null}
-          onChange={onChange}
+          onChange={(v) => {
+            onChange(v);
+            onOtherChange(undefined);
+          }}
+          otherSelected={other !== undefined}
+          onSelectOther={
+            allowOther
+              ? () => {
+                  onChange(null);
+                  onOtherChange(other ?? "");
+                }
+              : undefined
+          }
         />
       )}
       {question.type === "multi_choice" && (
@@ -213,6 +225,22 @@ function QuestionField({ question, value, onChange }: FieldProps) {
           options={question.options}
           value={(value ?? []) as string[]}
           onChange={onChange}
+          otherSelected={other !== undefined}
+          onToggleOther={
+            allowOther ? () => onOtherChange(other === undefined ? "" : undefined) : undefined
+          }
+        />
+      )}
+      {allowOther && other !== undefined && (
+        <input
+          className="input"
+          type="text"
+          maxLength={200}
+          value={other}
+          placeholder="Deine Antwort"
+          aria-label={`${question.label}: Andere`}
+          onChange={(e) => onOtherChange(e.target.value)}
+          style={{ marginTop: 8 }}
         />
       )}
       {question.type === "free_text" && (
@@ -279,10 +307,14 @@ function SingleChoiceField({
   options,
   value,
   onChange,
+  otherSelected,
+  onSelectOther,
 }: {
   options: string[];
   value: string | null;
   onChange: (v: string) => void;
+  otherSelected: boolean;
+  onSelectOther: (() => void) | undefined;
 }) {
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -290,12 +322,23 @@ function SingleChoiceField({
         <button
           key={opt}
           type="button"
-          className={value === opt ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm"}
+          className={
+            value === opt && !otherSelected ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm"
+          }
           onClick={() => onChange(opt)}
         >
           {opt}
         </button>
       ))}
+      {onSelectOther && (
+        <button
+          type="button"
+          className={otherSelected ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm"}
+          onClick={onSelectOther}
+        >
+          Andere …
+        </button>
+      )}
     </div>
   );
 }
@@ -304,10 +347,14 @@ function MultiChoiceField({
   options,
   value,
   onChange,
+  otherSelected,
+  onToggleOther,
 }: {
   options: string[];
   value: string[];
   onChange: (v: string[]) => void;
+  otherSelected: boolean;
+  onToggleOther: (() => void) | undefined;
 }) {
   const toggle = (opt: string) => {
     if (value.includes(opt)) onChange(value.filter((v) => v !== opt));
@@ -326,6 +373,15 @@ function MultiChoiceField({
           {opt}
         </button>
       ))}
+      {onToggleOther && (
+        <button
+          type="button"
+          className={otherSelected ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm"}
+          onClick={onToggleOther}
+        >
+          {otherSelected ? "✓ " : ""}Andere …
+        </button>
+      )}
     </div>
   );
 }

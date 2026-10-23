@@ -470,6 +470,22 @@ function QuestionEditor({ question, onChange, onRemove, onMoveUp, onMoveDown }: 
               >
                 {isDate ? "+ Datums-Slot" : "+ Option"}
               </button>
+              {isChoice && (
+                <label
+                  className="text-sm"
+                  style={{ display: "inline-flex", gap: 6, alignItems: "center", marginTop: 4 }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={question.allowOther === true}
+                    onChange={(e) => onChange({ allowOther: e.target.checked })}
+                  />
+                  „Andere“ mit Freitext erlauben
+                  <span className="muted text-xs">
+                    – Teilnehmende können eine eigene Antwort eintragen
+                  </span>
+                </label>
+              )}
             </div>
           )}
         </div>

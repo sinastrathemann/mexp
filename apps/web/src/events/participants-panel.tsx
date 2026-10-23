@@ -6,6 +6,7 @@ import { ApiRequestError, apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
 import { withBasePath } from "../base-path";
 import { AddParticipantModal } from "./add-participant-modal";
+import { withOther } from "./answer-utils";
 import { RegistrationModal } from "./registration-modal";
 import type {
   EventDto,
@@ -618,6 +619,10 @@ function AnswerSummary({
     return d.toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
   };
   const format = (q: RegistrationQuestion): string => {
+    const a = byId.get(q.id);
+    return withOther(formatValue(q), a?.otherText);
+  };
+  const formatValue = (q: RegistrationQuestion): string => {
     const a = byId.get(q.id);
     if (!a || a.value === null || a.value === "") return "—";
     if (q.type === "yes_no") return a.value === true ? "Ja" : a.value === false ? "Nein" : "—";

@@ -12,7 +12,11 @@ export interface ExportParticipant {
   registeredAt: string;
   cancelledAt: string | null;
   personalNote?: string | null;
-  answers?: { questionId: string; value: boolean | string | string[] | null }[];
+  answers?: {
+    questionId: string;
+    value: boolean | string | string[] | null;
+    otherText?: string | null | undefined;
+  }[];
 }
 
 export interface ExportQuestion {
@@ -33,11 +37,22 @@ function formatDate(iso: string | null): string {
   return new Date(iso).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
 }
 
-function formatAnswer(value: boolean | string | string[] | null | undefined): string {
+function formatValue(value: boolean | string | string[] | null | undefined): string {
   if (value === null || value === undefined) return "";
   if (typeof value === "boolean") return value ? "Ja" : "Nein";
   if (Array.isArray(value)) return value.join(", ");
   return value;
+}
+
+function formatAnswer(
+  answer:
+    | { value: boolean | string | string[] | null; otherText?: string | null | undefined }
+    | undefined,
+): string {
+  if (!answer) return "";
+  const parts = [formatValue(answer.value)];
+  if (answer.otherText) parts.push(`Andere: ${answer.otherText}`);
+  return parts.filter((p) => p !== "").join(", ");
 }
 
 export async function buildParticipantsWorkbook(
@@ -61,7 +76,7 @@ export async function buildParticipantsWorkbook(
   ];
 
   participants.forEach((p, index) => {
-    const answers = new Map((p.answers ?? []).map((a) => [a.questionId, a.value]));
+    const answers = new Map((p.answers ?? []).map((a) => [a.questionId, a]));
     const row = sheet.addRow({
       nr: index + 1,
       name: p.userDisplayName,

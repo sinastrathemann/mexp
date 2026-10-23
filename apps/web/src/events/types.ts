@@ -133,6 +133,8 @@ export interface RegistrationQuestion {
   // Für single_choice/multi_choice: Antwort-Optionen
   // Für date_pick: ISO-Datums-Strings als Slots
   options: string[];
+  // Einfach-/Mehrfachauswahl: zusätzliche Auswahl "Andere" mit Freitext
+  allowOther?: boolean;
 }
 
 // Antwort kann sein: boolean (yes_no), string (single_choice),
@@ -142,6 +144,8 @@ export type AnswerValue = boolean | string | string[] | null;
 export interface RegistrationAnswer {
   questionId: string;
   value: AnswerValue;
+  // Freitext zur Auswahl "Andere"
+  otherText?: string | null;
 }
 
 export const BUDGET_CATEGORIES = [
