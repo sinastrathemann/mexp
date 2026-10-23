@@ -31,6 +31,8 @@ export interface EventDto {
   visibility: EventVisibility;
   startAt: string;
   endAt: string;
+  // Uhrzeit steht noch nicht fest: nur das Datum anzeigen
+  timeTbd?: boolean;
   location: string | null;
   // Zusatz-Infos zur Location: Adresse, Parkmöglichkeiten, Besonderheiten
   locationDetails?: string | null;
@@ -86,6 +88,8 @@ export interface ParticipationDto {
   checkedInAt: string | null;
   // Freitext-Notiz des Teilnehmers (z.B. "komme mit Partner")
   personalNote?: string | null;
+  // Formularantworten (eigene Anmeldung bzw. Sicht mit Schreibrolle)
+  answers?: RegistrationAnswer[];
 }
 
 // userEmail/answers fehlen in der reduzierten Sicht für Nutzer ohne Schreibrolle.
@@ -133,6 +137,8 @@ export interface RegistrationQuestion {
   // Für single_choice/multi_choice: Antwort-Optionen
   // Für date_pick: ISO-Datums-Strings als Slots
   options: string[];
+  // Einfach-/Mehrfachauswahl: zusätzliche Auswahl "Andere" mit Freitext
+  allowOther?: boolean;
 }
 
 // Antwort kann sein: boolean (yes_no), string (single_choice),
@@ -142,6 +148,8 @@ export type AnswerValue = boolean | string | string[] | null;
 export interface RegistrationAnswer {
   questionId: string;
   value: AnswerValue;
+  // Freitext zur Auswahl "Andere"
+  otherText?: string | null;
 }
 
 export const BUDGET_CATEGORIES = [

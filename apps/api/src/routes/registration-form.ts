@@ -21,11 +21,15 @@ const questionSchema = z.object({
   label: z.string().min(1).max(300),
   required: z.boolean(),
   options: z.array(z.string().min(1).max(200)).default([]),
+  // Einfach-/Mehrfachauswahl: zusätzliche Auswahl "Andere" mit Freitext
+  allowOther: z.boolean().optional(),
 });
 
 const formSchema = z.object({
   questions: z.array(questionSchema).max(20),
 });
+
+export const OTHER_TEXT_MAX = 200;
 
 const answerValueSchema: z.ZodType<boolean | string | string[] | null> = z.union([
   z.boolean(),
@@ -40,6 +44,7 @@ const answersSchema = z.object({
       z.object({
         questionId: z.string().min(1),
         value: answerValueSchema,
+        otherText: z.string().max(OTHER_TEXT_MAX).nullable().optional(),
       }),
     )
     .default([]),
@@ -53,6 +58,7 @@ export interface DevRegistrationQuestion {
   label: string;
   required: boolean;
   options: string[];
+  allowOther?: boolean | undefined;
 }
 
 // eventId → questions[]
@@ -62,6 +68,8 @@ export const devFormStore = persistentMap<DevRegistrationQuestion[]>("registrati
 export interface DevAnswer {
   questionId: string;
   value: boolean | string | string[] | null;
+  // Freitext zur Auswahl "Andere" (nur bei allowOther)
+  otherText?: string | null | undefined;
 }
 export const devAnswerStore = persistentMap<DevAnswer[]>("registration-answers");
 
@@ -92,11 +100,25 @@ export function validateAnswers(
   const byQ = new Map(answers.map((a) => [a.questionId, a]));
   for (const q of questions) {
     const a = byQ.get(q.id);
-    const isAnswered =
+    const otherText = a?.otherText?.trim() ?? "";
+    const hasValue =
       a !== undefined &&
       a.value !== null &&
       a.value !== "" &&
       !(Array.isArray(a.value) && a.value.length === 0);
+    const isAnswered = hasValue || otherText !== "";
+    if (otherText !== "") {
+      const choice = q.type === "single_choice" || q.type === "multi_choice";
+      if (!choice || !q.allowOther) {
+        return { ok: false, message: `"${q.label}": "Andere" ist hier nicht vorgesehen` };
+      }
+      if (otherText.length > OTHER_TEXT_MAX) {
+        return {
+          ok: false,
+          message: `"${q.label}": Text bei "Andere" ist zu lang (max. ${OTHER_TEXT_MAX} Zeichen)`,
+        };
+      }
+    }
     if (q.required && !isAnswered) {
       return { ok: false, message: `Pflichtfrage nicht beantwortet: "${q.label}"` };
     }
@@ -135,6 +157,14 @@ export function validateAnswers(
     }
   }
   return { ok: true };
+}
+
+// Freitext "Andere" getrimmt speichern, leere Texte weglassen
+export function normalizeAnswers(answers: DevAnswer[]): DevAnswer[] {
+  return answers.map(({ otherText, ...rest }) => {
+    const trimmed = otherText?.trim() ?? "";
+    return trimmed === "" ? rest : { ...rest, otherText: trimmed };
+  });
 }
 
 // ─── Routes ─────────────────────────────────────────────────────

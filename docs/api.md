@@ -19,6 +19,7 @@ REST-API auf Basis Hono, alle Endpunkte unter `/api/`. Auth via Bearer-Token (Se
 | PATCH | `/api/events/:id` | event_office (owner) | Event bearbeiten |
 | POST | `/api/events/:id/approve` | manager | Event freigeben |
 | POST | `/api/events/:id/register` | participant+ | Anmeldung |
+| PATCH | `/api/events/:id/my-registration` | participant+ (eigene Anmeldung) | Eigene Antworten/Notiz ändern, solange Status `open` und Frist nicht abgelaufen (409 `REGISTRATION_CLOSED`) |
 | POST | `/api/events/:id/checkin` | event_office | QR-Check-in |
 | GET | `/api/events/:eventId/tasks` | admin, manager, event_office, werkstudent | Projektplan-Aufgaben eines Events |
 | POST | `/api/events/:eventId/tasks` | admin, manager, event_office, werkstudent | Aufgabe anlegen |

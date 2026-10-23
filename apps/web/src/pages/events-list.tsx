@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
+import { formatEventDate } from "../events/event-date";
 import { EventFilterBar, useEventFilters } from "../events/event-filters";
 import { EventStatusBadge } from "../events/status-badge";
 import { EVENT_STATUSES, type EventDto } from "../events/types";
@@ -37,11 +38,7 @@ export default function EventsListPage() {
     },
   });
 
-  const fmtDate = (iso: string) =>
-    new Date(iso).toLocaleString(i18n.language === "de" ? "de-DE" : "en-US", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
+  const fmtDate = (e: EventDto) => formatEventDate(e.startAt, e.timeTbd, i18n.language);
 
   const total = data?.events.length ?? 0;
 
@@ -170,7 +167,7 @@ export default function EventsListPage() {
               <div className="event-card-meta">
                 <div className="event-card-meta-row">
                   <span className="event-card-meta-label">Start</span>
-                  <span className="event-card-meta-value">{fmtDate(e.startAt)}</span>
+                  <span className="event-card-meta-value">{fmtDate(e)}</span>
                 </div>
                 <div className="event-card-meta-row">
                   <span className="event-card-meta-label">Ort</span>

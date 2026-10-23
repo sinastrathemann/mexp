@@ -7,6 +7,7 @@ import { useAuth } from "../auth/auth-context";
 import { withBasePath } from "../base-path";
 import { BudgetLinkCard } from "../events/budget-link-card";
 import { DocumentsPanel } from "../events/documents-panel";
+import { formatEventDate } from "../events/event-date";
 import { EventEditModal } from "../events/event-edit-modal";
 import { FeedbackPanel } from "../events/feedback-panel";
 import { KeyFiguresCard } from "../events/key-figures-card";
@@ -104,11 +105,7 @@ export default function EventDetailPage() {
   if (!data) return null;
 
   const event = data.event;
-  const fmtDate = (iso: string) =>
-    new Date(iso).toLocaleString(i18n.language === "de" ? "de-DE" : "en-US", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
+  const fmtDate = (iso: string) => formatEventDate(iso, event.timeTbd, i18n.language);
 
   return (
     <div className="page">

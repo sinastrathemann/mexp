@@ -37,9 +37,12 @@ import {
 } from "../participants-export.js";
 import { mexpUserStore, requireMexpRole, resolveMexpRoles } from "./_user-resolution.js";
 import {
+  type DevAnswer,
+  OTHER_TEXT_MAX,
   devAnswerStore,
   devFormStore,
   devLiveParticipantsStore,
+  normalizeAnswers,
   validateAnswers,
 } from "./registration-form.js";
 
@@ -55,6 +58,8 @@ const createEventSchema = z.object({
   visibility: eventVisibilitySchema.default("internal"),
   startAt: isoDateSchema,
   endAt: isoDateSchema,
+  // Uhrzeit steht noch nicht fest: nur das Datum zählt, Kalender als Ganztagstermin
+  timeTbd: z.boolean().default(false),
   location: z.string().max(500).nullable().default(null),
   locationDetails: z.string().max(5000).nullable().default(null),
   capacity: z.number().int().positive().nullable().default(null),
@@ -74,6 +79,7 @@ const updateEventSchema = z
     visibility: eventVisibilitySchema.optional(),
     startAt: isoDateSchema.optional(),
     endAt: isoDateSchema.optional(),
+    timeTbd: z.boolean().optional(),
     location: z.string().max(500).nullable().optional(),
     locationDetails: z.string().max(5000).nullable().optional(),
     capacity: z.number().int().positive().nullable().optional(),
@@ -142,6 +148,7 @@ export interface DevEventCreateInput {
   visibility: string;
   startAt: string;
   endAt: string;
+  timeTbd?: boolean;
   location: string | null;
   locationDetails?: string | null;
   capacity: number | null;
@@ -169,6 +176,7 @@ export function createDevEvent(input: DevEventCreateInput): DevEventRecord {
     status: "draft",
     startAt: input.startAt,
     endAt: input.endAt,
+    timeTbd: input.timeTbd ?? false,
     location: input.location,
     locationDetails: input.locationDetails ?? null,
     capacity: input.capacity,
@@ -394,6 +402,7 @@ eventRoutes.post(
         visibility: input.visibility,
         startAt: new Date(input.startAt).toISOString(),
         endAt: new Date(input.endAt).toISOString(),
+        timeTbd: input.timeTbd,
         location: input.location,
         locationDetails: input.locationDetails,
         capacity: input.capacity,
@@ -626,6 +635,7 @@ eventRoutes.patch(
       if (input.visibility !== undefined) next.visibility = input.visibility;
       if (input.startAt !== undefined) next.startAt = new Date(input.startAt).toISOString();
       if (input.endAt !== undefined) next.endAt = new Date(input.endAt).toISOString();
+      if (input.timeTbd !== undefined) next.timeTbd = input.timeTbd;
       if (input.location !== undefined) next.location = input.location;
       if (input.locationDetails !== undefined) next.locationDetails = input.locationDetails;
       if (input.capacity !== undefined) next.capacity = input.capacity;
@@ -705,6 +715,7 @@ eventRoutes.post(
         visibility: (merged.visibility as string) ?? "internal",
         startAt,
         endAt,
+        timeTbd: merged.timeTbd === true,
         location: (merged.location as string | null) ?? null,
         locationDetails: (merged.locationDetails as string | null | undefined) ?? null,
         capacity: (merged.capacity as number | null) ?? null,
@@ -751,6 +762,7 @@ eventRoutes.get("/:id/calendar.ics", async (c) => {
       (evt.locationDetails ? `\n\n${String(evt.locationDetails)}` : ""),
     startAt: String(evt.startAt ?? new Date().toISOString()),
     endAt: String(evt.endAt ?? new Date().toISOString()),
+    allDay: evt.timeTbd === true,
   });
 
   c.header("Content-Type", "text/calendar; charset=utf-8");
@@ -776,6 +788,15 @@ function icsDate(iso: string): string {
   );
 }
 
+// Ganztags-Datum (YYYYMMDD) aus dem UTC-Datum; plusDays für das exklusive DTEND
+function icsDay(iso: string, plusDays = 0): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "00000000";
+  d.setUTCDate(d.getUTCDate() + plusDays);
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}`;
+}
+
 function buildIcs(input: {
   id: string;
   title: string;
@@ -783,8 +804,12 @@ function buildIcs(input: {
   location: string;
   startAt: string;
   endAt: string;
+  allDay: boolean;
 }): string {
   const now = icsDate(new Date().toISOString());
+  const timing = input.allDay
+    ? [`DTSTART;VALUE=DATE:${icsDay(input.startAt)}`, `DTEND;VALUE=DATE:${icsDay(input.endAt, 1)}`]
+    : [`DTSTART:${icsDate(input.startAt)}`, `DTEND:${icsDate(input.endAt)}`];
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -794,8 +819,7 @@ function buildIcs(input: {
     "BEGIN:VEVENT",
     `UID:${input.id}@mexp.mindsquare.de`,
     `DTSTAMP:${now}`,
-    `DTSTART:${icsDate(input.startAt)}`,
-    `DTEND:${icsDate(input.endAt)}`,
+    ...timing,
     `SUMMARY:${icsEscape(input.title)}`,
     `DESCRIPTION:${icsEscape(input.description)}`,
     `LOCATION:${icsEscape(input.location)}`,
@@ -871,15 +895,18 @@ eventRoutes.get("/:id/my-participation", async (c) => {
   const actorIdSession = getHubUser(c).id;
   if (!env.DATABASE_URL) {
     const found = getDevParticipants(id).find((p) => p.userId === actorIdSession);
-    return c.json({ participation: found ?? null });
+    // Eigene Antworten mitliefern, damit die Person sie selbst bearbeiten kann
+    return c.json({
+      participation: found ? { ...found, answers: devAnswerStore.get(found.id) ?? [] } : null,
+    });
   }
   const actorId = actorIdSession;
   const participation = await getOwnParticipation(id, actorId, { events, participations });
   return c.json({ participation });
 });
 
-// Teilnehmende können ihre Anmeldung nachträglich nicht ändern — nur einmalig
-// anmelden und wieder abmelden. Änderungen übernehmen Admin/Werkstudent:innen über
+// Teilnehmende ändern ihre Angaben selbst über PATCH /:id/my-registration, solange die
+// Anmeldung offen ist; danach übernehmen Admin/Werkstudent:innen über
 // PATCH /:eventId/participants/:participationId.
 
 // Dev-Mode (file-store — Design-Spec §3.4): Override-Store für Teilnahmen
@@ -1085,7 +1112,7 @@ eventRoutes.post("/:id/register", async (c) => {
     }
 
     // Optional: Antworten + persönliche Notiz lesen
-    let answers: { questionId: string; value: boolean | string | string[] | null }[] = [];
+    let answers: DevAnswer[] = [];
     let personalNote: string | null = null;
     try {
       const text = await c.req.text();
@@ -1125,7 +1152,7 @@ eventRoutes.post("/:id/register", async (c) => {
         409,
       );
     }
-    devAnswerStore.set(participationId, answers);
+    devAnswerStore.set(participationId, normalizeAnswers(answers));
     // Nach einer Abmeldung neu anmelden: alten Status-Override (cancelled) verwerfen
     devParticipationOverrideStore.delete(participationId);
 
@@ -1245,6 +1272,81 @@ eventRoutes.post("/:id/withdraw", async (c) => {
   return c.json({ participation });
 });
 
+const selfEditSchema = z.object({
+  answers: z
+    .array(
+      z.object({
+        questionId: z.string().min(1),
+        value: z.union([z.boolean(), z.string().max(2000), z.array(z.string()), z.null()]),
+        otherText: z.string().max(OTHER_TEXT_MAX).nullable().optional(),
+      }),
+    )
+    .default([]),
+  personalNote: z.string().max(2000).nullable().optional(),
+});
+
+// Teilnehmende ändern Antworten und Notiz ihrer eigenen Anmeldung, solange die
+// Anmeldung offen ist. Status und Wartelistenplatz bleiben unverändert.
+eventRoutes.patch("/:id/my-registration", zValidator("json", selfEditSchema), async (c) => {
+  if (env.DATABASE_URL) {
+    return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Dev-only" } }, 501);
+  }
+  const id = c.req.param("id");
+  const actorId = getHubUser(c).id;
+  const input = c.req.valid("json");
+
+  const own = getDevParticipants(id).find((p) => p.userId === actorId);
+  if (!own || (own.status !== "registered" && own.status !== "waitlisted")) {
+    return c.json(
+      { error: { code: "NOT_REGISTERED", message: "Du bist nicht für dieses Event angemeldet." } },
+      404,
+    );
+  }
+
+  const base = findDevBaseEvent(id);
+  const event = base ? applyOverride(base) : undefined;
+  const deadline = event?.registrationDeadline;
+  const deadlinePassed =
+    typeof deadline === "string" &&
+    Number.isFinite(new Date(deadline).getTime()) &&
+    new Date(deadline).getTime() < Date.now();
+  if (event?.status !== "open" || deadlinePassed) {
+    return c.json(
+      {
+        error: {
+          code: "REGISTRATION_CLOSED",
+          message:
+            "Die Anmeldung ist geschlossen. Für Änderungen wende dich bitte an das Event-Team.",
+        },
+      },
+      409,
+    );
+  }
+
+  const questions = devFormStore.get(id) ?? [];
+  if (questions.length > 0) {
+    const validation = validateAnswers(questions, input.answers);
+    if (!validation.ok) {
+      return c.json({ error: { code: "INVALID_ANSWERS", message: validation.message } }, 400);
+    }
+  }
+  devAnswerStore.set(own.id, normalizeAnswers(input.answers));
+
+  let personalNote = own.personalNote ?? null;
+  if (input.personalNote !== undefined) {
+    const trimmed = input.personalNote?.trim() ?? "";
+    personalNote = trimmed === "" ? null : trimmed;
+    devParticipationOverrideStore.set(own.id, {
+      ...devParticipationOverrideStore.get(own.id),
+      personalNote,
+    });
+  }
+
+  return c.json({
+    participation: { ...own, personalNote, answers: devAnswerStore.get(own.id) ?? [] },
+  });
+});
+
 eventRoutes.post(
   "/:id/participants/promote-waitlist",
   requireMexpRole(...WRITE_ROLES),
@@ -1306,6 +1408,7 @@ const editParticipationSchema = z.object({
       z.object({
         questionId: z.string().min(1),
         value: z.union([z.boolean(), z.string(), z.array(z.string()), z.null()]),
+        otherText: z.string().max(OTHER_TEXT_MAX).nullable().optional(),
       }),
     )
     .optional(),
@@ -1358,7 +1461,7 @@ eventRoutes.patch(
       });
     }
     if (input.answers) {
-      devAnswerStore.set(participationId, input.answers);
+      devAnswerStore.set(participationId, normalizeAnswers(input.answers));
     }
 
     return c.json({
