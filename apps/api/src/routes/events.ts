@@ -20,7 +20,10 @@ import {
   EVENT_STATUSES,
   EVENT_TYPES,
   EVENT_VISIBILITIES,
+  type EventStatus,
   InvalidEventDatesError,
+  InvalidEventStatusTransitionError,
+  canTransition,
 } from "@mexp/domain";
 import { Hono } from "hono";
 import { z } from "zod";
@@ -828,17 +831,21 @@ eventRoutes.patch(
     const actorId = getHubUser(c).id;
 
     if (!env.DATABASE_URL) {
-      // Dev-Mode: Status im Override-Store ablegen
+      // Dev-Mode: erst prüfen (Existenz, erlaubter Übergang), dann im Override-Store ablegen
+      const base = findDevBaseEvent(id);
+      if (!base) {
+        return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
+      }
+      const currentStatus = applyOverride(base).status as EventStatus;
+      if (!canTransition(currentStatus, status)) {
+        throw new InvalidEventStatusTransitionError(currentStatus, status);
+      }
       const current = devEventOverrideStore.get(id) ?? {};
       devEventOverrideStore.set(id, {
         ...current,
         status,
         updatedAt: new Date().toISOString(),
       });
-      const base = findDevBaseEvent(id);
-      if (!base) {
-        return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
-      }
       return c.json({ event: applyOverride(base) });
     }
 
