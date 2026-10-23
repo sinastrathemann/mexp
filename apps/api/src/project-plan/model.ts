@@ -65,11 +65,7 @@ export const DEFAULT_TOOLS: ToolLink[] = [
     label: "Coworking-Copilot",
     url: "https://personal-hub.mindsquare.de/coworking-copilot/",
   },
-  {
-    id: "budget-control-agent",
-    label: "Budget-Control-Agent",
-    url: "https://personal-hub.mindsquare.de/budget-control-agent/",
-  },
+  // Budget-Control-Agent bewusst nicht: der hat einen eigenen Kasten auf der Event-Seite.
 ];
 
 /** Gespeicherte Liste — oder die Vorbelegung, solange der Admin nie gespeichert hat. */

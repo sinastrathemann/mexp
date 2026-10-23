@@ -50,10 +50,8 @@ describe("getTools", () => {
   beforeEach(() => toolStore.clear());
   it("liefert die Vorbelegung, solange nie gespeichert wurde", () => {
     expect(getTools()).toEqual(DEFAULT_TOOLS);
-    expect(DEFAULT_TOOLS.map((t) => t.label)).toEqual([
-      "Coworking-Copilot",
-      "Budget-Control-Agent",
-    ]);
+    // Budget-Control-Agent fehlt absichtlich — er hat einen eigenen Kasten (sonst doppelt).
+    expect(DEFAULT_TOOLS.map((t) => t.label)).toEqual(["Coworking-Copilot"]);
   });
   it("liefert eine gespeicherte (auch leere) Liste", () => {
     toolStore.set("default", { tools: [], updatedBy: "u1", updatedAt: "2026-10-23T00:00:00.000Z" });

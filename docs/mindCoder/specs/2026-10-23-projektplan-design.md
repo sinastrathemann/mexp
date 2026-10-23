@@ -48,7 +48,7 @@ Teilnehmende und andere Rollen sehen die Event-Seite unverändert.
 - Neuer Reiter „Tools“: Einträge hinzufügen, umbenennen, sortieren und löschen.
 - Ist die Liste noch nie gespeichert worden, ist sie mit diesen Einträgen vorbelegt:
   - Coworking-Copilot – `https://personal-hub.mindsquare.de/coworking-copilot/`
-  - Budget-Control-Agent – `https://personal-hub.mindsquare.de/budget-control-agent/`
+  - (Budget-Control-Agent nicht — eigener Budget-Kasten; der Tools-Kasten blendet ihn auch aus, falls er eingetragen wird. Änderung 2026-10-23 nach Nutzerfeedback „doppelt“.)
 - Die URL des Budget-Link-Kastens ist fest in der Konfiguration hinterlegt und hängt nicht von der Tools-Liste ab, damit das Löschen eines Tools den Budget-Kasten nicht kaputt macht.
 
 ### Nebenänderung

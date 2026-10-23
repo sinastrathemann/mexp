@@ -41,6 +41,6 @@ REST-API auf Basis Hono, alle Endpunkte unter `/api/`. Auth via Bearer-Token (Se
 - Die Fälligkeit wird in der Zeitzone Europe/Berlin berechnet.
 - `PATCH` darf Link-Text oder URL einzeln ändern, solange danach beides gesetzt oder beides leer ist (sonst `400 INVALID_LINK`).
 - Blueprint anwenden: dessen Aufgaben werden kopiert, Fälligkeit = Event-Start minus `daysBefore`.
-- Tools: bis zum ersten Speichern gelten Coworking-Copilot und Budget-Control-Agent als Vorbelegung.
+- Tools: bis zum ersten Speichern gilt Coworking-Copilot als Vorbelegung. Der Budget-Control-Agent wird im Tools-Kasten ausgeblendet, weil er einen eigenen Budget-Kasten hat.
 
 Vollständige Schema-Definitionen: `apps/api/src/routes/**/schema.ts` (Zod, single source of truth).

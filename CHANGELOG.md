@@ -15,7 +15,7 @@ Alle nennenswerten Änderungen an mEXP. Format: [Keep a Changelog](https://keepa
 - i18n (DE/EN) im Web mit react-i18next
 - Projektplan auf der Event-Detailseite (Team-Rollen): Phasen-Leiste, Aufgaben-Checkliste mit Verantwortlichen, Fälligkeit und Links, Tools-Kasten, Kennzahlen.
 - Aufgaben-Vorlagen je Blueprint; werden beim Anlegen eines Events übernommen.
-- Admin-Reiter „Tools“ für zentrale Links (vorbelegt: Coworking-Copilot, Budget-Control-Agent).
+- Admin-Reiter „Tools“ für zentrale Links (vorbelegt: Coworking-Copilot; der Budget-Control-Agent hat seinen eigenen Kasten und erscheint nicht doppelt).
 
 ### Changed
 - Budget-Bereich auf der Event-Seite durch Link zum Budget-Control-Agent ersetzt (keine Doppelerfassung).

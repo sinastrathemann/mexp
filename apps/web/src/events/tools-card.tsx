@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../api/client";
+import { isBudgetToolUrl } from "./external-links";
 import type { ToolLinkDto } from "./project-plan-types";
 
 /** Zentrale Tools-Liste (Admin → Tools), in jedem Event gleich. */
@@ -10,7 +11,8 @@ export function ToolsCard() {
     queryKey: ["tools"],
     queryFn: () => apiFetch<{ tools: ToolLinkDto[] }>("/tools"),
   });
-  const tools = q.data?.tools ?? [];
+  // Budget-Tool steht schon im eigenen Budget-Kasten — hier nicht doppelt zeigen.
+  const tools = (q.data?.tools ?? []).filter((tool) => !isBudgetToolUrl(tool.url));
   return (
     <div className="card">
       <h2 className="card-title">{t("projectPlan.toolsTitle")}</h2>
