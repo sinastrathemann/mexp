@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import type { RegistrationAnswer, RegistrationQuestion } from "./types";
 
 interface Props {
@@ -60,7 +61,8 @@ export function RegistrationModal({
     onSubmit(answers, personalNote.trim() === "" ? null : personalNote.trim());
   };
 
-  return (
+  // Portal an <body>, damit das Fenster unabhängig von der Scroll-Position mittig erscheint
+  return createPortal(
     <div
       className="modal-backdrop"
       onClick={onCancel}
@@ -171,7 +173,8 @@ export function RegistrationModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

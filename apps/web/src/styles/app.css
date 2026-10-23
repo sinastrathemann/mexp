@@ -84,7 +84,9 @@ hr {
   margin: 0 auto;
   padding: var(--space-10) var(--space-6) var(--space-16);
   width: 100%;
-  animation: pageFadeIn 480ms var(--ease-out) both;
+  /* "backwards" statt "both": nach der Animation darf kein transform stehen bleiben,
+     sonst richten sich position:fixed-Modals an .page statt am Viewport aus. */
+  animation: pageFadeIn 480ms var(--ease-out) backwards;
 }
 .page-narrow {
   max-width: 760px;
