@@ -16,8 +16,14 @@ Alle nennenswerten Änderungen an mEXP. Format: [Keep a Changelog](https://keepa
 - Projektplan auf der Event-Detailseite (Team-Rollen): Phasen-Leiste, Aufgaben-Checkliste mit Verantwortlichen, Fälligkeit und Links, Tools-Kasten, Kennzahlen.
 - Aufgaben-Vorlagen je Blueprint; werden beim Anlegen eines Events übernommen.
 - Admin-Reiter „Tools“ für zentrale Links (vorbelegt: Coworking-Copilot; der Budget-Control-Agent hat seinen eigenen Kasten und erscheint nicht doppelt).
+- Events mit offener Uhrzeit („Uhrzeit steht noch nicht fest“): nur Datum, Anzeige „Uhrzeit folgt“, Kalenderdatei als Ganztagstermin.
+- Anmelde-Formular: leere Fragen anlegen („Eigene Frage“) und Auswahl „Andere“ mit Freitext bei Einfach-/Mehrfachauswahl.
+- Teilnehmende können ihre Angaben ändern, solange die Anmeldung offen ist (`PATCH /events/:id/my-registration`).
+- Anmeldefenster zeigt Datum, Ort und Beschreibung des Events.
 
 ### Changed
+- Beschreibungsfeld beim Anlegen/Bearbeiten von Events ist größer und wächst mit dem Text.
+- Anmeldefenster erscheint immer mittig im sichtbaren Bereich (vorher teils oberhalb, man musste hochscrollen).
 - Budget-Bereich auf der Event-Seite durch Link zum Budget-Control-Agent ersetzt (keine Doppelerfassung).
 - Werkstudent:innen können Vorlagen in der Oberfläche bearbeiten.
 - Statuswechsel: Backend erlaubt jetzt dieselben Übergänge wie die Oberfläche (inkl. Reaktivieren abgesagter Events); im Datei-Modus wird der Übergang jetzt geprüft.
