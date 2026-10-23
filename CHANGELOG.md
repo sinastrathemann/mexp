@@ -20,3 +20,4 @@ Alle nennenswerten Änderungen an mEXP. Format: [Keep a Changelog](https://keepa
 ### Changed
 - Budget-Bereich auf der Event-Seite durch Link zum Budget-Control-Agent ersetzt (keine Doppelerfassung).
 - Werkstudent:innen können Vorlagen in der Oberfläche bearbeiten.
+- Statuswechsel: Backend erlaubt jetzt dieselben Übergänge wie die Oberfläche (inkl. Reaktivieren abgesagter Events); im Datei-Modus wird der Übergang jetzt geprüft.
