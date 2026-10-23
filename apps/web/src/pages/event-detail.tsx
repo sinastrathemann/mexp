@@ -26,6 +26,8 @@ export default function EventDetailPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const canManage = hasRole("admin", "manager", "event_office", "werkstudent");
+  // Budget-Owner sieht nur den Link ins Budget-Control-Tool (Team-Rollen: rechte Spalte)
+  const showBudgetOnly = !canManage && hasRole("budget_owner");
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["events", id, "detail"],
@@ -197,6 +199,8 @@ export default function EventDetailPage() {
           onDelete={() => deleteMut.mutate()}
         />
       )}
+
+      {showBudgetOnly && <BudgetLinkCard />}
 
       {canManage && (
         <>

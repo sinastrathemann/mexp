@@ -10,6 +10,7 @@ export function ToolsPanel() {
   const q = useQuery({
     queryKey: ["tools"],
     queryFn: () => apiFetch<{ tools: ToolLinkDto[] }>("/tools"),
+    refetchOnWindowFocus: false, // Editor: ungespeicherte Eingaben nicht überschreiben
   });
   const [rows, setRows] = useState<ToolLinkDto[]>([]);
   const [saved, setSaved] = useState(false);
@@ -83,6 +84,7 @@ export function ToolsPanel() {
                 className="btn btn-ghost btn-sm"
                 onClick={() => move(i, -1)}
                 title={t("projectPlan.moveUp")}
+                aria-label={t("projectPlan.moveUp")}
               >
                 ↑
               </button>
@@ -91,6 +93,7 @@ export function ToolsPanel() {
                 className="btn btn-ghost btn-sm"
                 onClick={() => move(i, 1)}
                 title={t("projectPlan.moveDown")}
+                aria-label={t("projectPlan.moveDown")}
               >
                 ↓
               </button>

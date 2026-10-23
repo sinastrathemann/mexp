@@ -48,6 +48,7 @@ export function BlueprintTasksModal({ blueprintId, name, onClose }: Props) {
   const q = useQuery({
     queryKey: key,
     queryFn: () => apiFetch<{ tasks: BlueprintTaskDto[] }>(`/blueprints/${blueprintId}/tasks`),
+    refetchOnWindowFocus: false, // Editor: ungespeicherte Eingaben nicht überschreiben
   });
   const [rows, setRows] = useState<Row[]>([]);
   useEffect(() => {

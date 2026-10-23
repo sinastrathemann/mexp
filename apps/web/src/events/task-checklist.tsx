@@ -149,7 +149,14 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
         <button type="submit" className="btn btn-primary btn-sm" disabled={saveMut.isPending}>
           {t("projectPlan.save")}
         </button>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditingId(null)}>
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          onClick={() => {
+            saveMut.reset();
+            setEditingId(null);
+          }}
+        >
           {t("projectPlan.cancel")}
         </button>
       </div>
@@ -215,6 +222,7 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
                 type="button"
                 className="btn btn-ghost btn-sm"
                 onClick={() => {
+                  saveMut.reset();
                   setDraft(toDraft(task));
                   setEditingId(task.id);
                 }}
@@ -239,12 +247,20 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
         {editingId === "new" && <li>{form}</li>}
       </ul>
 
+      {toggleMut.error instanceof Error && (
+        <div className="alert alert-error">{toggleMut.error.message}</div>
+      )}
+      {deleteMut.error instanceof Error && (
+        <div className="alert alert-error">{deleteMut.error.message}</div>
+      )}
+
       {editingId === null && (
         <button
           type="button"
           className="btn btn-outline btn-sm"
           style={{ marginTop: "var(--space-3)" }}
           onClick={() => {
+            saveMut.reset();
             setDraft(emptyDraft);
             setEditingId("new");
           }}
