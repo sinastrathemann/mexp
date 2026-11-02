@@ -30,6 +30,7 @@ const STATUS_LABELS: Record<string, string> = {
   attended: "Anwesend",
   cancelled: "Abgemeldet",
   no_show: "Nicht erschienen",
+  declined: "Nicht dabei",
 };
 
 function formatDate(iso: string | null): string {

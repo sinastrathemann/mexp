@@ -251,6 +251,7 @@
   },
   "participants": {
     "cancelledCount": "{{count}} cancelled",
+    "declinedCount": "{{count}} not attending",
     "editRegistration": "Edit",
     "yourNote": "Your note",
     "noChangesHint": "Changes to your registration are handled by the event team.",
@@ -274,6 +275,7 @@
     "promoteWaitlist": "Promote first waitlisted person",
     "promoting": "Promoting …",
     "yourStatusRegistered": "You are registered for this event.",
+    "yourStatusDeclined": "You said you are not attending.",
     "yourStatusWaitlisted": "You are on the waitlist (position {{position}}).",
     "registrationClosed": "Registration is not available right now (status: {{status}}).",
     "exportExcel": "Export participants (Excel)",
@@ -295,13 +297,16 @@
       "waitlisted": "Waitlisted",
       "cancelled": "Cancelled",
       "attended": "Attended",
-      "no_show": "Did not attend"
+      "no_show": "Did not attend",
+      "declined": "Not attending"
     },
     "editRegistrationHint": "Edit answers and note",
     "yourStatusFinal": "Your status for this event: {{status}}. Please contact the event team with any questions.",
     "bannerRegistered": "You are registered for this event",
     "listRegistered": "Registered ({{count}})",
     "listWaitlist": "Waitlist ({{count}})",
+    "listDeclined": "Not attending ({{count}})",
+    "answerResults": "Poll",
     "tableTitle": "All participants ({{count}})"
   },
   "budget": {

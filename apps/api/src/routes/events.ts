@@ -39,6 +39,7 @@ import { mexpUserStore, requireMexpRole, resolveMexpRoles } from "./_user-resolu
 import {
   type DevAnswer,
   OTHER_TEXT_MAX,
+  declinesAttendance,
   devAnswerStore,
   devFormStore,
   devLiveParticipantsStore,
@@ -972,8 +973,46 @@ function getDevParticipants(eventId: string): DevParticipantRecord[] {
   return merged.map(applyParticipationOverride);
 }
 
-// Reduzierte Sicht für Nutzer ohne Schreibrolle: nur Name + Status, keine
-// E-Mail, Notizen oder Formularantworten (Datenschutz).
+// Platz für eine (erneute) Zusage: ist das Event voll, geht es auf die Warteliste.
+// Die eigene (ggf. frühere) Anmeldung zählt nicht mit, sonst blockiert sie den eigenen Platz.
+function devSeatFor(
+  eventId: string,
+  userId: string,
+): { status: "registered" | "waitlisted"; waitlistPosition: number | null } {
+  const others = getDevParticipants(eventId).filter((p) => p.userId !== userId);
+  const eventBase = findDevBaseEvent(eventId);
+  const eventCapacity = eventBase ? applyOverride(eventBase).capacity : null;
+  const occupiedCount = others.filter(
+    (p) => p.status === "registered" || p.status === "attended",
+  ).length;
+  if (typeof eventCapacity !== "number" || eventCapacity <= 0 || occupiedCount < eventCapacity) {
+    return { status: "registered", waitlistPosition: null };
+  }
+  const lastPosition = Math.max(
+    0,
+    ...others.map((p) => (p.status === "waitlisted" ? (p.waitlistPosition ?? 0) : 0)),
+  );
+  return { status: "waitlisted", waitlistPosition: lastPosition + 1 };
+}
+
+// Nach geänderten Antworten: Zusage ↔ "nicht dabei" anhand der Teilnahme-Frage umstellen.
+// Andere Status (abgemeldet, teilgenommen, …) bleiben unberührt.
+function devAttendancePatch(
+  eventId: string,
+  participant: DevParticipantRecord,
+  answers: DevAnswer[],
+): Record<string, unknown> {
+  const declined = declinesAttendance(devFormStore.get(eventId) ?? [], answers);
+  const active = participant.status === "registered" || participant.status === "waitlisted";
+  if (declined && active) return { status: "declined", waitlistPosition: null };
+  if (!declined && participant.status === "declined") {
+    return devSeatFor(eventId, participant.userId);
+  }
+  return {};
+}
+
+// Reduzierte Sicht für Nutzer ohne Schreibrolle: Name + Status, keine E-Mail oder
+// Notizen (Datenschutz). Antworten nur zu Fragen, die das Event-Team freigegeben hat.
 interface PublicParticipant {
   id: string;
   eventId: string;
@@ -981,6 +1020,7 @@ interface PublicParticipant {
   userDisplayName: string;
   status: string;
   waitlistPosition: number | null;
+  answers?: DevAnswer[];
 }
 
 function toPublicParticipant(p: PublicParticipant): PublicParticipant {
@@ -991,7 +1031,21 @@ function toPublicParticipant(p: PublicParticipant): PublicParticipant {
     userDisplayName: p.userDisplayName,
     status: p.status,
     waitlistPosition: p.waitlistPosition,
+    ...(p.answers ? { answers: p.answers } : {}),
   };
+}
+
+function publicAnswersFor(eventId: string, participationId: string): DevAnswer[] {
+  const publicIds = new Set(
+    (devFormStore.get(eventId) ?? [])
+      .filter((q) => q.answersPublic && q.type !== "free_text")
+      .map((q) => q.id),
+  );
+  if (publicIds.size === 0) return [];
+  // "Andere"-Freitext bleibt intern — öffentlich nur die gewählten Optionen
+  return (devAnswerStore.get(participationId) ?? [])
+    .filter((a) => publicIds.has(a.questionId))
+    .map((a) => ({ questionId: a.questionId, value: a.value }));
 }
 
 eventRoutes.get("/:id/participants", async (c) => {
@@ -1002,7 +1056,11 @@ eventRoutes.get("/:id/participants", async (c) => {
   if (!env.DATABASE_URL) {
     const merged = getDevParticipants(id);
     if (!canManage) {
-      return c.json({ participants: merged.map(toPublicParticipant) });
+      return c.json({
+        participants: merged.map((p) =>
+          toPublicParticipant({ ...p, answers: publicAnswersFor(id, p.id) }),
+        ),
+      });
     }
     // Antworten aus devAnswerStore nachladen
     const withAnswers = merged.map((p) => ({
@@ -1174,23 +1232,11 @@ eventRoutes.post("/:id/register", async (c) => {
     // Nach einer Abmeldung neu anmelden: alten Status-Override (cancelled) verwerfen
     devParticipationOverrideStore.delete(participationId);
 
-    // Kapazität prüfen: ist das Event voll, landet die Anmeldung auf der Warteliste.
-    // Die eigene (ggf. frühere) Anmeldung zählt nicht mit, sonst blockiert ein
-    // erneutes Anmelden den eigenen Platz.
-    const others = getDevParticipants(id).filter((p) => p.userId !== actorId);
-    const eventBase = findDevBaseEvent(id);
-    const eventCapacity = eventBase ? applyOverride(eventBase).capacity : null;
-    const occupiedCount = others.filter(
-      (p) => p.status === "registered" || p.status === "attended",
-    ).length;
-    const isWaitlisted =
-      typeof eventCapacity === "number" && eventCapacity > 0 && occupiedCount >= eventCapacity;
-    const waitlistPosition = isWaitlisted
-      ? Math.max(
-          0,
-          ...others.map((p) => (p.status === "waitlisted" ? (p.waitlistPosition ?? 0) : 0)),
-        ) + 1
-      : null;
+    // "Nein" bei der Teilnahme-Frage: angemeldet, aber nicht dabei — belegt keinen Platz
+    const seat = declinesAttendance(questions, answers)
+      ? { status: "declined" as const, waitlistPosition: null }
+      : devSeatFor(id, actorId);
+    const { status, waitlistPosition } = seat;
 
     // Display-Name aus Personio-synced User-Store auflösen (falls verfügbar),
     // sonst aus dem Hub-User-Header, sonst Fallback auf hardcoded Dev-Users.
@@ -1222,7 +1268,7 @@ eventRoutes.post("/:id/register", async (c) => {
       userId: actorId,
       userDisplayName: profile.name,
       userEmail: profile.email,
-      status: isWaitlisted ? "waitlisted" : "registered",
+      status,
       waitlistPosition,
       registeredAt,
       checkedInAt: null,
@@ -1237,7 +1283,7 @@ eventRoutes.post("/:id/register", async (c) => {
           id: participationId,
           eventId: id,
           userId: actorId,
-          status: isWaitlisted ? "waitlisted" : "registered",
+          status,
           waitlistPosition,
           registeredAt,
           checkedInAt: null,
@@ -1314,7 +1360,10 @@ eventRoutes.patch("/:id/my-registration", zValidator("json", selfEditSchema), as
   const input = c.req.valid("json");
 
   const own = getDevParticipants(id).find((p) => p.userId === actorId);
-  if (!own || (own.status !== "registered" && own.status !== "waitlisted")) {
+  if (
+    !own ||
+    (own.status !== "registered" && own.status !== "waitlisted" && own.status !== "declined")
+  ) {
     return c.json(
       { error: { code: "NOT_REGISTERED", message: "Du bist nicht für dieses Event angemeldet." } },
       404,
@@ -1350,18 +1399,23 @@ eventRoutes.patch("/:id/my-registration", zValidator("json", selfEditSchema), as
   }
   devAnswerStore.set(own.id, normalizeAnswers(input.answers));
 
+  // Zu- oder Absage über die Teilnahme-Frage geändert → Status mitziehen
+  const patch = devAttendancePatch(id, own, input.answers);
   let personalNote = own.personalNote ?? null;
   if (input.personalNote !== undefined) {
     const trimmed = input.personalNote?.trim() ?? "";
     personalNote = trimmed === "" ? null : trimmed;
+    patch.personalNote = personalNote;
+  }
+  if (Object.keys(patch).length > 0) {
     devParticipationOverrideStore.set(own.id, {
       ...devParticipationOverrideStore.get(own.id),
-      personalNote,
+      ...patch,
     });
   }
 
   return c.json({
-    participation: { ...own, personalNote, answers: devAnswerStore.get(own.id) ?? [] },
+    participation: { ...own, ...patch, personalNote, answers: devAnswerStore.get(own.id) ?? [] },
   });
 });
 
@@ -1419,7 +1473,9 @@ eventRoutes.post(
 );
 
 const editParticipationSchema = z.object({
-  status: z.enum(["registered", "waitlisted", "cancelled", "attended", "no_show"]).optional(),
+  status: z
+    .enum(["registered", "waitlisted", "cancelled", "attended", "no_show", "declined"])
+    .optional(),
   personalNote: z.string().max(2000).nullable().optional(),
   answers: z
     .array(
@@ -1467,6 +1523,10 @@ eventRoutes.patch(
               ...all.map((p) => (p.status === "waitlisted" ? (p.waitlistPosition ?? 0) : 0)),
             ) + 1
           : null;
+    }
+    // Ohne ausdrücklichen Status: Antwort auf die Teilnahme-Frage bestimmt Zu-/Absage
+    if (input.answers && !input.status) {
+      Object.assign(patch, devAttendancePatch(eventId, participation, input.answers));
     }
     if (input.personalNote !== undefined) {
       const trimmed = input.personalNote?.trim() ?? "";

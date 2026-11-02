@@ -32,6 +32,7 @@ const PART_FILL: Record<ParticipationStatus, string> = {
   waitlisted: "fill-yellow",
   attended: "fill-lime",
   no_show: "fill-orange",
+  declined: "",
   cancelled: "",
 };
 

@@ -251,6 +251,7 @@
   },
   "participants": {
     "cancelledCount": "{{count}} abgemeldet",
+    "declinedCount": "{{count}} nicht dabei",
     "editRegistration": "Bearbeiten",
     "yourNote": "Deine Notiz",
     "noChangesHint": "Änderungen an deiner Anmeldung übernimmt das Event-Team.",
@@ -274,6 +275,7 @@
     "promoteWaitlist": "Erste Person von Warteliste nachrücken",
     "promoting": "Wird nachgerückt …",
     "yourStatusRegistered": "Du bist für dieses Event angemeldet.",
+    "yourStatusDeclined": "Du hast angegeben, dass du nicht dabei bist.",
     "yourStatusWaitlisted": "Du stehst auf der Warteliste (Position {{position}}).",
     "registrationClosed": "Anmeldung derzeit nicht möglich (Status: {{status}}).",
     "exportExcel": "Teilnehmer als Excel",
@@ -295,13 +297,16 @@
       "waitlisted": "Warteliste",
       "cancelled": "Abgemeldet",
       "attended": "Teilgenommen",
-      "no_show": "Nicht teilgenommen"
+      "no_show": "Nicht teilgenommen",
+      "declined": "Nicht dabei"
     },
     "editRegistrationHint": "Antworten und Notiz bearbeiten",
     "yourStatusFinal": "Dein Status für dieses Event: {{status}}. Bei Fragen wende dich an das Event-Team.",
     "bannerRegistered": "Du bist für dieses Event angemeldet",
     "listRegistered": "Angemeldet ({{count}})",
     "listWaitlist": "Warteliste ({{count}})",
+    "listDeclined": "Nicht dabei ({{count}})",
+    "answerResults": "Abstimmung",
     "tableTitle": "Alle Teilnehmenden ({{count}})"
   },
   "budget": {

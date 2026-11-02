@@ -24,6 +24,7 @@ const QUESTION_TEMPLATES: { label: string; build: () => Omit<RegistrationQuestio
       order: 0,
       type: "yes_no",
       label: "Bist du dabei?",
+      attendance: true,
       required: true,
       options: [],
     }),
@@ -511,6 +512,39 @@ function QuestionEditor({
                 </label>
               )}
             </div>
+          )}
+
+          {question.type === "yes_no" && (
+            <label
+              className="text-sm"
+              style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 6 }}
+            >
+              <input
+                type="checkbox"
+                checked={question.attendance ?? question.label.trim() === "Bist du dabei?"}
+                onChange={(e) => onChange({ attendance: e.target.checked })}
+              />
+              Teilnahme-Frage
+              <span className="muted text-xs">
+                – wer „Nein“ antwortet, steht in der Liste „Nicht dabei“ statt bei den Teilnehmenden
+              </span>
+            </label>
+          )}
+          {question.type !== "free_text" && (
+            <label
+              className="text-sm"
+              style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 6 }}
+            >
+              <input
+                type="checkbox"
+                checked={question.answersPublic === true}
+                onChange={(e) => onChange({ answersPublic: e.target.checked })}
+              />
+              Antworten für alle sichtbar
+              <span className="muted text-xs">
+                – Teilnehmende sehen pro Option, wer sie gewählt hat
+              </span>
+            </label>
           )}
         </div>
 

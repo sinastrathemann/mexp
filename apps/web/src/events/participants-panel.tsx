@@ -7,6 +7,7 @@ import { useAuth } from "../auth/auth-context";
 import { withBasePath } from "../base-path";
 import { AddParticipantModal } from "./add-participant-modal";
 import { withOther } from "./answer-utils";
+import { PublicAnswerResults } from "./public-answer-results";
 import { RegistrationModal } from "./registration-modal";
 import type {
   EventDto,
@@ -17,7 +18,14 @@ import type {
 } from "./types";
 
 // Status, die Admin/Werkstudent:innen in der Teilnehmerliste setzen können
-const STAFF_STATUSES = ["registered", "waitlisted", "cancelled", "attended", "no_show"] as const;
+const STAFF_STATUSES = [
+  "registered",
+  "waitlisted",
+  "declined",
+  "cancelled",
+  "attended",
+  "no_show",
+] as const;
 type StaffStatus = (typeof STAFF_STATUSES)[number];
 
 interface ParticipantsPanelProps {
@@ -173,6 +181,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const attendedCount = participants.filter((p) => p.status === "attended").length;
   const noShowCount = participants.filter((p) => p.status === "no_show").length;
   const cancelledCount = participants.filter((p) => p.status === "cancelled").length;
+  const declinedCount = participants.filter((p) => p.status === "declined").length;
 
   const visibleParticipants = participants.filter(
     (p) => p.status === "registered" || p.status === "waitlisted" || p.status === "attended",
@@ -183,6 +192,9 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const waitlistNames = visibleParticipants
     .filter((p) => p.status === "waitlisted")
     .sort((x, y) => (x.waitlistPosition ?? 0) - (y.waitlistPosition ?? 0))
+    .map((p) => ({ id: p.id, name: p.userDisplayName }));
+  const declinedNames = participants
+    .filter((p) => p.status === "declined")
     .map((p) => ({ id: p.id, name: p.userDisplayName }));
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -205,7 +217,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const ownForSelfActions = own;
   const canSelfEdit =
     own !== undefined &&
-    (own.status === "registered" || own.status === "waitlisted") &&
+    (own.status === "registered" || own.status === "waitlisted" || own.status === "declined") &&
     registrationOpen &&
     deadlineOpen;
 
@@ -219,12 +231,13 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
         {waitlistCount > 0 && ` · ${t("participants.waitlistCount", { count: waitlistCount })}`}
         {attendedCount > 0 && ` · ${t("participants.attendedCount", { count: attendedCount })}`}
         {noShowCount > 0 && ` · ${t("participants.noShowCount", { count: noShowCount })}`}
+        {declinedCount > 0 && ` · ${t("participants.declinedCount", { count: declinedCount })}`}
         {canManage &&
           cancelledCount > 0 &&
           ` · ${t("participants.cancelledCount", { count: cancelledCount })}`}
       </p>
 
-      {!canManage && visibleParticipants.length > 0 && (
+      {!canManage && (visibleParticipants.length > 0 || declinedNames.length > 0) && (
         <div className="participant-list-box">
           <ParticipantNameList
             title={t("participants.listRegistered", { count: confirmedNames.length })}
@@ -237,6 +250,20 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
               muted
             />
           )}
+          {declinedNames.length > 0 && (
+            <ParticipantNameList
+              title={t("participants.listDeclined", { count: declinedNames.length })}
+              names={declinedNames}
+              muted
+            />
+          )}
+        </div>
+      )}
+
+      {questions.some((q) => q.answersPublic && q.type !== "free_text") && (
+        <div style={{ marginTop: "var(--space-4)" }}>
+          <div className="label">{t("participants.answerResults")}</div>
+          <PublicAnswerResults questions={questions} participants={participants} />
         </div>
       )}
 
@@ -542,12 +569,21 @@ function SelfActions(props: SelfActionsProps) {
     ? new Date(registrationDeadline).getTime() < Date.now()
     : false;
 
-  const ownActive = own && (own.status === "registered" || own.status === "waitlisted");
+  const ownActive =
+    own &&
+    (own.status === "registered" || own.status === "waitlisted" || own.status === "declined");
 
   if (ownActive) {
     return (
       <div style={{ marginTop: "var(--space-3)" }}>
-        {own.status === "registered" ? (
+        {own.status === "declined" ? (
+          <output className="registration-status registration-status--waitlist">
+            <span className="registration-status-icon" aria-hidden="true">
+              ×
+            </span>
+            <span>{t("participants.yourStatusDeclined")}</span>
+          </output>
+        ) : own.status === "registered" ? (
           <output className="registration-status">
             <span className="registration-status-icon" aria-hidden="true">
               ✓

@@ -23,6 +23,10 @@ const questionSchema = z.object({
   options: z.array(z.string().min(1).max(200)).default([]),
   // Einfach-/Mehrfachauswahl: zusätzliche Auswahl "Andere" mit Freitext
   allowOther: z.boolean().optional(),
+  // Ja/Nein-Frage entscheidet über die Teilnahme: "Nein" = nicht dabei
+  attendance: z.boolean().optional(),
+  // Antworten sehen auch Teilnehmende ohne Schreibrolle (Abstimmung mit Namen)
+  answersPublic: z.boolean().optional(),
 });
 
 const formSchema = z.object({
@@ -59,6 +63,23 @@ export interface DevRegistrationQuestion {
   required: boolean;
   options: string[];
   allowOther?: boolean | undefined;
+  attendance?: boolean | undefined;
+  answersPublic?: boolean | undefined;
+}
+
+// Formulare von vor dem Teilnahme-Häkchen: die Vorlage "Bist du dabei?" gilt weiter als Teilnahme-Frage
+export function isAttendanceQuestion(q: DevRegistrationQuestion): boolean {
+  if (q.type !== "yes_no") return false;
+  return q.attendance ?? q.label.trim() === "Bist du dabei?";
+}
+
+// true, wenn eine Teilnahme-Frage mit "Nein" beantwortet wurde
+export function declinesAttendance(
+  questions: DevRegistrationQuestion[],
+  answers: DevAnswer[],
+): boolean {
+  const byQ = new Map(answers.map((a) => [a.questionId, a.value]));
+  return questions.some((q) => isAttendanceQuestion(q) && byQ.get(q.id) === false);
 }
 
 // eventId → questions[]
@@ -82,7 +103,8 @@ export interface DevLiveParticipant {
   userEmail: string;
   // Nach Anlage immer "registered" — check-in/no-show/promote-waitlist verändern den
   // Status über den participation-override-Store (siehe events.ts), nicht hier direkt.
-  status: "registered" | "waitlisted" | "attended" | "no_show" | "cancelled";
+  // "declined": Teilnahme-Frage mit "Nein" beantwortet — angemeldet, aber nicht dabei
+  status: "registered" | "waitlisted" | "attended" | "no_show" | "cancelled" | "declined";
   waitlistPosition: number | null;
   registeredAt: string;
   checkedInAt: string | null;

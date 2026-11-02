@@ -74,6 +74,8 @@ export const PARTICIPATION_STATUSES = [
   "cancelled",
   "attended",
   "no_show",
+  // Teilnahme-Frage mit "Nein" beantwortet: angemeldet, aber nicht dabei
+  "declined",
 ] as const;
 export type ParticipationStatus = (typeof PARTICIPATION_STATUSES)[number];
 
@@ -139,6 +141,10 @@ export interface RegistrationQuestion {
   options: string[];
   // Einfach-/Mehrfachauswahl: zusätzliche Auswahl "Andere" mit Freitext
   allowOther?: boolean;
+  // Ja/Nein: "Nein" bedeutet nicht dabei (eigene Liste, belegt keinen Platz)
+  attendance?: boolean;
+  // Antworten für alle sichtbar (Ergebnis pro Option mit Namen)
+  answersPublic?: boolean;
 }
 
 // Antwort kann sein: boolean (yes_no), string (single_choice),
