@@ -53,7 +53,8 @@ const isoDateSchema = z.string().datetime({ offset: true });
 
 const createEventSchema = z.object({
   title: z.string().min(1).max(200),
-  description: z.string().max(5000).default(""),
+  // Rich-Text-HTML aus dem Editor — Markup braucht mehr Platz als reiner Text
+  description: z.string().max(20000).default(""),
   eventType: eventTypeSchema,
   visibility: eventVisibilitySchema.default("internal"),
   startAt: isoDateSchema,
@@ -74,7 +75,7 @@ const createEventSchema = z.object({
 const updateEventSchema = z
   .object({
     title: z.string().min(1).max(200).optional(),
-    description: z.string().max(5000).optional(),
+    description: z.string().max(20000).optional(),
     eventType: eventTypeSchema.optional(),
     visibility: eventVisibilitySchema.optional(),
     startAt: isoDateSchema.optional(),
@@ -770,6 +771,23 @@ eventRoutes.get("/:id/calendar.ics", async (c) => {
   return c.body(ics);
 });
 
+// Kalender-Clients zeigen kein HTML — Formatierung der Event-Beschreibung entfernen
+function htmlToPlainText(text: string): string {
+  if (!/^\s*<(p|ul|ol)[\s>]/i.test(text)) return text;
+  return text
+    .replace(/<li[^>]*>/gi, "• ")
+    .replace(/<\/(p|li)>|<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function icsEscape(text: string): string {
   return text
     .replace(/\\/g, "\\\\")
@@ -821,7 +839,7 @@ function buildIcs(input: {
     `DTSTAMP:${now}`,
     ...timing,
     `SUMMARY:${icsEscape(input.title)}`,
-    `DESCRIPTION:${icsEscape(input.description)}`,
+    `DESCRIPTION:${icsEscape(htmlToPlainText(input.description))}`,
     `LOCATION:${icsEscape(input.location)}`,
     "STATUS:CONFIRMED",
     "TRANSP:OPAQUE",

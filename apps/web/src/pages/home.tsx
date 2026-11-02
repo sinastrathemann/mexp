@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
 import { withBasePath } from "../base-path";
+import { richTextToPlain } from "../components/rich-text-utils";
 import { EventFilterBar, useEventFilters } from "../events/event-filters";
 import { EventStatusBadge } from "../events/status-badge";
 import type { EventDto } from "../events/types";
@@ -505,7 +506,7 @@ function EventCardBig({
             overflow: "hidden",
           }}
         >
-          {event.description}
+          {richTextToPlain(event.description)}
         </p>
       )}
 

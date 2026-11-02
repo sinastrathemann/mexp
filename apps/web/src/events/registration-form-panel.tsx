@@ -116,11 +116,14 @@ export function RegistrationFormPanel({ event }: Props) {
   const [questions, setQuestions] = useState<RegistrationQuestion[]>([]);
   const [dirty, setDirty] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  // Fragen, die schon einmal verlassen wurden — erst dann zeigen wir Validierungsfehler an
+  const [touched, setTouched] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (formQ.data?.questions) {
       setQuestions(formQ.data.questions);
       setDirty(false);
+      setTouched(new Set());
     }
   }, [formQ.data]);
 
@@ -139,24 +142,31 @@ export function RegistrationFormPanel({ event }: Props) {
   if (!canEdit) return null;
 
   // Client-seitige Vorab-Validierung — verhindert hängende Saves
-  const clientValidationError = (() => {
-    for (const q of questions) {
-      if (!q.label.trim()) return "Eine Frage hat keinen Text.";
-      if (
-        (q.type === "single_choice" || q.type === "multi_choice" || q.type === "date_pick") &&
-        q.options.length === 0
-      ) {
-        return `"${q.label}": Mindestens eine Option erforderlich`;
-      }
-      if (
-        (q.type === "single_choice" || q.type === "multi_choice" || q.type === "date_pick") &&
-        q.options.some((o) => !o.trim())
-      ) {
-        return `"${q.label}": Leere Option entfernen oder ausfüllen`;
-      }
+  const questionError = (q: RegistrationQuestion): string | null => {
+    if (!q.label.trim()) return "Eine Frage hat keinen Text.";
+    if (
+      (q.type === "single_choice" || q.type === "multi_choice" || q.type === "date_pick") &&
+      q.options.length === 0
+    ) {
+      return `"${q.label}": Mindestens eine Option erforderlich`;
+    }
+    if (
+      (q.type === "single_choice" || q.type === "multi_choice" || q.type === "date_pick") &&
+      q.options.some((o) => !o.trim())
+    ) {
+      return `"${q.label}": Leere Option entfernen oder ausfüllen`;
     }
     return null;
-  })();
+  };
+  const firstError = (qs: RegistrationQuestion[]) =>
+    qs.reduce<string | null>((err, q) => err ?? questionError(q), null);
+  const clientValidationError = firstError(questions);
+  // Frisch hinzugefügte, noch nicht bearbeitete Fragen nicht sofort als Fehler anmahnen
+  const visibleValidationError = firstError(questions.filter((q) => touched.has(q.id)));
+
+  const markTouched = (id: string) => {
+    setTouched((t) => (t.has(id) ? t : new Set(t).add(id)));
+  };
 
   const updateQuestion = (id: string, patch: Partial<RegistrationQuestion>) => {
     setQuestions((qs) => qs.map((q) => (q.id === id ? { ...q, ...patch } : q)));
@@ -245,9 +255,9 @@ export function RegistrationFormPanel({ event }: Props) {
         />
       )}
 
-      {clientValidationError && (
+      {visibleValidationError && (
         <div className="alert alert-warning" style={{ marginTop: "var(--space-3)" }}>
-          ⚠ {clientValidationError}
+          ⚠ {visibleValidationError}
         </div>
       )}
       {saveMut.error instanceof Error && (
@@ -270,6 +280,7 @@ export function RegistrationFormPanel({ event }: Props) {
               key={q.id}
               question={q}
               onChange={(patch) => updateQuestion(q.id, patch)}
+              onTouched={() => markTouched(q.id)}
               onRemove={() => removeQuestion(q.id)}
               onMoveUp={idx > 0 ? () => move(q.id, -1) : undefined}
               onMoveDown={idx < questions.length - 1 ? () => move(q.id, 1) : undefined}
@@ -358,12 +369,20 @@ export function RegistrationFormPanel({ event }: Props) {
 interface EditorProps {
   question: RegistrationQuestion;
   onChange: (patch: Partial<RegistrationQuestion>) => void;
+  onTouched: () => void;
   onRemove: () => void;
   onMoveUp: (() => void) | undefined;
   onMoveDown: (() => void) | undefined;
 }
 
-function QuestionEditor({ question, onChange, onRemove, onMoveUp, onMoveDown }: EditorProps) {
+function QuestionEditor({
+  question,
+  onChange,
+  onTouched,
+  onRemove,
+  onMoveUp,
+  onMoveDown,
+}: EditorProps) {
   const isChoice = question.type === "single_choice" || question.type === "multi_choice";
   const isDate = question.type === "date_pick";
 
@@ -383,6 +402,10 @@ function QuestionEditor({ question, onChange, onRemove, onMoveUp, onMoveDown }: 
     <div
       className="card-flat"
       style={{ margin: 0, padding: "var(--space-4)", background: "var(--bg-subtle)" }}
+      // Erst als "berührt" werten, wenn der Fokus die ganze Frage verlässt (nicht beim Wechsel zur Option)
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) onTouched();
+      }}
     >
       <div
         style={{
