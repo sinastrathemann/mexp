@@ -2184,39 +2184,3 @@ output.alert {
   color: var(--fg-strong);
   outline: none;
 }
-
-/* ---------- Abstimmungsergebnis (freigegebene Antworten) ---------- */
-.answer-results {
-  display: grid;
-  gap: var(--space-4);
-}
-.answer-results-title {
-  font-weight: var(--weight-bold);
-  margin-bottom: var(--space-2);
-}
-.answer-results-row {
-  display: grid;
-  grid-template-columns: minmax(90px, 160px) minmax(60px, 1fr) 2.5em;
-  align-items: center;
-  gap: 4px var(--space-3);
-  padding: 4px 0;
-}
-.answer-results-names {
-  grid-column: 1 / -1;
-  padding-left: 2px;
-}
-.answer-results-bar {
-  height: 8px;
-  border-radius: 4px;
-  background: var(--border-default);
-  overflow: hidden;
-}
-.answer-results-bar > span {
-  display: block;
-  height: 100%;
-  background: var(--brand-orange);
-}
-.answer-results-count {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}

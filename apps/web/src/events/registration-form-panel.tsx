@@ -542,7 +542,7 @@ function QuestionEditor({
               />
               Antworten für alle sichtbar
               <span className="muted text-xs">
-                – Teilnehmende sehen pro Option, wer sie gewählt hat
+                – die Antwort steht in der Teilnehmerliste in Klammern hinter dem Namen
               </span>
             </label>
           )}

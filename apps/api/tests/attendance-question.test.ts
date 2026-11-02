@@ -53,3 +53,13 @@ describe("declinesAttendance", () => {
     expect(declinesAttendance([yesNo({})], [{ questionId: "q1", value: false }])).toBe(false);
   });
 });
+
+describe("validateAnswers bei 'nicht dabei'", () => {
+  it("Pflichtfrage Stadt entfällt, wenn die Teilnahme-Frage mit Nein beantwortet ist", async () => {
+    const { validateAnswers } = await import("../src/routes/registration-form.js");
+    const dabei = yesNo({ id: "q0", label: "Bist du dabei?", required: true, attendance: true });
+    const city = yesNo({ id: "q1", type: "single_choice", required: true, options: ["Hamburg"] });
+    expect(validateAnswers([dabei, city], [{ questionId: "q0", value: false }]).ok).toBe(true);
+    expect(validateAnswers([dabei, city], [{ questionId: "q0", value: true }]).ok).toBe(false);
+  });
+});

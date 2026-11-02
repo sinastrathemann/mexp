@@ -120,7 +120,11 @@ export function validateAnswers(
   answers: DevAnswer[],
 ): { ok: true } | { ok: false; message: string } {
   const byQ = new Map(answers.map((a) => [a.questionId, a]));
-  for (const q of questions) {
+  // "Nicht dabei": weitere Pflichtfragen (z. B. Stadt-Abstimmung) entfallen
+  const relevant = declinesAttendance(questions, answers)
+    ? questions.filter(isAttendanceQuestion)
+    : questions;
+  for (const q of relevant) {
     const a = byQ.get(q.id);
     const otherText = a?.otherText?.trim() ?? "";
     const hasValue =

@@ -306,7 +306,6 @@
     "listRegistered": "Angemeldet ({{count}})",
     "listWaitlist": "Warteliste ({{count}})",
     "listDeclined": "Nicht dabei ({{count}})",
-    "answerResults": "Abstimmung",
     "tableTitle": "Alle Teilnehmenden ({{count}})"
   },
   "budget": {

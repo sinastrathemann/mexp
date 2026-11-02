@@ -9,6 +9,21 @@ function isEmpty(v: AnswerValue | undefined): boolean {
   return v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0);
 }
 
+// Formulare von vor dem Teilnahme-Häkchen: die Vorlage "Bist du dabei?" gilt weiter als Teilnahme-Frage
+export function isAttendanceQuestion(q: RegistrationQuestion): boolean {
+  if (q.type !== "yes_no") return false;
+  return q.attendance ?? q.label.trim() === "Bist du dabei?";
+}
+
+// Wer bei einer Teilnahme-Frage "Nein" sagt, muss die übrigen Fragen nicht mehr beantworten
+export function activeQuestions(
+  questions: RegistrationQuestion[],
+  values: AnswerValues,
+): RegistrationQuestion[] {
+  const declined = questions.some((q) => isAttendanceQuestion(q) && values[q.id] === false);
+  return declined ? questions.filter(isAttendanceQuestion) : questions;
+}
+
 // Liefert die erste Fehlermeldung oder null, wenn alles passt
 export function checkAnswers(
   questions: RegistrationQuestion[],

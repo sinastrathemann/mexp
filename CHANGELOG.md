@@ -6,7 +6,7 @@ Alle nennenswerten Änderungen an mEXP. Format: [Keep a Changelog](https://keepa
 
 ### Added
 - Anmelde-Formular: Häkchen „Teilnahme-Frage“ bei Ja/Nein-Fragen (bei „Bist du dabei?“ automatisch). Wer „Nein“ antwortet, steht in einer eigenen Liste „Nicht dabei“, zählt nicht als Teilnehmer:in und belegt keinen Platz; Änderung der Antwort stellt den Status um.
-- Anmelde-Formular: Häkchen „Antworten für alle sichtbar“ pro Frage. Teilnehmende sehen dann im Bereich „Abstimmung“ pro Option Anzahl und Namen (ohne Freitexte).
+- Anmelde-Formular: Häkchen „Antworten für alle sichtbar“ pro Frage. Die Antwort steht dann in der Teilnehmerliste in Klammern hinter dem Namen, z. B. „Anna (Hamburg)“ (ohne Freitexte). Wer „Nein“ bei der Teilnahme-Frage sagt, muss die übrigen Fragen nicht mehr beantworten.
 - Phase 0 Setup: Monorepo-Struktur (pnpm workspaces, apps/api + apps/web + packages/*)
 - Basis-Tooling: TypeScript strict, Biome, Vitest
 - CLAUDE.md mit Projekt-Kontext und Architektur-Regeln

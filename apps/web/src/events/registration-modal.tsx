@@ -3,7 +3,13 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { RichText } from "../components/rich-text";
 import { richTextToPlain } from "../components/rich-text-utils";
-import { type AnswerValues, type OtherTexts, buildAnswers, checkAnswers } from "./answer-utils";
+import {
+  type AnswerValues,
+  type OtherTexts,
+  activeQuestions,
+  buildAnswers,
+  checkAnswers,
+} from "./answer-utils";
 import { formatEventDate } from "./event-date";
 import type { EventDto, RegistrationAnswer, RegistrationQuestion } from "./types";
 
@@ -60,15 +66,19 @@ export function RegistrationModal({
     setOthers((s) => ({ ...s, [id]: text }));
   };
 
+  const shownQuestions = activeQuestions(questions, values);
+  const skipsQuestions = shownQuestions.length < questions.length;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError(null);
-    const problem = checkAnswers(questions, values, others);
+    const problem = checkAnswers(shownQuestions, values, others);
     if (problem) {
       setValidationError(problem);
       return;
     }
-    const answers = buildAnswers(questions, values, others);
+    // Bei "nicht dabei" nur die Teilnahme-Antwort speichern — frühere Stimmen entfallen
+    const answers = buildAnswers(shownQuestions, values, others);
     onSubmit(answers, personalNote.trim() === "" ? null : personalNote.trim());
   };
 
@@ -121,7 +131,7 @@ export function RegistrationModal({
 
         <form onSubmit={handleSubmit} style={{ marginTop: "var(--space-4)" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
-            {questions.map((q) => (
+            {shownQuestions.map((q) => (
               <QuestionField
                 key={q.id}
                 question={q}
@@ -131,6 +141,11 @@ export function RegistrationModal({
                 onOtherChange={(text) => setOther(q.id, text)}
               />
             ))}
+            {skipsQuestions && (
+              <p className="muted text-sm" style={{ margin: 0 }}>
+                Da du nicht dabei bist, entfallen die weiteren Fragen.
+              </p>
+            )}
           </div>
 
           <fieldset

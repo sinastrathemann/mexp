@@ -7,7 +7,7 @@ import { useAuth } from "../auth/auth-context";
 import { withBasePath } from "../base-path";
 import { AddParticipantModal } from "./add-participant-modal";
 import { withOther } from "./answer-utils";
-import { PublicAnswerResults } from "./public-answer-results";
+import { publicAnswerText } from "./public-answers";
 import { RegistrationModal } from "./registration-modal";
 import type {
   EventDto,
@@ -186,13 +186,19 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const visibleParticipants = participants.filter(
     (p) => p.status === "registered" || p.status === "waitlisted" || p.status === "attended",
   );
+  // Freigegebene Antworten (z. B. gewählte Stadt) stehen in Klammern hinter dem Namen
+  const withChoice = (p: ParticipantDto) => ({
+    id: p.id,
+    name: p.userDisplayName,
+    detail: publicAnswerText(questions, p),
+  });
   const confirmedNames = visibleParticipants
     .filter((p) => p.status !== "waitlisted")
-    .map((p) => ({ id: p.id, name: p.userDisplayName }));
+    .map(withChoice);
   const waitlistNames = visibleParticipants
     .filter((p) => p.status === "waitlisted")
     .sort((x, y) => (x.waitlistPosition ?? 0) - (y.waitlistPosition ?? 0))
-    .map((p) => ({ id: p.id, name: p.userDisplayName }));
+    .map(withChoice);
   const declinedNames = participants
     .filter((p) => p.status === "declined")
     .map((p) => ({ id: p.id, name: p.userDisplayName }));
@@ -257,13 +263,6 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
               muted
             />
           )}
-        </div>
-      )}
-
-      {questions.some((q) => q.answersPublic && q.type !== "free_text") && (
-        <div style={{ marginTop: "var(--space-4)" }}>
-          <div className="label">{t("participants.answerResults")}</div>
-          <PublicAnswerResults questions={questions} participants={participants} />
         </div>
       )}
 
@@ -520,7 +519,7 @@ function ParticipantNameList({
   muted = false,
 }: {
   title: string;
-  names: { id: string; name: string }[];
+  names: { id: string; name: string; detail?: string }[];
   muted?: boolean;
 }) {
   return (
@@ -528,7 +527,10 @@ function ParticipantNameList({
       <div className="participant-list-title">{title}</div>
       <ol className={muted ? "participant-list-items is-muted" : "participant-list-items"}>
         {names.map((n) => (
-          <li key={n.id}>{n.name}</li>
+          <li key={n.id}>
+            {n.name}
+            {n.detail && <span className="muted"> ({n.detail})</span>}
+          </li>
         ))}
       </ol>
     </div>
