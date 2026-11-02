@@ -3,7 +3,7 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../api/client";
-import { AutoGrowTextarea } from "../components/auto-grow-textarea";
+import { RichTextEditor } from "../components/rich-text-editor";
 import { tbdDateInput, tbdIso } from "./event-date";
 import { EventDateFields } from "./event-date-fields";
 import {
@@ -205,13 +205,7 @@ export function EventEditModal({
             <label className="label" htmlFor="ee-desc">
               {t("events.fieldDescription")}
             </label>
-            <AutoGrowTextarea
-              id="ee-desc"
-              className="textarea"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={6}
-            />
+            <RichTextEditor id="ee-desc" value={description} onChange={setDescription} />
           </div>
 
           <div className="field-row">

@@ -20,8 +20,11 @@ Alle nennenswerten Änderungen an mEXP. Format: [Keep a Changelog](https://keepa
 - Anmelde-Formular: leere Fragen anlegen („Eigene Frage“) und Auswahl „Andere“ mit Freitext bei Einfach-/Mehrfachauswahl.
 - Teilnehmende können ihre Angaben ändern, solange die Anmeldung offen ist (`PATCH /events/:id/my-registration`).
 - Anmeldefenster zeigt Datum, Ort und Beschreibung des Events.
+- Event-Beschreibung mit Formatierung: fett, kursiv, unterstrichen, Textfarbe (Orange/Blau/Rot), Stichpunkte und nummerierte Listen mit Einrücken (Tab/Umschalt+Tab). Aus Word/Outlook kopierte Listen bleiben erhalten; Kalenderdatei bekommt reinen Text.
 
 ### Changed
+- Ja/Nein-Fragen im Anmeldefenster zeigen „Ja“ / „Nein“ statt „Ja, bin dabei“.
+- Anmelde-Formular: Hinweis „Frage hat keinen Text“ erscheint erst, wenn die neue Frage verlassen wurde, nicht schon direkt nach dem Hinzufügen.
 - Beschreibungsfeld beim Anlegen/Bearbeiten von Events ist größer und wächst mit dem Text.
 - Anmeldefenster erscheint immer mittig im sichtbaren Bereich (vorher teils oberhalb, man musste hochscrollen).
 - Budget-Bereich auf der Event-Seite durch Link zum Budget-Control-Agent ersetzt (keine Doppelerfassung).

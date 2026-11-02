@@ -4,7 +4,7 @@ import type { FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ApiRequestError, apiFetch } from "../api/client";
-import { AutoGrowTextarea } from "../components/auto-grow-textarea";
+import { RichTextEditor } from "../components/rich-text-editor";
 import { tbdIso } from "../events/event-date";
 import { EventDateFields } from "../events/event-date-fields";
 import {
@@ -204,14 +204,7 @@ export default function EventCreatePage() {
           <label className="label" htmlFor="ev-desc">
             {t("events.fieldDescription")}
           </label>
-          <AutoGrowTextarea
-            id="ev-desc"
-            className="textarea"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={6}
-            maxLength={5000}
-          />
+          <RichTextEditor id="ev-desc" value={description} onChange={setDescription} />
         </div>
         <div className="field-row">
           <div className="field">

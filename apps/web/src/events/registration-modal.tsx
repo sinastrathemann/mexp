@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { RichText } from "../components/rich-text";
+import { richTextToPlain } from "../components/rich-text-utils";
 import { type AnswerValues, type OtherTexts, buildAnswers, checkAnswers } from "./answer-utils";
 import { formatEventDate } from "./event-date";
 import type { EventDto, RegistrationAnswer, RegistrationQuestion } from "./types";
@@ -202,11 +204,9 @@ function EventInfo({ event }: { event: EventDto }) {
   const { t, i18n } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const description = event.description.trim();
-  const isLong = description.length > DESCRIPTION_PREVIEW_CHARS;
-  const shown =
-    isLong && !expanded
-      ? `${description.slice(0, DESCRIPTION_PREVIEW_CHARS).trimEnd()} …`
-      : description;
+  // Gekürzt wird der reine Text; aufgeklappt zeigen wir die volle Formatierung
+  const plain = richTextToPlain(description);
+  const isLong = plain.length > DESCRIPTION_PREVIEW_CHARS;
   const sameDay = event.startAt.slice(0, 10) === event.endAt.slice(0, 10);
 
   return (
@@ -231,8 +231,14 @@ function EventInfo({ event }: { event: EventDto }) {
         )}
       </div>
       {description && (
-        <div className="text-sm" style={{ marginTop: "var(--space-2)", whiteSpace: "pre-wrap" }}>
-          {shown}
+        <div className="text-sm" style={{ marginTop: "var(--space-2)" }}>
+          {isLong && !expanded ? (
+            <span style={{ whiteSpace: "pre-wrap" }}>
+              {`${plain.slice(0, DESCRIPTION_PREVIEW_CHARS).trimEnd()} …`}
+            </span>
+          ) : (
+            <RichText value={description} />
+          )}
           {isLong && (
             <button
               type="button"
@@ -358,7 +364,7 @@ function YesNoField({
         className={value === true ? "btn btn-primary" : "btn btn-outline"}
         onClick={() => onChange(true)}
       >
-        ✓ Ja, bin dabei
+        ✓ Ja
       </button>
       <button
         type="button"

@@ -5,6 +5,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
 import { withBasePath } from "../base-path";
+import { RichText } from "../components/rich-text";
 import { BudgetLinkCard } from "../events/budget-link-card";
 import { DocumentsPanel } from "../events/documents-panel";
 import { formatEventDate } from "../events/event-date";
@@ -269,7 +270,7 @@ export default function EventDetailPage() {
           <div className="label" style={{ margin: 0 }}>
             {t("events.fieldDescription")}
           </div>
-          <span style={{ whiteSpace: "pre-wrap" }}>{event.description || "—"}</span>
+          {event.description ? <RichText value={event.description} /> : <span>—</span>}
         </div>
       </div>
 
