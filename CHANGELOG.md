@@ -23,6 +23,7 @@ Alle nennenswerten Änderungen an mEXP. Format: [Keep a Changelog](https://keepa
 - Event-Beschreibung mit Formatierung: fett, kursiv, unterstrichen, Textfarbe (Orange/Blau/Rot), Stichpunkte und nummerierte Listen mit Einrücken (Tab/Umschalt+Tab). Aus Word/Outlook kopierte Listen bleiben erhalten; Kalenderdatei bekommt reinen Text.
 
 ### Changed
+- Anmeldefenster: gekürzte Event-Beschreibung zeigt Formatierung schon vor „Mehr anzeigen“; leere Absätze bleiben in der Anzeige erhalten.
 - Ja/Nein-Fragen im Anmeldefenster zeigen „Ja“ / „Nein“ statt „Ja, bin dabei“.
 - Anmelde-Formular: Hinweis „Frage hat keinen Text“ erscheint erst, wenn die neue Frage verlassen wurde, nicht schon direkt nach dem Hinzufügen.
 - Beschreibungsfeld beim Anlegen/Bearbeiten von Events ist größer und wächst mit dem Text.

@@ -13,7 +13,7 @@ DOMPurify.addHook("afterSanitizeAttributes", (node) => {
 });
 
 // Zeigt eine Beschreibung formatiert an; Alt-Bestand ohne HTML bleibt reiner Text
-export function RichText({ value, className }: { value: string; className?: string }) {
+export function RichText({ value, className }: { value: string; className?: string | undefined }) {
   const html = useMemo(
     () =>
       isRichTextHtml(value)

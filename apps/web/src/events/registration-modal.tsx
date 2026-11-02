@@ -199,14 +199,17 @@ export function RegistrationModal({
 
 // Lange Beschreibungen werden gekürzt und lassen sich aufklappen
 const DESCRIPTION_PREVIEW_CHARS = 280;
+const DESCRIPTION_PREVIEW_LINES = 6;
 
 function EventInfo({ event }: { event: EventDto }) {
   const { t, i18n } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const description = event.description.trim();
-  // Gekürzt wird der reine Text; aufgeklappt zeigen wir die volle Formatierung
+  // Länge am reinen Text messen; gekürzt wird über die Höhe, damit die Formatierung sichtbar bleibt
   const plain = richTextToPlain(description);
-  const isLong = plain.length > DESCRIPTION_PREVIEW_CHARS;
+  const isLong =
+    plain.length > DESCRIPTION_PREVIEW_CHARS ||
+    plain.split("\n").length > DESCRIPTION_PREVIEW_LINES;
   const sameDay = event.startAt.slice(0, 10) === event.endAt.slice(0, 10);
 
   return (
@@ -232,13 +235,10 @@ function EventInfo({ event }: { event: EventDto }) {
       </div>
       {description && (
         <div className="text-sm" style={{ marginTop: "var(--space-2)" }}>
-          {isLong && !expanded ? (
-            <span style={{ whiteSpace: "pre-wrap" }}>
-              {`${plain.slice(0, DESCRIPTION_PREVIEW_CHARS).trimEnd()} …`}
-            </span>
-          ) : (
-            <RichText value={description} />
-          )}
+          <RichText
+            value={description}
+            className={isLong && !expanded ? "rich-text-collapsed" : undefined}
+          />
           {isLong && (
             <button
               type="button"

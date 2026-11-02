@@ -2111,6 +2111,17 @@ output.alert {
 .rich-text p {
   margin: 0;
 }
+/* Leere Absätze (doppeltes Enter) sonst ohne Höhe — Abstand ginge in der Anzeige verloren */
+.rich-text p:empty::before {
+  content: "\00a0";
+}
+/* Gekürzte Vorschau: Formatierung bleibt, unten blendet der Text aus */
+.rich-text-collapsed {
+  max-height: 7.5em;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent);
+  mask-image: linear-gradient(to bottom, #000 60%, transparent);
+}
 .rich-text ul,
 .rich-text ol {
   margin: 4px 0;
