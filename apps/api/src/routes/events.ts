@@ -1042,10 +1042,14 @@ function publicAnswersFor(eventId: string, participationId: string): DevAnswer[]
       .map((q) => q.id),
   );
   if (publicIds.size === 0) return [];
-  // "Andere"-Freitext bleibt intern — öffentlich nur die gewählten Optionen
+  // Eigene Angabe bei "Andere" (z. B. eine weitere Stadt) gehört zur Wahl und ist mit freigegeben
   return (devAnswerStore.get(participationId) ?? [])
     .filter((a) => publicIds.has(a.questionId))
-    .map((a) => ({ questionId: a.questionId, value: a.value }));
+    .map((a) => ({
+      questionId: a.questionId,
+      value: a.value,
+      ...(a.otherText ? { otherText: a.otherText } : {}),
+    }));
 }
 
 eventRoutes.get("/:id/participants", async (c) => {

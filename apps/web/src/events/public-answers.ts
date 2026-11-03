@@ -7,7 +7,8 @@ function fmtSlot(iso: string): string {
 }
 
 // Freigegebene Antworten einer Person als kurzer Text für die Namensliste,
-// z. B. "Hamburg" oder "Hamburg · 12.12.26, 18:00". Leer, wenn nichts freigegeben/beantwortet.
+// z. B. "Hamburg", "Köln" (eigene Angabe bei "Andere") oder "Hamburg · 12.12.26, 18:00".
+// Leer, wenn nichts freigegeben/beantwortet.
 export function publicAnswerText(
   questions: RegistrationQuestion[],
   participant: ParticipantDto,
@@ -15,13 +16,16 @@ export function publicAnswerText(
   const parts: string[] = [];
   for (const q of questions) {
     if (!q.answersPublic || q.type === "free_text") continue;
-    const v = participant.answers?.find((a) => a.questionId === q.id)?.value;
-    if (v === undefined || v === null || v === "") continue;
-    if (typeof v === "boolean") parts.push(v ? "Ja" : "Nein");
-    else if (Array.isArray(v)) {
-      if (v.length > 0)
-        parts.push(v.map((o) => (q.type === "date_pick" ? fmtSlot(o) : o)).join(", "));
-    } else parts.push(v);
+    const a = participant.answers?.find((x) => x.questionId === q.id);
+    const v = a?.value;
+    const chosen: string[] = [];
+    if (typeof v === "boolean") chosen.push(v ? "Ja" : "Nein");
+    else if (Array.isArray(v))
+      chosen.push(...v.map((o) => (q.type === "date_pick" ? fmtSlot(o) : o)));
+    else if (v) chosen.push(v);
+    const other = a?.otherText?.trim();
+    if (other) chosen.push(other);
+    if (chosen.length > 0) parts.push(chosen.join(", "));
   }
   return parts.join(" · ");
 }
