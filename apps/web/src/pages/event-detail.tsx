@@ -101,7 +101,12 @@ export default function EventDetailPage() {
       apiFetch<{ event: EventDto }>(`/events/${id}/${archive ? "archive" : "unarchive"}`, {
         method: "POST",
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["events"] }),
+    onSuccess: () => {
+      // Archivierte Events fehlen auch in den Dashboards
+      qc.invalidateQueries({ queryKey: ["events"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["my"] });
+    },
   });
 
   if (isLoading) return <div className="page">{t("auth.loading")}</div>;
@@ -175,6 +180,12 @@ export default function EventDetailPage() {
           )}
         </div>
       </div>
+
+      {archiveMut.error instanceof Error && (
+        <div className="alert alert-error" style={{ marginBottom: "var(--space-3)" }}>
+          {archiveMut.error.message}
+        </div>
+      )}
 
       {(myStatus === "registered" || myStatus === "attended") && (
         <output className="registration-status registration-status--banner">
