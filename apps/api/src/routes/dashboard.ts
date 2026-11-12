@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { dashboard, env } from "../deps.js";
 import { buildOneNoteImportedEvents } from "../onenote-import.js";
 import { requireMexpRole } from "./_user-resolution.js";
-import { devCreatedEventsStore, devEventOverrideStore } from "./events.js";
+import { devCreatedEventsStore, devEventOverrideStore, isEventArchived } from "./events.js";
 import { devLiveParticipantsStore } from "./registration-form.js";
 
 export const dashboardRoutes = new Hono();
@@ -26,6 +26,12 @@ interface EventLike {
 }
 
 function computeDevStats() {
+  const archivedIds = new Set<string>();
+  const skipArchived = (id: string) => {
+    if (!isEventArchived(id, devEventOverrideStore.get(id))) return false;
+    archivedIds.add(id);
+    return true;
+  };
   const seedIds = ["evt-001", "evt-002", "evt-003", "evt-004", "evt-005", "evt-006", "evt-007"];
   const allEvents: EventLike[] = [];
 
@@ -33,6 +39,7 @@ function computeDevStats() {
     for (const seedId of seedIds) {
       const ov = devEventOverrideStore.get(seedId) as EventLike | undefined;
       if (ov?._deleted) continue;
+      if (skipArchived(seedId)) continue;
       allEvents.push({
         id: seedId,
         status: (ov?.status as string) ?? "open",
@@ -45,6 +52,7 @@ function computeDevStats() {
   for (const event of buildOneNoteImportedEvents()) {
     const override = devEventOverrideStore.get(event.id) as EventLike | undefined;
     if (override?._deleted) continue;
+    if (skipArchived(event.id)) continue;
     allEvents.push({
       id: event.id,
       status: (override?.status as string) ?? event.status,
@@ -57,6 +65,7 @@ function computeDevStats() {
   for (const evt of devCreatedEventsStore.values()) {
     const e = evt as unknown as EventLike;
     if (e._deleted) continue;
+    if (skipArchived(e.id)) continue;
     allEvents.push({
       id: e.id,
       status: e.status ?? "draft",
@@ -101,6 +110,7 @@ function computeDevStats() {
   let closedNoShow = 0;
 
   for (const [eventId, participants] of devLiveParticipantsStore.entries()) {
+    if (archivedIds.has(eventId)) continue;
     for (const p of participants) {
       const st = p.status ?? "registered";
       if (participationByStatus[st] !== undefined) participationByStatus[st]++;
