@@ -123,7 +123,8 @@ function isArchived(request: EventRequestRecord): boolean {
   return Boolean(request.archivedAt);
 }
 function isInInbox(request: EventRequestRecord): boolean {
-  return !isArchived(request) && !request.assignedToId;
+  // Anfragen mit Event sind erledigt — auch Altbestand ohne archivedAt bleibt aus dem Eingang
+  return !isArchived(request) && !request.assignedToId && !request.eventId;
 }
 function isInMailbox(request: EventRequestRecord, userId: string): boolean {
   return !isArchived(request) && request.assignedToId === userId && !request.eventId;

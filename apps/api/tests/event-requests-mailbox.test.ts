@@ -167,6 +167,11 @@ describe("Eventanfragen: Postfächer und Archiv", () => {
     expect(own.status).toBe(200);
   });
 
+  it("Altbestand mit Event, ohne Zuweisung und ohne archivedAt bleibt aus dem Eingang", async () => {
+    seed("alt-mit-event", { status: "approved", eventId: "evt-live" });
+    expect((await list(admin, "?view=inbox")).ids).toEqual(["neu"]);
+  });
+
   it("Weiterleiten verschiebt aus dem Eingang ins Postfach", async () => {
     expect((await patch(admin, "neu", { assignedToId: "werk-2" })).status).toBe(200);
     expect((await list(admin, "?view=inbox")).ids).toEqual([]);
