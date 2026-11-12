@@ -872,11 +872,10 @@ function buildIcs(input: {
 
 // Archiv (Spec 2026-11-10-archiv-design.md §1): nur Admin, umkehrbar, idempotent.
 // Schreibt ausschließlich das Override-Feld `_archived`, alle anderen Felder bleiben.
-function setEventArchived(c: Context, archived: boolean) {
+function setEventArchived(c: Context, id: string, archived: boolean) {
   if (env.DATABASE_URL) {
     return c.json({ error: { code: "NOT_SUPPORTED", message: "Archiv nur im Datei-Modus." } }, 501);
   }
-  const id = c.req.param("id");
   const base = findDevBaseEvent(id);
   const current = devEventOverrideStore.get(id) ?? {};
   if (!base || current._deleted === true) {
@@ -888,8 +887,12 @@ function setEventArchived(c: Context, archived: boolean) {
   });
 }
 
-eventRoutes.post("/:id/archive", requireMexpRole("admin"), (c) => setEventArchived(c, true));
-eventRoutes.post("/:id/unarchive", requireMexpRole("admin"), (c) => setEventArchived(c, false));
+eventRoutes.post("/:id/archive", requireMexpRole("admin"), (c) =>
+  setEventArchived(c, c.req.param("id"), true),
+);
+eventRoutes.post("/:id/unarchive", requireMexpRole("admin"), (c) =>
+  setEventArchived(c, c.req.param("id"), false),
+);
 
 // Event "löschen" — nur Admin. Dev-Mode: in Override-Store als hidden markieren.
 eventRoutes.delete("/:id", requireMexpRole("admin"), async (c) => {
