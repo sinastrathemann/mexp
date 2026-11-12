@@ -5,6 +5,8 @@ Alle nennenswerten Änderungen an mEXP. Format: [Keep a Changelog](https://keepa
 ## [Unreleased]
 
 ### Added
+- Archiv für Events: Admins archivieren und stellen wieder her; Eventliste mit Umschalter „Aktiv / Archiv“; OneNote-Termine liegen standardmäßig im Archiv; Dashboard zählt archivierte Events nicht.
+- Persönliche Postfächer für Eventanfragen: Eingang (Admin) → Weiterleiten → „Mein Postfach“; Admins sehen „Alle Postfächer“ und das Archiv. Event anlegen archiviert die Anfrage.
 - Anmelde-Formular: Häkchen „Teilnahme-Frage“ bei Ja/Nein-Fragen (bei „Bist du dabei?“ automatisch). Wer „Nein“ antwortet, steht in einer eigenen Liste „Nicht dabei“, zählt nicht als Teilnehmer:in und belegt keinen Platz; Änderung der Antwort stellt den Status um.
 - Anmelde-Formular: Häkchen „Antworten für alle sichtbar“ pro Frage. Die Antwort steht dann in der Teilnehmerliste in Klammern hinter dem Namen, z. B. „Anna (Hamburg)“, inklusive eigener Angabe bei „Andere“ (Freitext-Fragen bleiben intern). Wer „Nein“ bei der Teilnahme-Frage sagt, muss die übrigen Fragen nicht mehr beantworten.
 - Phase 0 Setup: Monorepo-Struktur (pnpm workspaces, apps/api + apps/web + packages/*)
@@ -25,6 +27,7 @@ Alle nennenswerten Änderungen an mEXP. Format: [Keep a Changelog](https://keepa
 - Event-Beschreibung mit Formatierung: fett, kursiv, unterstrichen, Textfarbe (Orange/Blau/Rot), Stichpunkte und nummerierte Listen mit Einrücken (Tab/Umschalt+Tab). Aus Word/Outlook kopierte Listen bleiben erhalten; Kalenderdatei bekommt reinen Text.
 
 ### Changed
+- Eventanfragen weiterleiten dürfen nur noch Admins. Team-Rollen sehen nur eigene und ihnen zugewiesene Anfragen.
 - Anmeldefenster: gekürzte Event-Beschreibung zeigt Formatierung schon vor „Mehr anzeigen“; leere Absätze bleiben in der Anzeige erhalten.
 - Ja/Nein-Fragen im Anmeldefenster zeigen „Ja“ / „Nein“ statt „Ja, bin dabei“.
 - Anmelde-Formular: Hinweis „Frage hat keinen Text“ erscheint erst, wenn die neue Frage verlassen wurde, nicht schon direkt nach dem Hinzufügen.
