@@ -33,6 +33,8 @@ export interface EventDto {
   endAt: string;
   // Uhrzeit steht noch nicht fest: nur das Datum anzeigen
   timeTbd?: boolean;
+  // Nur in GET /events/:id befüllt
+  archived?: boolean;
   location: string | null;
   // Zusatz-Infos zur Location: Adresse, Parkmöglichkeiten, Besonderheiten
   locationDetails?: string | null;
