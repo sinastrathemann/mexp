@@ -16,16 +16,18 @@ export default function EventsListPage() {
   const canCreate = hasRole("admin", "manager", "event_office", "werkstudent");
   const canManage = canCreate;
 
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showArchived, setShowArchived] = useState(false);
   const { data, isLoading, error } = useQuery({
-    queryKey: ["events", "list"],
-    queryFn: () => apiFetch<{ events: EventDto[] }>("/events"),
+    queryKey: ["events", "list", showArchived ? "archived" : "active"],
+    queryFn: () =>
+      apiFetch<{ events: EventDto[] }>(`/events${showArchived ? "?archived=true" : ""}`),
   });
 
   const allEvents = data?.events ?? [];
   const filters = useEventFilters(allEvents);
   const events = filters.filtered;
 
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const bulkMut = useMutation({
     mutationFn: (status: string) =>
       apiFetch("/events/bulk/status", {
@@ -46,7 +48,12 @@ export default function EventsListPage() {
     <div className="page">
       <div className="page-header">
         <div>
-          <div className="eyebrow">Events · {total.toString().padStart(2, "0")} aktiv</div>
+          <div className="eyebrow">
+            Events · {total.toString().padStart(2, "0")}{" "}
+            {showArchived
+              ? t("events.archived").toLowerCase()
+              : t("events.viewActive").toLowerCase()}
+          </div>
           <h1 className="page-title">{t("events.listTitle")}</h1>
           <p className="page-subtitle">
             Alle Events im Überblick — Coworking, Bereichsevents, Teamevents, Feelgood-Formate und
@@ -59,6 +66,28 @@ export default function EventsListPage() {
           </Link>
         )}
       </div>
+
+      {canManage && (
+        <div className="row" role="tablist" style={{ gap: 8, marginBottom: 16 }}>
+          {[false, true].map((archived) => (
+            <button
+              key={String(archived)}
+              type="button"
+              role="tab"
+              aria-selected={showArchived === archived}
+              className={
+                showArchived === archived ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm"
+              }
+              onClick={() => {
+                setShowArchived(archived);
+                setSelectedIds([]);
+              }}
+            >
+              {t(archived ? "events.viewArchive" : "events.viewActive")}
+            </button>
+          ))}
+        </div>
+      )}
 
       {data && allEvents.length > 0 && (
         <EventFilterBar filters={filters} total={allEvents.length} showStatus={canManage} />
@@ -133,7 +162,9 @@ export default function EventsListPage() {
           }}
         >
           <div className="bento-eyebrow">Noch nichts hier</div>
-          <h3 style={{ marginTop: "var(--space-3)" }}>{t("events.empty")}</h3>
+          <h3 style={{ marginTop: "var(--space-3)" }}>
+            {showArchived ? t("events.emptyArchive") : t("events.empty")}
+          </h3>
         </div>
       )}
 

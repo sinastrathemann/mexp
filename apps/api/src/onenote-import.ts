@@ -177,3 +177,8 @@ export function buildOneNoteImportedEvents(): OneNoteImportedEvent[] {
       };
     });
 }
+
+/** Gehört die ID zu einem fest im Code hinterlegten OneNote-Termin? (unabhängig vom Datum) */
+export function isOneNoteEventId(id: string): boolean {
+  return eventSourcePages.some((entry) => entry.id === id);
+}

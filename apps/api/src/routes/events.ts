@@ -25,11 +25,11 @@ import {
   canTransition,
   isEventStatus,
 } from "@mexp/domain";
-import { Hono } from "hono";
+import { type Context, Hono } from "hono";
 import { z } from "zod";
 import { events, audit, env, participations } from "../deps.js";
 import { persistentMap } from "../dev-persistence.js";
-import { buildOneNoteImportedEvents } from "../onenote-import.js";
+import { buildOneNoteImportedEvents, isOneNoteEventId } from "../onenote-import.js";
 import {
   type ExportParticipant,
   type ExportQuestion,
@@ -99,6 +99,7 @@ const transitionSchema = z.object({ status: eventStatusSchema });
 const listQuerySchema = z.object({
   status: eventStatusSchema.optional(),
   mine: z.enum(["true", "false"]).optional(),
+  archived: z.enum(["true", "false"]).optional(),
 });
 
 // Schreibrechte: anlegen + bearbeiten. Werkstudent dürfen mitarbeiten, aber NICHT löschen.
@@ -115,6 +116,22 @@ function applyOverride<T extends { id: string }>(event: T): T {
   const ov = devEventOverrideStore.get(event.id);
   if (!ov) return event;
   return { ...event, ...ov };
+}
+
+/**
+ * Zentrale Archiv-Regel (Spec 2026-11-10-archiv-design.md §1).
+ * - Override `_archived: true/false` gewinnt immer.
+ * - Fehlt das Feld: OneNote-Termine gelten als archiviert, alles andere als aktiv.
+ *   So bleiben Live-Events ohne jede Datenänderung sichtbar.
+ */
+export function isEventArchived(
+  eventId: string,
+  override: Record<string, unknown> | undefined,
+): boolean {
+  const flag = override?._archived;
+  if (flag === true) return true;
+  if (flag === false) return false;
+  return isOneNoteEventId(eventId);
 }
 
 // Dev-Mode (file-store — Design-Spec §3.4): Store für neu angelegte Events.
@@ -326,9 +343,11 @@ eventRoutes.get("/", zValidator("query", listQuerySchema), async (c) => {
     // Nicht-privilegierte User (Teilnehmer/Read-Only) sehen nur diese Status:
     const VISIBLE_STATUSES_FOR_PARTICIPANT = new Set(["planned", "open", "running"]);
 
+    const wantArchived = c.req.valid("query").archived === "true";
     const events = baseEvents
       .map(applyOverride)
       .filter((e) => (e as unknown as { _deleted?: boolean })._deleted !== true)
+      .filter((e) => isEventArchived(e.id, devEventOverrideStore.get(e.id)) === wantArchived)
       // Status-Filter: Teilnehmer sehen nur geplant/anmeldung-offen/läuft
       .filter((e) => {
         if (isPrivilegedRole) return true;
@@ -612,7 +631,9 @@ eventRoutes.get("/:id", async (c) => {
     if ((merged as { _deleted?: boolean })._deleted) {
       return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
     }
-    return c.json({ event: merged });
+    return c.json({
+      event: { ...merged, archived: isEventArchived(id, devEventOverrideStore.get(id)) },
+    });
   }
   const event = await getEvent(id, { events });
   return c.json({ event });
@@ -848,6 +869,30 @@ function buildIcs(input: {
     "END:VCALENDAR",
   ].join("\r\n");
 }
+
+// Archiv (Spec 2026-11-10-archiv-design.md §1): nur Admin, umkehrbar, idempotent.
+// Schreibt ausschließlich das Override-Feld `_archived`, alle anderen Felder bleiben.
+function setEventArchived(c: Context, id: string, archived: boolean) {
+  if (env.DATABASE_URL) {
+    return c.json({ error: { code: "NOT_SUPPORTED", message: "Archiv nur im Datei-Modus." } }, 501);
+  }
+  const base = findDevBaseEvent(id);
+  const current = devEventOverrideStore.get(id) ?? {};
+  if (!base || current._deleted === true) {
+    return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
+  }
+  devEventOverrideStore.set(id, { ...current, _archived: archived });
+  return c.json({
+    event: { ...applyOverride(base), archived: isEventArchived(id, { _archived: archived }) },
+  });
+}
+
+eventRoutes.post("/:id/archive", requireMexpRole("admin"), (c) =>
+  setEventArchived(c, c.req.param("id"), true),
+);
+eventRoutes.post("/:id/unarchive", requireMexpRole("admin"), (c) =>
+  setEventArchived(c, c.req.param("id"), false),
+);
 
 // Event "löschen" — nur Admin. Dev-Mode: in Override-Store als hidden markieren.
 eventRoutes.delete("/:id", requireMexpRole("admin"), async (c) => {

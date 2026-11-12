@@ -7,7 +7,7 @@ import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
 
 type RequestStatus = "submitted" | "in_review" | "approved" | "declined";
-type View = "new" | "mine" | "inbox" | "assigned";
+type View = "new" | "mine" | "inbox" | "assigned" | "allMailboxes" | "archive";
 type TimeOfDay = "day" | "evening";
 
 interface EventRequestDto {
@@ -155,20 +155,29 @@ export default function EventRequestsPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const canManage = hasRole("admin", "manager", "event_office", "werkstudent");
+  const isAdmin = hasRole("admin");
+  const canAssign = isAdmin;
   const [view, setView] = useState<View>("new");
+  const [mailboxOwner, setMailboxOwner] = useState("");
   const [form, setForm] = useState(EMPTY_FORM);
   const [formError, setFormError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const isTeamView = view === "inbox" || view === "assigned" || view === "allMailboxes";
 
-  const { user } = useAuth();
-  const canAssign = hasRole("admin", "manager", "event_office");
+  const requestUrl: Record<Exclude<View, "new">, string> = {
+    mine: "/event-requests?view=mine",
+    inbox: "/event-requests?view=inbox",
+    assigned: "/event-requests?view=assigned",
+    allMailboxes: `/event-requests?view=assigned&assignee=${encodeURIComponent(mailboxOwner)}`,
+    archive: "/event-requests?view=archive",
+  };
   const requestQuery = useQuery({
-    queryKey: ["event-requests", view === "assigned" ? "inbox" : view],
+    queryKey: ["event-requests", view, view === "allMailboxes" ? mailboxOwner : ""],
     queryFn: () =>
       apiFetch<{ requests: EventRequestDto[]; canManage: boolean }>(
-        view === "inbox" || view === "assigned" ? "/event-requests" : "/event-requests?mine=true",
+        requestUrl[view as Exclude<View, "new">],
       ),
-    enabled: view !== "new",
+    enabled: view !== "new" && (view !== "allMailboxes" || mailboxOwner !== ""),
   });
   const pendingQuery = useQuery({
     queryKey: ["event-requests", "pending-count"],
@@ -179,7 +188,7 @@ export default function EventRequestsPage() {
   const assigneesQuery = useQuery({
     queryKey: ["event-requests", "assignees"],
     queryFn: () => apiFetch<{ assignees: AssigneeDto[] }>("/event-requests/assignees"),
-    enabled: canAssign && (view === "inbox" || view === "assigned"),
+    enabled: canAssign && (isTeamView || view === "archive"),
     staleTime: 5 * 60_000,
   });
 
@@ -202,7 +211,7 @@ export default function EventRequestsPage() {
     mutationFn: ({
       id,
       ...patch
-    }: { id: string; status?: RequestStatus; assignedToId?: string | null }) =>
+    }: { id: string; status?: RequestStatus; assignedToId?: string | null; archived?: boolean }) =>
       apiFetch<{ request: EventRequestDto }>(`/event-requests/${id}`, {
         method: "PATCH",
         body: JSON.stringify(patch),
@@ -268,9 +277,7 @@ export default function EventRequestsPage() {
       dateStyle: "medium",
       timeZone: "UTC",
     });
-  const allRequests = requestQuery.data?.requests ?? [];
-  const requests =
-    view === "assigned" ? allRequests.filter((r) => r.assignedToId === user?.id) : allRequests;
+  const requests = requestQuery.data?.requests ?? [];
   const newInboxCount = pendingQuery.data?.submitted ?? 0;
   const assignedCount = pendingQuery.data?.assignedToMe ?? 0;
 
@@ -308,7 +315,7 @@ export default function EventRequestsPage() {
         >
           {t("eventRequests.myRequests")}
         </button>
-        {canManage && (
+        {isAdmin && (
           <button
             type="button"
             role="tab"
@@ -340,11 +347,45 @@ export default function EventRequestsPage() {
             )}
           </button>
         )}
+        {isAdmin &&
+          (["allMailboxes", "archive"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              role="tab"
+              aria-selected={view === v}
+              className={view === v ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm"}
+              onClick={() => setView(v)}
+            >
+              {t(v === "allMailboxes" ? "eventRequests.allMailboxes" : "eventRequests.archive")}
+            </button>
+          ))}
       </div>
 
-      {(view === "inbox" || view === "assigned") && newInboxCount > 0 && (
+      {isAdmin && isTeamView && newInboxCount > 0 && (
         <div className="alert alert-success" style={{ marginBottom: 16 }}>
           {t("eventRequests.newRequestPing", { count: newInboxCount })}
+        </div>
+      )}
+
+      {view === "allMailboxes" && (
+        <div className="field" style={{ marginBottom: 16, maxWidth: 320 }}>
+          <label className="label" htmlFor="mailbox-owner">
+            {t("eventRequests.mailboxOf")}
+          </label>
+          <select
+            id="mailbox-owner"
+            className="select"
+            value={mailboxOwner}
+            onChange={(event) => setMailboxOwner(event.target.value)}
+          >
+            <option value="">{t("eventRequests.chooseMailbox")}</option>
+            {(assigneesQuery.data?.assignees ?? []).map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.displayName}
+              </option>
+            ))}
+          </select>
         </div>
       )}
 
@@ -624,7 +665,15 @@ export default function EventRequestsPage() {
           )}
           {!requestQuery.isLoading && requests.length === 0 && (
             <div className="card" style={{ color: "var(--fg-muted)" }}>
-              {view === "inbox" ? t("eventRequests.emptyInbox") : t("eventRequests.emptyMine")}
+              {view === "inbox"
+                ? t("eventRequests.emptyInbox")
+                : view === "assigned" || view === "allMailboxes"
+                  ? view === "allMailboxes" && mailboxOwner === ""
+                    ? t("eventRequests.chooseMailbox")
+                    : t("eventRequests.emptyMailbox")
+                  : view === "archive"
+                    ? t("eventRequests.emptyArchive")
+                    : t("eventRequests.emptyMine")}
             </div>
           )}
           <div className="event-grid">
@@ -642,7 +691,7 @@ export default function EventRequestsPage() {
                 </div>
                 <h2 className="event-card-title">{request.occasion}</h2>
                 <div className="event-card-meta">
-                  {view === "inbox" && (
+                  {(isTeamView || view === "archive") && (
                     <MetaRow
                       label={t("eventRequests.requester")}
                       value={request.requesterName ?? request.requesterEmail ?? "—"}
@@ -665,7 +714,7 @@ export default function EventRequestsPage() {
                       .filter(Boolean)
                       .join(" · ")}
                   />
-                  {(view === "inbox" || view === "assigned") && (
+                  {(isTeamView || view === "archive") && (
                     <MetaRow
                       label={t("eventRequests.assignedTo")}
                       value={request.assignedToName ?? "—"}
@@ -723,7 +772,7 @@ export default function EventRequestsPage() {
                     <MetaRow label={t("eventRequests.notes")} value={request.notes || "—"} />
                   </div>
                 </details>
-                {(view === "inbox" || view === "assigned") && (
+                {isTeamView && (
                   <>
                     <div className="field" style={{ marginTop: "var(--space-3)" }}>
                       <label className="label" htmlFor={`request-status-${request.id}`}>
@@ -793,7 +842,42 @@ export default function EventRequestsPage() {
                         </button>
                       )}
                     </div>
+                    {isAdmin && (
+                      <div style={{ marginTop: "var(--space-2)" }}>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-sm"
+                          disabled={updateMutation.isPending}
+                          onClick={() => updateMutation.mutate({ id: request.id, archived: true })}
+                        >
+                          {t("eventRequests.archiveAction")}
+                        </button>
+                      </div>
+                    )}
                   </>
+                )}
+                {view === "archive" && (
+                  <div className="row" style={{ gap: 8, marginTop: "var(--space-3)" }}>
+                    {request.eventId && (
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-sm"
+                        onClick={() => navigate(`/events/${request.eventId}`)}
+                      >
+                        {t("eventRequests.openEvent")}
+                      </button>
+                    )}
+                    {!request.eventId && (
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-sm"
+                        disabled={updateMutation.isPending}
+                        onClick={() => updateMutation.mutate({ id: request.id, archived: false })}
+                      >
+                        {t("eventRequests.restoreAction")}
+                      </button>
+                    )}
+                  </div>
                 )}
               </article>
             ))}

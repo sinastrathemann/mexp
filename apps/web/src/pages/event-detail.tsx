@@ -96,6 +96,19 @@ export default function EventDetailPage() {
     },
   });
 
+  const archiveMut = useMutation({
+    mutationFn: (archive: boolean) =>
+      apiFetch<{ event: EventDto }>(`/events/${id}/${archive ? "archive" : "unarchive"}`, {
+        method: "POST",
+      }),
+    onSuccess: () => {
+      // Archivierte Events fehlen auch in den Dashboards
+      qc.invalidateQueries({ queryKey: ["events"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["my"] });
+    },
+  });
+
   if (isLoading) return <div className="page">{t("auth.loading")}</div>;
   if (error instanceof Error)
     return (
@@ -119,6 +132,7 @@ export default function EventDetailPage() {
           <h1 className="page-title">{event.title}</h1>
           <div className="row" style={{ marginTop: "var(--space-2)" }}>
             <EventStatusBadge status={event.status} />
+            {event.archived && <span className="badge badge-orange">{t("events.archived")}</span>}
             <span className="badge badge-muted">{t(`events.visibility.${event.visibility}`)}</span>
             {event.audienceScope === "teams" && (event.audienceTeams?.length ?? 0) > 0 && (
               <span className="badge badge-muted">
@@ -151,8 +165,27 @@ export default function EventDetailPage() {
               ✎ Bearbeiten
             </button>
           )}
+          {hasRole("admin") && (
+            <button
+              type="button"
+              className="btn btn-outline"
+              disabled={archiveMut.isPending}
+              onClick={() => {
+                if (event.archived) archiveMut.mutate(false);
+                else if (window.confirm(t("events.archiveConfirm"))) archiveMut.mutate(true);
+              }}
+            >
+              {event.archived ? t("events.restoreAction") : t("events.archiveAction")}
+            </button>
+          )}
         </div>
       </div>
+
+      {archiveMut.error instanceof Error && (
+        <div className="alert alert-error" style={{ marginBottom: "var(--space-3)" }}>
+          {archiveMut.error.message}
+        </div>
+      )}
 
       {(myStatus === "registered" || myStatus === "attended") && (
         <output className="registration-status registration-status--banner">

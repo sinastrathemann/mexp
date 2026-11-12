@@ -63,11 +63,18 @@ const updateRequestSchema = z
     // null = Zuweisung entfernen
     assignedToId: z.string().min(1).nullable().optional(),
     eventId: z.string().min(1).optional(),
+    // Archiv (nur Admin): true = archivieren, false = wiederherstellen
+    archived: z.boolean().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "Leeres Update." });
+const listQuerySchema = z.object({
+  view: z.enum(["inbox", "mine", "assigned", "archive"]).optional(),
+  mine: z.enum(["true", "false"]).optional(),
+  assignee: z.string().min(1).optional(),
+});
 const REQUEST_MANAGER_ROLES = ["admin", "manager", "event_office", "werkstudent"] as const;
-// Nur diese Rollen dürfen Anfragen an jemanden im Team weiterleiten.
-const REQUEST_ASSIGNER_ROLES = ["admin", "manager", "event_office"] as const;
+// Nur Admins leiten Anfragen an ein Postfach weiter (Spec 2026-11-10-archiv-design.md §2).
+const REQUEST_ASSIGNER_ROLES = ["admin"] as const;
 
 export type EventRequestStatus = z.infer<typeof eventRequestStatusSchema>;
 
@@ -100,6 +107,8 @@ export interface EventRequestRecord {
   assignedToName?: string | null;
   // Event, das aus dieser Anfrage angelegt wurde
   eventId?: string | null;
+  // Archiv: fehlt das Feld oder ist es null, ist die Anfrage aktiv (Altbestand bleibt sichtbar)
+  archivedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -109,6 +118,23 @@ export const eventRequestRoutes = new Hono();
 
 function hasAnyRole(roles: string[], allowed: readonly string[]): boolean {
   return roles.some((role) => allowed.includes(role));
+}
+function isArchived(request: EventRequestRecord): boolean {
+  return Boolean(request.archivedAt);
+}
+function isInArchive(request: EventRequestRecord): boolean {
+  // Archiv = archiviert oder bereits zu einem Event geworden (auch Altbestand ohne archivedAt)
+  return isArchived(request) || Boolean(request.eventId);
+}
+function isInInbox(request: EventRequestRecord): boolean {
+  // Anfragen mit Event sind erledigt — auch Altbestand ohne archivedAt bleibt aus dem Eingang
+  return !isArchived(request) && !request.assignedToId && !request.eventId;
+}
+function isInMailbox(request: EventRequestRecord, userId: string): boolean {
+  return !isArchived(request) && request.assignedToId === userId && !request.eventId;
+}
+function forbidden(message = "Keine Berechtigung.") {
+  return { error: { code: "FORBIDDEN", message } };
 }
 
 // Zähler für die Seitenleiste ("Ping"). Muss vor "/:id" stehen.
@@ -121,9 +147,9 @@ eventRequestRoutes.get("/pending-count", requireMexpRole(...REQUEST_MANAGER_ROLE
   let submitted = 0;
   let assignedToMe = 0;
   for (const request of eventRequestStore.values()) {
-    if (isAdmin && request.status === "submitted") submitted++;
+    if (isAdmin && isInInbox(request) && request.status === "submitted") submitted++;
     if (
-      request.assignedToId === userId &&
+      isInMailbox(request, userId) &&
       (request.status === "submitted" || request.status === "in_review")
     ) {
       assignedToMe++;
@@ -149,21 +175,44 @@ eventRequestRoutes.get("/:id", (c) => {
     return c.json({ error: { code: "NOT_FOUND", message: "Anfrage nicht gefunden." } }, 404);
   }
 
-  const canManage = hasAnyRole(resolveMexpRoles(c), REQUEST_MANAGER_ROLES);
-  if (request.requesterId !== user.id && !canManage) {
-    return c.json({ error: { code: "FORBIDDEN", message: "Keine Berechtigung." } }, 403);
+  const isAdmin = resolveMexpRoles(c).includes("admin");
+  if (request.requesterId !== user.id && request.assignedToId !== user.id && !isAdmin) {
+    return c.json(forbidden(), 403);
   }
 
   return c.json({ request });
 });
 
-eventRequestRoutes.get("/", (c) => {
+eventRequestRoutes.get("/", zValidator("query", listQuerySchema), (c) => {
   const user = getHubUser(c);
-  const canManage = hasAnyRole(resolveMexpRoles(c), REQUEST_MANAGER_ROLES);
-  const mineOnly = !canManage || c.req.query("mine") === "true";
-  const requests = Array.from(eventRequestStore.values())
-    .filter((request) => !mineOnly || request.requesterId === user.id)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const roles = resolveMexpRoles(c);
+  const canManage = hasAnyRole(roles, REQUEST_MANAGER_ROLES);
+  const isAdmin = roles.includes("admin");
+  const q = c.req.valid("query");
+  const view = q.view ?? (q.mine === "true" || !canManage ? "mine" : undefined);
+  const all = Array.from(eventRequestStore.values());
+
+  let requests: EventRequestRecord[];
+  if (view === "mine") {
+    // Antragstellende sehen ihre Anfragen immer, auch archivierte
+    requests = all.filter((r) => r.requesterId === user.id);
+  } else if (view === "inbox") {
+    if (!isAdmin) return c.json(forbidden(), 403);
+    requests = all.filter(isInInbox);
+  } else if (view === "archive") {
+    if (!isAdmin) return c.json(forbidden(), 403);
+    requests = all.filter(isInArchive);
+  } else if (view === "assigned") {
+    const assignee = q.assignee ?? user.id;
+    if (assignee !== user.id && !isAdmin) return c.json(forbidden(), 403);
+    requests = all.filter((r) => isInMailbox(r, assignee));
+  } else {
+    // Ohne view: Admin alles, Team-Rollen nur eigene + zugewiesene
+    requests = isAdmin
+      ? all
+      : all.filter((r) => r.requesterId === user.id || r.assignedToId === user.id);
+  }
+  requests.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   return c.json({ requests, canManage });
 });
 
@@ -198,15 +247,28 @@ eventRequestRoutes.patch(
       return c.json({ error: { code: "NOT_FOUND", message: "Anfrage nicht gefunden." } }, 404);
     }
     const input = c.req.valid("json");
-    const updated: EventRequestRecord = { ...request, updatedAt: new Date().toISOString() };
+    const user = getHubUser(c);
+    const isAdmin = resolveMexpRoles(c).includes("admin");
+    // Nicht-Admins bearbeiten nur Anfragen in ihrem Postfach
+    if (!isAdmin && request.assignedToId !== user.id) {
+      return c.json(forbidden(), 403);
+    }
+    if (input.archived !== undefined && !isAdmin) {
+      return c.json(forbidden("Nur Admins dürfen Anfragen archivieren."), 403);
+    }
+    const now = new Date().toISOString();
+    const updated: EventRequestRecord = { ...request, updatedAt: now };
     if (input.status) updated.status = input.status;
-    if (input.eventId) updated.eventId = input.eventId;
+    if (input.eventId) {
+      updated.eventId = input.eventId;
+      // Event angelegt → Anfrage verlässt das Postfach und liegt im Archiv
+      updated.archivedAt = updated.archivedAt ?? now;
+    }
+    if (input.archived === true) updated.archivedAt = updated.archivedAt ?? now;
+    if (input.archived === false) updated.archivedAt = null;
     if (input.assignedToId !== undefined) {
       if (!hasAnyRole(resolveMexpRoles(c), REQUEST_ASSIGNER_ROLES)) {
-        return c.json(
-          { error: { code: "FORBIDDEN", message: "Nur Admins dürfen Anfragen weiterleiten." } },
-          403,
-        );
+        return c.json(forbidden("Nur Admins dürfen Anfragen weiterleiten."), 403);
       }
       if (input.assignedToId === null) {
         updated.assignedToId = null;
