@@ -172,6 +172,18 @@ describe("Eventanfragen: Postfächer und Archiv", () => {
     expect((await list(admin, "?view=inbox")).ids).toEqual(["neu"]);
   });
 
+  it("Altbestand mit Event, unzugewiesen, ohne archivedAt erscheint im Archiv", async () => {
+    seed("alt-mit-event", { status: "approved", eventId: "evt-live" });
+    expect((await list(admin, "?view=archive")).ids).toEqual(["alt-mit-event"]);
+  });
+
+  it("Wiederherstellen einer Anfrage mit Event: bleibt im Archiv, nicht im Eingang", async () => {
+    expect((await patch(admin, "neu", { eventId: "evt-x" })).status).toBe(200);
+    expect((await patch(admin, "neu", { archived: false })).status).toBe(200);
+    expect((await list(admin, "?view=archive")).ids).toEqual(["neu"]);
+    expect((await list(admin, "?view=inbox")).ids).toEqual([]);
+  });
+
   it("Weiterleiten verschiebt aus dem Eingang ins Postfach", async () => {
     expect((await patch(admin, "neu", { assignedToId: "werk-2" })).status).toBe(200);
     expect((await list(admin, "?view=inbox")).ids).toEqual([]);

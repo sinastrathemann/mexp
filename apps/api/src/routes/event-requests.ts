@@ -122,6 +122,10 @@ function hasAnyRole(roles: string[], allowed: readonly string[]): boolean {
 function isArchived(request: EventRequestRecord): boolean {
   return Boolean(request.archivedAt);
 }
+function isInArchive(request: EventRequestRecord): boolean {
+  // Archiv = archiviert oder bereits zu einem Event geworden (auch Altbestand ohne archivedAt)
+  return isArchived(request) || Boolean(request.eventId);
+}
 function isInInbox(request: EventRequestRecord): boolean {
   // Anfragen mit Event sind erledigt — auch Altbestand ohne archivedAt bleibt aus dem Eingang
   return !isArchived(request) && !request.assignedToId && !request.eventId;
@@ -197,7 +201,7 @@ eventRequestRoutes.get("/", zValidator("query", listQuerySchema), (c) => {
     requests = all.filter(isInInbox);
   } else if (view === "archive") {
     if (!isAdmin) return c.json(forbidden(), 403);
-    requests = all.filter(isArchived);
+    requests = all.filter(isInArchive);
   } else if (view === "assigned") {
     const assignee = q.assignee ?? user.id;
     if (assignee !== user.id && !isAdmin) return c.json(forbidden(), 403);

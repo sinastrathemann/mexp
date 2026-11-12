@@ -668,8 +668,12 @@ export default function EventRequestsPage() {
               {view === "inbox"
                 ? t("eventRequests.emptyInbox")
                 : view === "assigned" || view === "allMailboxes"
-                  ? t("eventRequests.emptyMailbox")
-                  : t("eventRequests.emptyMine")}
+                  ? view === "allMailboxes" && mailboxOwner === ""
+                    ? t("eventRequests.chooseMailbox")
+                    : t("eventRequests.emptyMailbox")
+                  : view === "archive"
+                    ? t("eventRequests.emptyArchive")
+                    : t("eventRequests.emptyMine")}
             </div>
           )}
           <div className="event-grid">
@@ -863,14 +867,16 @@ export default function EventRequestsPage() {
                         {t("eventRequests.openEvent")}
                       </button>
                     )}
-                    <button
-                      type="button"
-                      className="btn btn-outline btn-sm"
-                      disabled={updateMutation.isPending}
-                      onClick={() => updateMutation.mutate({ id: request.id, archived: false })}
-                    >
-                      {t("eventRequests.restoreAction")}
-                    </button>
+                    {!request.eventId && (
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-sm"
+                        disabled={updateMutation.isPending}
+                        onClick={() => updateMutation.mutate({ id: request.id, archived: false })}
+                      >
+                        {t("eventRequests.restoreAction")}
+                      </button>
+                    )}
                   </div>
                 )}
               </article>

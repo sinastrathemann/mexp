@@ -50,7 +50,9 @@ export default function EventsListPage() {
         <div>
           <div className="eyebrow">
             Events · {total.toString().padStart(2, "0")}{" "}
-            {showArchived ? t("events.archived").toLowerCase() : "aktiv"}
+            {showArchived
+              ? t("events.archived").toLowerCase()
+              : t("events.viewActive").toLowerCase()}
           </div>
           <h1 className="page-title">{t("events.listTitle")}</h1>
           <p className="page-subtitle">
@@ -160,7 +162,9 @@ export default function EventsListPage() {
           }}
         >
           <div className="bento-eyebrow">Noch nichts hier</div>
-          <h3 style={{ marginTop: "var(--space-3)" }}>{t("events.empty")}</h3>
+          <h3 style={{ marginTop: "var(--space-3)" }}>
+            {showArchived ? t("events.emptyArchive") : t("events.empty")}
+          </h3>
         </div>
       )}
 
