@@ -188,6 +188,13 @@
     "newRequest": "Anfrage stellen",
     "myRequests": "Meine Anfragen",
     "inbox": "Eingang",
+    "allMailboxes": "Alle Postfächer",
+    "mailboxOf": "Postfach von",
+    "chooseMailbox": "Person wählen …",
+    "archive": "Archiv",
+    "archiveAction": "Archivieren",
+    "restoreAction": "Wiederherstellen",
+    "emptyMailbox": "Keine Anfragen in diesem Postfach.",
     "category": "Kategorie",
     "chooseCategory": "Bitte wählen",
     "categories": {
@@ -239,7 +246,7 @@
       "approved": "Genehmigt",
       "declined": "Abgelehnt"
     },
-    "assignedToMe": "Mir zugewiesen",
+    "assignedToMe": "Mein Postfach",
     "assignedTo": "Zugewiesen an",
     "forwardTo": "Weiterleiten an",
     "notAssigned": "— nicht zugewiesen —",

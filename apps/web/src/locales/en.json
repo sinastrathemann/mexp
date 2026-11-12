@@ -188,6 +188,13 @@
     "newRequest": "New request",
     "myRequests": "My requests",
     "inbox": "Inbox",
+    "allMailboxes": "All mailboxes",
+    "mailboxOf": "Mailbox of",
+    "chooseMailbox": "Choose person …",
+    "archive": "Archive",
+    "archiveAction": "Archive",
+    "restoreAction": "Restore",
+    "emptyMailbox": "No requests in this mailbox.",
     "category": "Category",
     "chooseCategory": "Choose a category",
     "categories": {
@@ -239,7 +246,7 @@
       "approved": "Approved",
       "declined": "Declined"
     },
-    "assignedToMe": "Assigned to me",
+    "assignedToMe": "My mailbox",
     "assignedTo": "Assigned to",
     "forwardTo": "Forward to",
     "notAssigned": "— not assigned —",
