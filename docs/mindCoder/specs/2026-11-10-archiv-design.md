@@ -9,8 +9,8 @@ Test- und Altdaten verschwinden nicht, sondern landen in einem umkehrbaren Archi
 
 ## Harte Randbedingung: Live-Daten
 
-mEXP ist produktiv. Das Feelgood-Event und die Anfrage „YPP Revival“ (Vanessa)
-sind Live-Daten und dürfen sich nicht verändern.
+mEXP ist produktiv. Das Feelgood-Event, die Anfrage „YPP Revival“ (Vanessa) und
+das von Saskia Rüter angelegte Event „5-jähriges Jubiläum“ sind Live-Daten und dürfen sich nicht verändern.
 
 - Es gibt **kein** Schema- oder Datenmigrations-Skript.
 - Das Archiv ist ein **zusätzliches, optionales Kennzeichen**. Fehlt es, gilt der
@@ -145,5 +145,5 @@ Fehlt es oder ist es `null`, ist die Anfrage aktiv.
   das Postfach einer Person.
 
 **Manueller Check vor dem Deploy:** lokal mit einer Kopie der Live-JSON-Dateien
-starten, falls verfügbar. Das Feelgood-Event und „YPP Revival“ müssen unverändert
+starten, falls verfügbar. Das Feelgood-Event, „YPP Revival“ und Saskia Rüters Event müssen unverändert
 erscheinen.
