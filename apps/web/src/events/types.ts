@@ -36,6 +36,8 @@ export interface EventDto {
   timeTbd?: boolean;
   // Nur in GET /events/:id befüllt
   archived?: boolean;
+  // Anmeldung vom Event-Team manuell geschlossen (Phase bleibt "open")
+  registrationClosed?: boolean;
   location: string | null;
   // Zusatz-Infos zur Location: Adresse, Parkmöglichkeiten, Besonderheiten
   locationDetails?: string | null;

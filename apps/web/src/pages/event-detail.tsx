@@ -16,6 +16,7 @@ import { ParticipantsPanel } from "../events/participants-panel";
 import { PhaseBar } from "../events/phase-bar";
 import { PlanMetaCard } from "../events/plan-meta-card";
 import { RegistrationFormPanel } from "../events/registration-form-panel";
+import { registrationState } from "../events/registration-state";
 import { EventStatusBadge } from "../events/status-badge";
 import { TaskChecklist } from "../events/task-checklist";
 import { TenderPanel } from "../events/tender-panel";
@@ -240,6 +241,10 @@ export default function EventDetailPage() {
           <PhaseBar
             status={event.status}
             pending={transitionMut.isPending}
+            registrationClosed={
+              registrationState(event) === "closed_manual" ||
+              registrationState(event) === "closed_deadline"
+            }
             onTransition={(status) => transitionMut.mutate(status)}
           />
           {transitionMut.error instanceof Error && (

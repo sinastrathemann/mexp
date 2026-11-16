@@ -9,6 +9,7 @@ import { AddParticipantModal } from "./add-participant-modal";
 import { withOther } from "./answer-utils";
 import { publicAnswerText } from "./public-answers";
 import { RegistrationModal } from "./registration-modal";
+import { isInactive, orderParticipants, registrationState } from "./registration-state";
 import type {
   EventDto,
   ParticipantDto,
@@ -38,6 +39,10 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const qc = useQueryClient();
   const canManage = hasRole("admin", "manager", "event_office", "werkstudent");
   const registrationOpen = event.status === "open";
+  // Frist abgelaufen oder vom Event-Team geschlossen (Feedback-Runde 4)
+  const regState = registrationState(event);
+  const closedReason =
+    regState === "closed_manual" ? "manual" : regState === "closed_deadline" ? "deadline" : null;
   const [modalOpen, setModalOpen] = useState(false);
   const [addParticipantOpen, setAddParticipantOpen] = useState(false);
   const [editing, setEditing] = useState<ParticipantDto | null>(null);
@@ -143,6 +148,17 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
     },
   });
 
+  const closeMut = useMutation({
+    mutationFn: (closed: boolean) =>
+      apiFetch<{ event: EventDto }>(`/events/${event.id}/registration-closed`, {
+        method: "PUT",
+        body: JSON.stringify({ closed }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["events"] });
+    },
+  });
+
   const participants = participantsQ.data?.participants ?? [];
   const ownFromList = user ? participants.find((p) => p.userId === user.id) : undefined;
   const ownFromSelf = myParticipationQ.data?.participation ?? undefined;
@@ -156,8 +172,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
   const wantsRegistration = searchParams.get("anmelden") === "1";
   const sectionRef = useRef<HTMLElement>(null);
   const ownLoaded = canManage ? participantsQ.isSuccess : myParticipationQ.isSuccess;
-  const deadlineOpen =
-    !event.registrationDeadline || new Date(event.registrationDeadline).getTime() >= Date.now();
+  const deadlineOpen = closedReason === null;
   useEffect(() => {
     if (!wantsRegistration || !ownLoaded || !formQ.isSuccess) return;
     const alreadyIn = own && own.status !== "cancelled";
@@ -204,15 +219,18 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
     .map((p) => ({ id: p.id, name: p.userDisplayName }));
 
   const [searchTerm, setSearchTerm] = useState("");
-  const filteredParticipants = searchTerm.trim()
-    ? participants.filter((p) => {
-        const q = searchTerm.toLowerCase();
-        return (
-          p.userDisplayName.toLowerCase().includes(q) ||
-          (p.userEmail ?? "").toLowerCase().includes(q)
-        );
-      })
-    : participants;
+  const filteredParticipants = orderParticipants(
+    searchTerm.trim()
+      ? participants.filter((p) => {
+          const q = searchTerm.toLowerCase();
+          return (
+            p.userDisplayName.toLowerCase().includes(q) ||
+            (p.userEmail ?? "").toLowerCase().includes(q)
+          );
+        })
+      : participants,
+  );
+  const firstInactiveIndex = filteredParticipants.findIndex((p) => isInactive(p.status));
 
   const fmtDate = (iso: string) =>
     new Date(iso).toLocaleString(i18n.language === "de" ? "de-DE" : "en-US", {
@@ -236,12 +254,20 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
         {event.capacity !== null && ` / ${event.capacity}`}
         {waitlistCount > 0 && ` · ${t("participants.waitlistCount", { count: waitlistCount })}`}
         {attendedCount > 0 && ` · ${t("participants.attendedCount", { count: attendedCount })}`}
-        {noShowCount > 0 && ` · ${t("participants.noShowCount", { count: noShowCount })}`}
-        {declinedCount > 0 && ` · ${t("participants.declinedCount", { count: declinedCount })}`}
-        {canManage &&
-          cancelledCount > 0 &&
-          ` · ${t("participants.cancelledCount", { count: cancelledCount })}`}
       </p>
+      {(declinedCount > 0 || noShowCount > 0 || (canManage && cancelledCount > 0)) && (
+        <p className="muted text-sm" style={{ marginTop: 0 }}>
+          {[
+            declinedCount > 0 && t("participants.declinedCount", { count: declinedCount }),
+            canManage &&
+              cancelledCount > 0 &&
+              t("participants.cancelledCount", { count: cancelledCount }),
+            noShowCount > 0 && t("participants.noShowCount", { count: noShowCount }),
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+      )}
 
       {!canManage && (visibleParticipants.length > 0 || declinedNames.length > 0) && (
         <div className="participant-list-box">
@@ -269,7 +295,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
       <SelfActions
         registrationOpen={registrationOpen}
         eventStatus={event.status}
-        registrationDeadline={event.registrationDeadline ?? null}
+        closedReason={closedReason}
         own={ownForSelfActions}
         registerPending={registerMut.isPending}
         withdrawPending={withdrawMut.isPending}
@@ -353,6 +379,30 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
             >
               {t("participants.addParticipant")}
             </button>
+            {event.status === "open" && (
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                disabled={closeMut.isPending}
+                onClick={() => {
+                  const closing = event.registrationClosed !== true;
+                  if (
+                    window.confirm(
+                      t(
+                        closing
+                          ? "participants.confirmCloseRegistration"
+                          : "participants.confirmReopenRegistration",
+                      ),
+                    )
+                  )
+                    closeMut.mutate(closing);
+                }}
+              >
+                {event.registrationClosed === true
+                  ? t("participants.reopenRegistration")
+                  : t("participants.closeRegistration")}
+              </button>
+            )}
             <a
               href={withBasePath(`/api/events/${event.id}/participants.xlsx`)}
               className="btn btn-outline btn-sm"
@@ -372,6 +422,16 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
               </button>
             )}
           </div>
+          {regState === "closed_deadline" && event.registrationClosed !== true && (
+            <p className="muted text-sm" style={{ marginTop: "var(--space-2)" }}>
+              {t("participants.deadlinePassedHint")}
+            </p>
+          )}
+          {closeMut.error instanceof Error && (
+            <div className="alert alert-error" style={{ marginTop: "var(--space-2)" }}>
+              {closeMut.error.message}
+            </div>
+          )}
           {editMut.error instanceof Error && !editing && (
             <div className="alert alert-error" style={{ marginTop: "var(--space-2)" }}>
               {editMut.error.message}
@@ -428,16 +488,31 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredParticipants.map((p, index) => (
+                    {filteredParticipants.flatMap((p, index) => [
+                      ...(index === firstInactiveIndex
+                        ? [
+                            <tr key="inactive-divider" className="row-divider">
+                              <td colSpan={questions.length > 0 ? 8 : 7}>
+                                {t("participants.inactiveSection", {
+                                  count: filteredParticipants.length - firstInactiveIndex,
+                                })}
+                              </td>
+                            </tr>,
+                          ]
+                        : []),
                       <tr
                         key={p.id}
                         className={
                           p.status === "cancelled" || p.status === "no_show"
                             ? "row-cancelled"
-                            : undefined
+                            : p.status === "declined"
+                              ? "row-declined"
+                              : undefined
                         }
                       >
-                        <td className="muted text-mono">{index + 1}</td>
+                        <td className="muted text-mono">
+                          {isInactive(p.status) ? "–" : index + 1}
+                        </td>
                         <td className="text-bold" style={{ whiteSpace: "nowrap" }}>
                           {p.userDisplayName}
                           <button
@@ -467,7 +542,9 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
                               minWidth: 170,
                               ...(p.status === "cancelled" || p.status === "no_show"
                                 ? { color: "#b42318", borderColor: "#b42318", fontWeight: 600 }
-                                : {}),
+                                : p.status === "declined"
+                                  ? { color: "#b54708", borderColor: "#b54708", fontWeight: 600 }
+                                  : {}),
                             }}
                           >
                             {STAFF_STATUSES.map((st) => (
@@ -500,8 +577,8 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
                             <span className="muted text-xs">—</span>
                           )}
                         </td>
-                      </tr>
-                    ))}
+                      </tr>,
+                    ])}
                   </tbody>
                 </table>
               </>
@@ -540,7 +617,7 @@ function ParticipantNameList({
 interface SelfActionsProps {
   registrationOpen: boolean;
   eventStatus: string;
-  registrationDeadline: string | null;
+  closedReason: "manual" | "deadline" | null;
   own: ParticipationDto | undefined;
   registerPending: boolean;
   withdrawPending: boolean;
@@ -556,7 +633,7 @@ function SelfActions(props: SelfActionsProps) {
   const {
     registrationOpen,
     eventStatus,
-    registrationDeadline,
+    closedReason,
     own,
     registerPending,
     withdrawPending,
@@ -567,9 +644,11 @@ function SelfActions(props: SelfActionsProps) {
     onEdit,
   } = props;
 
-  const deadlinePassed = registrationDeadline
-    ? new Date(registrationDeadline).getTime() < Date.now()
-    : false;
+  const deadlinePassed = closedReason !== null;
+  const closedText =
+    closedReason === "manual"
+      ? t("participants.closedByTeam")
+      : "Die Anmeldefrist ist abgelaufen — eine Anmeldung ist nicht mehr möglich.";
 
   const ownActive =
     own &&
@@ -653,17 +732,12 @@ function SelfActions(props: SelfActionsProps) {
           Anmeldung geschlossen
         </span>
         <div>
-          <button
-            type="button"
-            disabled
-            className="btn btn-primary"
-            title="Die Anmeldefrist für dieses Event ist abgelaufen."
-          >
+          <button type="button" disabled className="btn btn-primary" title={closedText}>
             {t("participants.register")}
           </button>
         </div>
         <p className="muted" style={{ marginTop: 8 }}>
-          Die Anmeldefrist ist abgelaufen — eine Anmeldung ist nicht mehr möglich.
+          {closedText}
         </p>
       </div>
     );
