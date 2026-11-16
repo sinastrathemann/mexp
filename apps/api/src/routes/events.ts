@@ -429,6 +429,8 @@ eventRoutes.get("/", zValidator("query", listQuerySchema), async (c) => {
         return {
           ...e,
           registrationClosed: isRegistrationManuallyClosed(devEventOverrideStore.get(e.id)),
+          // Nur gelesen aus Plan-Meta (Runde 5) — Teilnehmer bekommen Projekte gar nicht erst
+          kind: isProject(e.id) ? "project" : "event",
           registeredCount: participants.filter(
             (p) => p.status === "registered" || p.status === "attended",
           ).length,
@@ -682,6 +684,7 @@ eventRoutes.get("/:id", async (c) => {
         ...merged,
         archived: isEventArchived(id, devEventOverrideStore.get(id)),
         registrationClosed: isRegistrationManuallyClosed(devEventOverrideStore.get(id)),
+        kind: isProject(id) ? "project" : "event",
       },
     });
   }

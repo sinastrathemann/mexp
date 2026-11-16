@@ -38,6 +38,8 @@ export interface EventDto {
   archived?: boolean;
   // Anmeldung vom Event-Team manuell geschlossen (Phase bleibt "open")
   registrationClosed?: boolean;
+  /** Runde 5: internes Projekt statt Event (nur fürs Team relevant). Fehlt → Event. */
+  kind?: "event" | "project";
   location: string | null;
   // Zusatz-Infos zur Location: Adresse, Parkmöglichkeiten, Besonderheiten
   locationDetails?: string | null;

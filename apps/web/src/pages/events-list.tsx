@@ -6,6 +6,7 @@ import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
 import { formatEventDate } from "../events/event-date";
 import { EventFilterBar, useEventFilters } from "../events/event-filters";
+import { eventTypeLabel } from "../events/event-type-label";
 import { EventStatusBadge } from "../events/status-badge";
 import { EVENT_STATUSES, type EventDto } from "../events/types";
 
@@ -189,7 +190,7 @@ export default function EventsListPage() {
                 />
               )}
               <div className="event-card-head">
-                <span className="event-card-type">{t(`events.type.${e.eventType}`)}</span>
+                <span className="event-card-type">{eventTypeLabel(e, t)}</span>
                 <EventStatusBadge status={e.status} />
               </div>
 

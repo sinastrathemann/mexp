@@ -48,6 +48,7 @@ export function PlanMetaCard({ event }: { event: EventDto }) {
       qc.setQueryData(metaKey, res);
       // Event/Projekt wirkt auf Listen, Jahresplanung und Teilnehmersicht
       qc.invalidateQueries({ queryKey: ["year-plan"] });
+      qc.invalidateQueries({ queryKey: ["events"] });
       setEditing(false);
     },
   });

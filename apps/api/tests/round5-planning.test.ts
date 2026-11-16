@@ -142,7 +142,13 @@ describe("Event oder Projekt", () => {
 
     const listTeam = await (await app().request("/api/events", { headers: team() })).json();
     expect(ownIds(listTeam.events)).toEqual(["e1", "p1"]);
-    expect((await app().request("/api/events/p1", { headers: team() })).status).toBe(200);
+    const kinds = Object.fromEntries(
+      listTeam.events.map((e: { id: string; kind: string }) => [e.id, e.kind]),
+    );
+    expect(kinds).toMatchObject({ e1: "event", p1: "project" });
+    const detail = await app().request("/api/events/p1", { headers: team() });
+    expect(detail.status).toBe(200);
+    expect((await detail.json()).event.kind).toBe("project");
   });
 
   it("Teilnehmer dürfen Plan-Meta nicht lesen", async () => {

@@ -11,6 +11,7 @@ import { DocumentsPanel } from "../events/documents-panel";
 import { EventContentCard } from "../events/event-content-card";
 import { formatEventDate } from "../events/event-date";
 import { EventEditModal } from "../events/event-edit-modal";
+import { eventTypeLabel } from "../events/event-type-label";
 import { FeedbackPanel } from "../events/feedback-panel";
 import { KeyFiguresCard } from "../events/key-figures-card";
 import { ParticipantsPanel } from "../events/participants-panel";
@@ -131,7 +132,7 @@ export default function EventDetailPage() {
       </Link>
       <div className="page-header" style={{ marginTop: "var(--space-3)" }}>
         <div>
-          <div className="eyebrow">{t(`events.type.${event.eventType}`)}</div>
+          <div className="eyebrow">{eventTypeLabel(event, t)}</div>
           <h1 className="page-title">{event.title}</h1>
           <div className="row" style={{ marginTop: "var(--space-2)" }}>
             <EventStatusBadge status={event.status} />
