@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { EventTaskDto } from "./project-plan-types";
-import { isOverdue, sortBlueprintTasks, sortTasks, taskProgress, todayIso } from "./task-utils";
+import { isOverdue, moveTask, sortTasks, taskProgress, todayIso } from "./task-utils";
 
 function task(id: string, over: Partial<EventTaskDto> = {}): EventTaskDto {
   return {
@@ -16,6 +16,7 @@ function task(id: string, over: Partial<EventTaskDto> = {}): EventTaskDto {
     doneAt: null,
     createdBy: "u",
     createdAt: "2026-10-01T00:00:00.000Z",
+    priority: "medium",
     ...over,
   };
 }
@@ -92,27 +93,38 @@ describe("todayIso", () => {
   });
 });
 
-describe("sortBlueprintTasks", () => {
-  const bt = (title: string, daysBefore: number | null) => ({
-    title,
-    daysBefore,
-    linkLabel: null,
-    linkUrl: null,
+describe("sortTasks nach Priorität und eigener Reihenfolge", () => {
+  it("Priorität: hoch vor mittel vor niedrig, innerhalb nach Fälligkeit, erledigte zuletzt", () => {
+    const sorted = sortTasks(
+      [
+        task("low", { priority: "low", dueDate: "2026-01-01" }),
+        task("doneHigh", { priority: "high", done: true }),
+        task("med", { priority: "medium" }),
+        task("highLate", { priority: "high", dueDate: "2026-12-01" }),
+        task("highEarly", { priority: "high", dueDate: "2026-11-01" }),
+      ],
+      "priority",
+    );
+    expect(sorted.map((t) => t.id)).toEqual(["highEarly", "highLate", "med", "low", "doneHigh"]);
   });
-  it("früheste Fälligkeit (meiste Tage vorher) zuerst, ohne Frist zuletzt, sonst stabil", () => {
-    const sorted = sortBlueprintTasks([
-      bt("ohne", null),
-      bt("1 Tag", 1),
-      bt("30 Tage", 30),
-      bt("7 Tage a", 7),
-      bt("7 Tage b", 7),
-    ]);
-    expect(sorted.map((t) => t.title)).toEqual([
-      "30 Tage",
-      "7 Tage a",
-      "7 Tage b",
-      "1 Tag",
-      "ohne",
-    ]);
+  it("eigene Reihenfolge: gespeicherte Reihenfolge, erledigte zuletzt", () => {
+    const sorted = sortTasks(
+      [task("c", { dueDate: "2026-01-01" }), task("done", { done: true }), task("a"), task("b")],
+      "manual",
+    );
+    expect(sorted.map((t) => t.id)).toEqual(["c", "a", "b", "done"]);
+  });
+});
+
+describe("moveTask", () => {
+  const list = [task("a"), task("b"), task("c"), task("d", { done: true })];
+  it("tauscht mit dem Nachbarn und liefert die vollständige id-Liste", () => {
+    expect(moveTask(list, "b", -1)).toEqual(["b", "a", "c", "d"]);
+    expect(moveTask(list, "b", 1)).toEqual(["a", "c", "b", "d"]);
+  });
+  it("am Rand oder über die Grenze offen/erledigt hinweg: null", () => {
+    expect(moveTask(list, "a", -1)).toBeNull();
+    expect(moveTask(list, "c", 1)).toBeNull();
+    expect(moveTask(list, "x", 1)).toBeNull();
   });
 });

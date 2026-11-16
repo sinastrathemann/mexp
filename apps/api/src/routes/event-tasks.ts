@@ -5,11 +5,13 @@ import { Hono } from "hono";
 import { z } from "zod";
 import {
   type EventTask,
+  TASK_PRIORITIES,
   TEAM_ROLES,
   eventTaskStore,
   httpsUrlSchema,
   linkLabelSchema,
   taskTitleSchema,
+  withTaskDefaults,
 } from "../project-plan/model.js";
 import { mexpUserStore, requireMexpRole } from "./_user-resolution.js";
 
@@ -34,16 +36,20 @@ const createSchema = z
     title: taskTitleSchema,
     dueDate: dateSchema.nullable().optional(),
     assigneeId: z.string().min(1).nullable().optional(),
+    priority: z.enum(TASK_PRIORITIES).optional(),
     linkLabel: linkLabelSchema.nullable().optional(),
     linkUrl: httpsUrlSchema.nullable().optional(),
   })
   .refine(linkPairOk, linkPairMessage);
+
+const orderSchema = z.object({ ids: z.array(z.string().min(1)).max(MAX_TASKS_PER_EVENT) });
 
 const updateSchema = z
   .object({
     title: taskTitleSchema.optional(),
     dueDate: dateSchema.nullable().optional(),
     assigneeId: z.string().min(1).nullable().optional(),
+    priority: z.enum(TASK_PRIORITIES).optional(),
     linkLabel: linkLabelSchema.nullable().optional(),
     linkUrl: httpsUrlSchema.nullable().optional(),
     done: z.boolean().optional(),
@@ -72,7 +78,7 @@ const notFound = { error: { code: "NOT_FOUND", message: "Aufgabe nicht gefunden.
 export const eventTaskRoutes = new Hono();
 
 eventTaskRoutes.get("/events/:eventId/tasks", requireMexpRole(...TEAM_ROLES), (c) =>
-  c.json({ tasks: eventTaskStore.get(c.req.param("eventId")) ?? [] }),
+  c.json({ tasks: (eventTaskStore.get(c.req.param("eventId")) ?? []).map(withTaskDefaults) }),
 );
 
 eventTaskRoutes.get("/task-assignees", requireMexpRole(...TEAM_ROLES), (c) => {
@@ -105,6 +111,7 @@ eventTaskRoutes.post(
       id: randomUUID(),
       title: input.title,
       dueDate: input.dueDate ?? null,
+      priority: input.priority ?? "medium",
       assigneeId: assignee?.id ?? null,
       assigneeName: assignee?.displayName ?? null,
       linkLabel: input.linkLabel ?? null,
@@ -116,7 +123,7 @@ eventTaskRoutes.post(
       createdAt: new Date().toISOString(),
     };
     eventTaskStore.set(eventId, [...(eventTaskStore.get(eventId) ?? []), task]);
-    return c.json({ task }, 201);
+    return c.json({ task: withTaskDefaults(task) }, 201);
   },
 );
 
@@ -133,6 +140,7 @@ eventTaskRoutes.patch(
     const updated: EventTask = { ...current };
     if (input.title !== undefined) updated.title = input.title;
     if (input.dueDate !== undefined) updated.dueDate = input.dueDate;
+    if (input.priority !== undefined) updated.priority = input.priority;
     if (input.linkLabel !== undefined) updated.linkLabel = input.linkLabel;
     if (input.linkUrl !== undefined) updated.linkUrl = input.linkUrl;
     // Link nur komplett: Teilupdates (nur Text oder nur URL) dürfen keinen halben Link hinterlassen.
@@ -162,7 +170,39 @@ eventTaskRoutes.patch(
       eventId,
       tasks.map((t) => (t.id === updated.id ? updated : t)),
     );
-    return c.json({ task: updated });
+    return c.json({ task: withTaskDefaults(updated) });
+  },
+);
+
+// Manuelle Reihenfolge: ids muss genau die vorhandenen Aufgaben enthalten (jede einmal).
+// Geändert wird nur die Reihenfolge im Array, nicht die Aufgaben selbst.
+eventTaskRoutes.put(
+  "/events/:eventId/tasks/order",
+  requireMexpRole(...TEAM_ROLES),
+  zValidator("json", orderSchema),
+  (c) => {
+    const eventId = c.req.param("eventId");
+    const tasks = eventTaskStore.get(eventId) ?? [];
+    const { ids } = c.req.valid("json");
+    const byId = new Map(tasks.map((t) => [t.id, t]));
+    if (
+      ids.length !== tasks.length ||
+      new Set(ids).size !== ids.length ||
+      ids.some((id) => !byId.has(id))
+    ) {
+      return c.json(
+        {
+          error: {
+            code: "INVALID_ORDER",
+            message: "Die Reihenfolge passt nicht zu den Aufgaben. Bitte Seite neu laden.",
+          },
+        },
+        400,
+      );
+    }
+    const reordered = ids.map((id) => byId.get(id)).filter((t): t is EventTask => t !== undefined);
+    eventTaskStore.set(eventId, reordered);
+    return c.json({ tasks: reordered.map(withTaskDefaults) });
   },
 );
 

@@ -3,23 +3,69 @@ import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
-import type { AssigneeDto, EventTaskDto } from "./project-plan-types";
-import { isOverdue, sortTasks, taskProgress, todayIso } from "./task-utils";
+import {
+  type AssigneeDto,
+  type EventTaskDto,
+  TASK_PRIORITIES,
+  type TaskPriority,
+} from "./project-plan-types";
+import {
+  TASK_SORT_MODES,
+  type TaskSortMode,
+  isOverdue,
+  moveTask,
+  sortTasks,
+  taskProgress,
+  todayIso,
+} from "./task-utils";
+
+// Sortierung ist eine persönliche Ansichts-Einstellung: nur im Browser gemerkt.
+const SORT_STORAGE_KEY = "mexp.taskSort";
+function loadSortMode(): TaskSortMode {
+  try {
+    const v = localStorage.getItem(SORT_STORAGE_KEY);
+    return (TASK_SORT_MODES as readonly string[]).includes(v ?? "") ? (v as TaskSortMode) : "date";
+  } catch {
+    return "date";
+  }
+}
+function saveSortMode(mode: TaskSortMode) {
+  try {
+    localStorage.setItem(SORT_STORAGE_KEY, mode);
+  } catch {
+    // Ohne Storage gilt die Wahl nur bis zum Neuladen
+  }
+}
+
+const PRIORITY_LABEL: Record<TaskPriority, string> = {
+  high: "projectPlan.priorityHigh",
+  medium: "projectPlan.priorityMedium",
+  low: "projectPlan.priorityLow",
+};
 
 interface Draft {
   title: string;
   dueDate: string;
+  priority: TaskPriority;
   assigneeId: string;
   linkLabel: string;
   linkUrl: string;
 }
 
-const emptyDraft: Draft = { title: "", dueDate: "", assigneeId: "", linkLabel: "", linkUrl: "" };
+const emptyDraft: Draft = {
+  title: "",
+  dueDate: "",
+  priority: "medium",
+  assigneeId: "",
+  linkLabel: "",
+  linkUrl: "",
+};
 
 function toDraft(task: EventTaskDto): Draft {
   return {
     title: task.title,
     dueDate: task.dueDate ?? "",
+    priority: task.priority,
     assigneeId: task.assigneeId ?? "",
     linkLabel: task.linkLabel ?? "",
     linkUrl: task.linkUrl ?? "",
@@ -31,6 +77,7 @@ function toPayload(d: Draft) {
   return {
     title: d.title.trim(),
     dueDate: d.dueDate || null,
+    priority: d.priority,
     assigneeId: d.assigneeId || null,
     linkLabel: hasLink ? d.linkLabel.trim() : null,
     linkUrl: hasLink ? d.linkUrl.trim() : null,
@@ -84,12 +131,22 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
       }),
     onSuccess: invalidate,
   });
+  const orderMut = useMutation({
+    mutationFn: (ids: string[]) =>
+      apiFetch(`/events/${eventId}/tasks/order`, { method: "PUT", body: JSON.stringify({ ids }) }),
+    onSettled: invalidate,
+  });
   const deleteMut = useMutation({
     mutationFn: (id: string) => apiFetch(`/events/${eventId}/tasks/${id}`, { method: "DELETE" }),
     onSuccess: invalidate,
   });
 
-  const tasks = sortTasks(tasksQ.data?.tasks ?? []);
+  const [sortMode, setSortMode] = useState<TaskSortMode>(loadSortMode);
+  const tasks = sortTasks(tasksQ.data?.tasks ?? [], sortMode);
+  const move = (id: string, delta: -1 | 1) => {
+    const ids = moveTask(tasks, id, delta);
+    if (ids) orderMut.mutate(ids);
+  };
   const progress = taskProgress(tasks);
 
   const submit = (e: FormEvent) => {
@@ -115,6 +172,18 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
         value={draft.dueDate}
         onChange={(e) => setDraft({ ...draft, dueDate: e.target.value })}
       />
+      <select
+        className="input"
+        aria-label={t("projectPlan.taskPriority")}
+        value={draft.priority}
+        onChange={(e) => setDraft({ ...draft, priority: e.target.value as TaskPriority })}
+      >
+        {TASK_PRIORITIES.map((p) => (
+          <option key={p} value={p}>
+            {t("projectPlan.taskPriority")}: {t(PRIORITY_LABEL[p])}
+          </option>
+        ))}
+      </select>
       <select
         className="input"
         aria-label={t("projectPlan.taskAssignee")}
@@ -177,6 +246,26 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
           {t("projectPlan.tasksProgress", { done: progress.done, total: progress.total })}
         </span>
       </div>
+      <div className="row" style={{ gap: "var(--space-2)", alignItems: "center" }}>
+        <label className="muted text-xs" htmlFor={`task-sort-${eventId}`}>
+          {t("projectPlan.sortBy")}
+        </label>
+        <select
+          id={`task-sort-${eventId}`}
+          className="select"
+          style={{ width: "auto" }}
+          value={sortMode}
+          onChange={(e) => {
+            const mode = e.target.value as TaskSortMode;
+            setSortMode(mode);
+            saveSortMode(mode);
+          }}
+        >
+          <option value="date">{t("projectPlan.sortDate")}</option>
+          <option value="priority">{t("projectPlan.sortPriority")}</option>
+          <option value="manual">{t("projectPlan.sortManual")}</option>
+        </select>
+      </div>
       <div className="task-progress" aria-hidden="true">
         <div className="task-progress-bar" style={{ width: `${progress.percent}%` }} />
       </div>
@@ -202,7 +291,17 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
                 }}
               />
               <div className="task-main">
-                <span className="task-title">{task.title}</span>
+                <span className="task-title">
+                  {task.priority !== "medium" && (
+                    <span
+                      className={`badge ${task.priority === "high" ? "badge-danger" : "badge-muted"}`}
+                      style={{ marginRight: "var(--space-2)" }}
+                    >
+                      {t(PRIORITY_LABEL[task.priority])}
+                    </span>
+                  )}
+                  {task.title}
+                </span>
                 <span className="muted text-xs">
                   {task.assigneeName ?? ""}
                   {task.assigneeName && task.dueDate ? " · " : ""}
@@ -214,6 +313,30 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
                   )}
                 </span>
               </div>
+              {sortMode === "manual" && (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    aria-label={`${t("projectPlan.moveUp")}: ${task.title}`}
+                    title={t("projectPlan.moveUp")}
+                    disabled={orderMut.isPending || moveTask(tasks, task.id, -1) === null}
+                    onClick={() => move(task.id, -1)}
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    aria-label={`${t("projectPlan.moveDown")}: ${task.title}`}
+                    title={t("projectPlan.moveDown")}
+                    disabled={orderMut.isPending || moveTask(tasks, task.id, 1) === null}
+                    onClick={() => move(task.id, 1)}
+                  >
+                    ↓
+                  </button>
+                </>
+              )}
               {task.linkUrl && (
                 <a
                   href={task.linkUrl}
@@ -265,6 +388,19 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
             className="btn btn-ghost btn-sm"
             aria-label={t("projectPlan.dismiss")}
             onClick={() => toggleMut.reset()}
+          >
+            ×
+          </button>
+        </div>
+      )}
+      {orderMut.error instanceof Error && (
+        <div className="alert alert-error row" style={{ justifyContent: "space-between" }}>
+          <span>{orderMut.error.message}</span>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            aria-label={t("projectPlan.dismiss")}
+            onClick={() => orderMut.reset()}
           >
             ×
           </button>

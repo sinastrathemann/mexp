@@ -10,10 +10,17 @@ import { persistentMap } from "../dev-persistence.js";
 
 export const TEAM_ROLES = ["admin", "manager", "event_office", "werkstudent"] as const;
 
+export const TASK_PRIORITIES = ["high", "medium", "low"] as const;
+export type TaskPriority = (typeof TASK_PRIORITIES)[number];
+export const DEFAULT_TASK_PRIORITY: TaskPriority = "medium";
+
 export interface EventTask {
   id: string;
   title: string;
   dueDate: string | null; // YYYY-MM-DD
+  // Optional (Feedback-Runde 3): Bestandsaufgaben haben das Feld nicht und werden
+  // nie nachträglich beschrieben — beim Lesen gilt dann DEFAULT_TASK_PRIORITY.
+  priority?: TaskPriority;
   assigneeId: string | null;
   assigneeName: string | null;
   linkLabel: string | null;
@@ -45,7 +52,13 @@ export interface ToolList {
   updatedAt: string;
 }
 
+// Reihenfolge des Arrays = manuelle Reihenfolge („Eigene Reihenfolge“ im Projektplan).
 export const eventTaskStore = persistentMap<EventTask[]>("event-tasks");
+
+/** API-Sicht einer Aufgabe: Priorität immer gesetzt, gespeicherter Datensatz bleibt unverändert. */
+export function withTaskDefaults(task: EventTask): EventTask & { priority: TaskPriority } {
+  return { ...task, priority: task.priority ?? DEFAULT_TASK_PRIORITY };
+}
 export const blueprintTaskStore = persistentMap<BlueprintTask[]>("blueprint-tasks");
 export const toolStore = persistentMap<ToolList>("tools");
 
