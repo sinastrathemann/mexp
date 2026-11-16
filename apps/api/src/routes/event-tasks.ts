@@ -50,7 +50,7 @@ const updateSchema = z
   })
   .refine((v) => Object.keys(v).length > 0, { message: "Leeres Update." });
 
-function teamMember(id: string) {
+export function teamMember(id: string) {
   const user = mexpUserStore.get(id);
   if (
     !user ||

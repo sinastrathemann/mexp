@@ -11,6 +11,7 @@ export const EVENT_TYPES = [
   "strategy",
   "division",
   "local_experience",
+  "personal_moments",
 ] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 

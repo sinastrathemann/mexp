@@ -1,4 +1,4 @@
-import type { EventTaskDto } from "./project-plan-types";
+import type { BlueprintTaskDto, EventTaskDto } from "./project-plan-types";
 
 /** Offene Aufgaben nach Fälligkeit (ohne Datum zuletzt), erledigte darunter. */
 export function sortTasks(tasks: EventTaskDto[]): EventTaskDto[] {
@@ -28,4 +28,19 @@ export function todayIso(): string {
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/**
+ * Aufgaben-Vorlagen nach Fälligkeit: die meisten Tage vor dem Event zuerst,
+ * Vorlagen ohne Frist zuletzt; bei Gleichstand bleibt die bisherige Reihenfolge.
+ */
+export function sortBlueprintTasks<T extends Pick<BlueprintTaskDto, "daysBefore">>(
+  tasks: T[],
+): T[] {
+  return [...tasks].sort((a, b) => {
+    if (a.daysBefore === b.daysBefore) return 0;
+    if (a.daysBefore === null) return 1;
+    if (b.daysBefore === null) return -1;
+    return b.daysBefore - a.daysBefore;
+  });
 }

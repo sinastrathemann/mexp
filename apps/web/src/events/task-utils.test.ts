@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { EventTaskDto } from "./project-plan-types";
-import { isOverdue, sortTasks, taskProgress, todayIso } from "./task-utils";
+import { isOverdue, sortBlueprintTasks, sortTasks, taskProgress, todayIso } from "./task-utils";
 
 function task(id: string, over: Partial<EventTaskDto> = {}): EventTaskDto {
   return {
@@ -89,5 +89,30 @@ describe("todayIso", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 9, 23, 23, 59));
     expect(todayIso()).toBe("2026-10-23");
+  });
+});
+
+describe("sortBlueprintTasks", () => {
+  const bt = (title: string, daysBefore: number | null) => ({
+    title,
+    daysBefore,
+    linkLabel: null,
+    linkUrl: null,
+  });
+  it("früheste Fälligkeit (meiste Tage vorher) zuerst, ohne Frist zuletzt, sonst stabil", () => {
+    const sorted = sortBlueprintTasks([
+      bt("ohne", null),
+      bt("1 Tag", 1),
+      bt("30 Tage", 30),
+      bt("7 Tage a", 7),
+      bt("7 Tage b", 7),
+    ]);
+    expect(sorted.map((t) => t.title)).toEqual([
+      "30 Tage",
+      "7 Tage a",
+      "7 Tage b",
+      "1 Tag",
+      "ohne",
+    ]);
   });
 });

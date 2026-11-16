@@ -32,3 +32,10 @@ export interface AssigneeDto {
   id: string;
   displayName: string;
 }
+
+// GET/PUT /events/:id/plan-meta — nur für das Event-Team (EXM)
+export interface EventPlanMetaDto {
+  responsibleId: string | null;
+  responsibleName: string | null;
+  exmNote: string | null;
+}

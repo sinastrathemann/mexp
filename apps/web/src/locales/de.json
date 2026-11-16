@@ -152,7 +152,8 @@
       "team": "Teamevent",
       "strategy": "Strategieevent",
       "division": "Bereichsevent",
-      "local_experience": "Local Experience"
+      "local_experience": "Local Experience",
+      "personal_moments": "Persönliche Momente / Jubiläum"
     },
     "visibility": {
       "internal": "Intern",
@@ -409,6 +410,17 @@
     }
   },
   "projectPlan": {
+    "metaResponsible": "Verantwortlich",
+    "metaResponsibleDefault": "Wer das Event anlegt (Standard)",
+    "metaResponsibleFallback": "angelegt von",
+    "metaResponsibleUnknown": "Nicht festgelegt",
+    "metaExmNote": "Notiz (nur für EXM sichtbar)",
+    "metaExmNoteHint": "Sieht nur das Experience-Management-Team, nicht die Mitarbeitenden.",
+    "metaExmNoteEmpty": "Noch keine interne Notiz.",
+    "metaEdit": "Bearbeiten",
+    "metaSave": "Speichern",
+    "metaCancel": "Abbrechen",
+    "metaSaveError": "Konnte nicht gespeichert werden: {{message}}",
     "loading": "Wird geladen …",
     "loadError": "Konnte nicht geladen werden: {{message}}",
     "phaseDraft": "Entwurf",

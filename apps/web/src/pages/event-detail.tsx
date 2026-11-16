@@ -14,6 +14,7 @@ import { FeedbackPanel } from "../events/feedback-panel";
 import { KeyFiguresCard } from "../events/key-figures-card";
 import { ParticipantsPanel } from "../events/participants-panel";
 import { PhaseBar } from "../events/phase-bar";
+import { PlanMetaCard } from "../events/plan-meta-card";
 import { RegistrationFormPanel } from "../events/registration-form-panel";
 import { EventStatusBadge } from "../events/status-badge";
 import { TaskChecklist } from "../events/task-checklist";
@@ -235,6 +236,7 @@ export default function EventDetailPage() {
 
       {canManage && (
         <>
+          <PlanMetaCard event={event} />
           <PhaseBar
             status={event.status}
             pending={transitionMut.isPending}

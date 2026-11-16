@@ -49,6 +49,22 @@ export const eventTaskStore = persistentMap<EventTask[]>("event-tasks");
 export const blueprintTaskStore = persistentMap<BlueprintTask[]>("blueprint-tasks");
 export const toolStore = persistentMap<ToolList>("tools");
 
+/**
+ * Projektplan-Meta je Event (Feedback-Runde 3): Verantwortliche/r und interne
+ * EXM-Notiz. Eigener Store statt Feld am Event, damit bestehende Event-Datensätze
+ * unverändert bleiben und die Notiz nie über die Event-Endpunkte an
+ * Mitarbeitende ausgeliefert wird. Fehlt ein Eintrag: niemand gesetzt, keine
+ * Notiz (die UI zeigt dann die Person, die das Event angelegt hat).
+ */
+export interface EventPlanMeta {
+  responsibleId: string | null;
+  exmNote: string | null;
+  updatedBy: string;
+  updatedAt: string;
+}
+
+export const eventPlanMetaStore = persistentMap<EventPlanMeta>("event-plan-meta");
+
 // Nur https: verhindert javascript:-Links und unverschlüsselte Ziele.
 export const httpsUrlSchema = z
   .string()
