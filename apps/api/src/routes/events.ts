@@ -35,6 +35,7 @@ import {
   type ExportQuestion,
   buildParticipantsWorkbook,
 } from "../participants-export.js";
+import { TEAM_ROLES, isProject } from "../project-plan/model.js";
 import { mexpUserStore, requireMexpRole, resolveMexpRoles } from "./_user-resolution.js";
 import {
   type DevAnswer,
@@ -112,7 +113,7 @@ const WRITE_ROLES = ["admin", "manager", "event_office", "werkstudent"] as const
 // friert danach ein — siehe Audit-Finding FUN-08.
 export const devEventOverrideStore = persistentMap<Record<string, unknown>>("event-overrides");
 
-function applyOverride<T extends { id: string }>(event: T): T {
+export function applyOverride<T extends { id: string }>(event: T): T {
   const ov = devEventOverrideStore.get(event.id);
   if (!ov) return event;
   return { ...event, ...ov };
@@ -145,6 +146,9 @@ export function isRegistrationManuallyClosed(override: Record<string, unknown> |
  * damit auch eine schon beim Anlegen gesetzte Frist greift.
  */
 function registrationBlock(id: string): { code: string; message: string } | null {
+  if (isProject(id)) {
+    return { code: "REGISTRATION_CLOSED", message: "Für Projekte gibt es keine Anmeldung." };
+  }
   const base = findDevBaseEvent(id);
   const event = base ? applyOverride(base) : undefined;
   if (isRegistrationManuallyClosed(devEventOverrideStore.get(id))) {
@@ -178,7 +182,7 @@ export interface DevEventRecord {
 // Exportiert — gleiche Begruendung wie bei devEventOverrideStore (FUN-08).
 export const devCreatedEventsStore = persistentMap<DevEventRecord>("created-events");
 
-function listDevBaseEvents(): DevEventRecord[] {
+export function listDevBaseEvents(): DevEventRecord[] {
   const baseEvents = [
     ...(env.NODE_ENV === "production" ? [] : (buildMockEventList() as unknown as DevEventRecord[])),
     ...buildOneNoteImportedEvents(),
@@ -188,7 +192,7 @@ function listDevBaseEvents(): DevEventRecord[] {
   return baseEvents;
 }
 
-function findDevBaseEvent(id: string): DevEventRecord | undefined {
+export function findDevBaseEvent(id: string): DevEventRecord | undefined {
   return devCreatedEventsStore.get(id) ?? listDevBaseEvents().find((e) => e.id === id);
 }
 
@@ -372,6 +376,7 @@ eventRoutes.get("/", zValidator("query", listQuerySchema), async (c) => {
     const isPrivilegedRole = userRoles.some((r) =>
       ["admin", "manager", "event_office", "budget_owner", "werkstudent"].includes(r),
     );
+    const isTeamRole = userRoles.some((r) => (TEAM_ROLES as readonly string[]).includes(r));
     // Nicht-privilegierte User (Teilnehmer/Read-Only) sehen nur diese Status:
     const VISIBLE_STATUSES_FOR_PARTICIPANT = new Set(["planned", "open", "running"]);
 
@@ -386,6 +391,8 @@ eventRoutes.get("/", zValidator("query", listQuerySchema), async (c) => {
         const status = String((e as unknown as { status?: string }).status ?? "");
         return VISIBLE_STATUSES_FOR_PARTICIPANT.has(status);
       })
+      // Projekte (Feedback-Runde 5) sind interne Vorhaben — nur das Event-Team sieht sie.
+      .filter((e) => isTeamRole || !isProject(e.id))
       // Teilnehmerkreis-Filter: Admins/Manager etc. sehen immer alles, andere nur ihre Events
       .filter((e) => {
         if (isPrivilegedRole) return true;
@@ -662,6 +669,12 @@ eventRoutes.get("/:id", async (c) => {
       return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
     const merged = applyOverride(event);
     if ((merged as { _deleted?: boolean })._deleted) {
+      return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
+    }
+    const viewerIsTeam = resolveMexpRoles(c).some((r) =>
+      (TEAM_ROLES as readonly string[]).includes(r),
+    );
+    if (isProject(id) && !viewerIsTeam) {
       return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
     }
     return c.json({

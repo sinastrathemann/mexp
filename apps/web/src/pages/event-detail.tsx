@@ -8,6 +8,7 @@ import { withBasePath } from "../base-path";
 import { RichText } from "../components/rich-text";
 import { BudgetLinkCard } from "../events/budget-link-card";
 import { DocumentsPanel } from "../events/documents-panel";
+import { EventContentCard } from "../events/event-content-card";
 import { formatEventDate } from "../events/event-date";
 import { EventEditModal } from "../events/event-edit-modal";
 import { FeedbackPanel } from "../events/feedback-panel";
@@ -258,6 +259,7 @@ export default function EventDetailPage() {
               <BudgetLinkCard />
             </div>
           </div>
+          <EventContentCard eventId={event.id} />
         </>
       )}
 

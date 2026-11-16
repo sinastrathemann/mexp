@@ -76,6 +76,22 @@ export function Sidebar() {
             )}
           </NavLink>
         )}
+        {canManageRequests && (
+          <NavLink
+            to="/year-plan"
+            className={({ isActive }) => `ms-sidebar-link${isActive ? " active" : ""}`}
+          >
+            {t("planning.yearPlanNav")}
+          </NavLink>
+        )}
+        {canManageRequests && (
+          <NavLink
+            to="/content-plan"
+            className={({ isActive }) => `ms-sidebar-link${isActive ? " active" : ""}`}
+          >
+            {t("planning.contentPlanNav")}
+          </NavLink>
+        )}
         {hasRole("admin", "manager", "event_office") && (
           <NavLink
             to="/reports"

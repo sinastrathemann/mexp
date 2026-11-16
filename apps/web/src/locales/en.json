@@ -491,5 +491,105 @@
     "blueprintTasksTitle": "Tasks of template “{{name}}”",
     "blueprintTasksHint": "Copied into every event created from this template. Due date = event start minus days.",
     "daysBefore": "Days before"
+  },
+  "planning": {
+    "teamOnly": "EXM team only",
+    "empty": "no planning details",
+    "kindLabel": "What are you creating?",
+    "kind": {
+      "event": "🎉 Event",
+      "project": "📁 Project"
+    },
+    "kindHint": {
+      "event": "With registration and participant list, visible to employees (depending on audience).",
+      "project": "Internal initiative without registration or participant list. Visible to the team only."
+    },
+    "targetCount": "Target headcount",
+    "targetCountPlaceholder": "e.g. 140 employees (60 C)",
+    "targetShort": "Target",
+    "categories": "Categories",
+    "categoriesShort": "Cat.",
+    "categoriesHint": "1 = up to 3 years, 2 = up to 5 years, 3 = more than 5 years with us",
+    "recurrence": "Status",
+    "recurrenceLabel": {
+      "N": "new",
+      "W": "recurring",
+      "R": "regular",
+      "V": "variation"
+    },
+    "alternativeDate": "Alternative date (option)",
+    "alternativeShort": "Option",
+    "goalReached": "Goal reached?",
+    "goal": {
+      "missed": "missed",
+      "reached": "reached",
+      "exceeded": "exceeded"
+    },
+    "contentPlanTitle": "Content plan",
+    "contentPlanNav": "Content plan",
+    "yearPlanTitle": "Annual plan",
+    "yearPlanNav": "Annual plan",
+    "week": "CW {{week}}",
+    "today": "Today",
+    "view": {
+      "week": "Week",
+      "list": "List"
+    },
+    "weekday": {
+      "0": "Sun",
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat"
+    },
+    "channelLabel": "Channel",
+    "allChannels": "All channels",
+    "channel": {
+      "general": "General",
+      "mail": "Mail",
+      "teams": "Teams",
+      "outlook": "Outlook",
+      "communities": "Communities",
+      "location": "Location",
+      "other": "Other"
+    },
+    "personLabel": "Responsible",
+    "allPersons": "All people",
+    "responsible": "Responsible",
+    "addEntry": "Entry",
+    "editEntry": "Edit entry",
+    "date": "Date",
+    "titleLabel": "Title",
+    "titlePlaceholder": "e.g. Reminder mindcon",
+    "linkedEvent": "Event/project",
+    "note": "Note",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirmDelete": "Really delete this entry?",
+    "noEntries": "No entries in this period.",
+    "filter": {
+      "internal": "Internal",
+      "external": "External",
+      "holidays": "Holidays"
+    },
+    "addExternal": "Add date",
+    "entryKind": "Type",
+    "entry": "Date",
+    "rowKind": {
+      "external": "External date",
+      "school_holiday": "School holidays",
+      "holiday": "Public holiday"
+    },
+    "externalPlaceholder": "e.g. Board meeting",
+    "from": "From",
+    "toOptional": "To (optional)",
+    "option": "Option",
+    "archived": "archived",
+    "eventContentTitle": "Planned communication",
+    "openContentPlan": "Open content plan",
+    "eventContentEmpty": "No content plan entries linked to this event yet."
   }
 }

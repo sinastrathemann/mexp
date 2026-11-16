@@ -9,7 +9,12 @@ import { appendEmail } from "../events/email-list";
 import { EmailSuggest } from "../events/email-suggest";
 import { tbdIso } from "../events/event-date";
 import { EventDateFields } from "../events/event-date-fields";
-import type { AssigneeDto } from "../events/project-plan-types";
+import { PlanningFields } from "../events/planning-fields";
+import {
+  type AssigneeDto,
+  EMPTY_PLANNING,
+  type PlanningFieldsValue,
+} from "../events/project-plan-types";
 import {
   EVENT_TYPES,
   EVENT_VISIBILITIES,
@@ -70,6 +75,14 @@ export default function EventCreatePage() {
   // Projektplan-Meta (Feedback-Runde 3) — separat gespeichert, nur für EXM sichtbar
   const [responsibleId, setResponsibleId] = useState("");
   const [exmNote, setExmNote] = useState("");
+  // Feedback-Runde 5: Event oder Projekt + Planungsfelder (ebenfalls Plan-Meta, nur EXM)
+  const [planning, setPlanning] = useState<PlanningFieldsValue>(EMPTY_PLANNING);
+  const planningTouched =
+    planning.kind !== "event" ||
+    Boolean(planning.targetCount?.trim()) ||
+    planning.targetCategories.length > 0 ||
+    planning.recurrence !== null ||
+    planning.alternativeDate !== null;
 
   const assigneesQ = useQuery({
     queryKey: ["task-assignees"],
@@ -140,13 +153,15 @@ export default function EventCreatePage() {
         body: JSON.stringify(input),
       }),
     onSuccess: async (res) => {
-      if (responsibleId || exmNote.trim()) {
+      if (responsibleId || exmNote.trim() || planningTouched) {
         // Fehler hier dürfen das angelegte Event nicht blockieren — im Projektplan nachpflegbar
         await apiFetch(`/events/${res.event.id}/plan-meta`, {
           method: "PUT",
           body: JSON.stringify({
             responsibleId: responsibleId || null,
             exmNote: exmNote.trim() || null,
+            ...planning,
+            targetCount: planning.targetCount?.trim() || null,
           }),
         }).catch(() => undefined);
       }
@@ -207,6 +222,12 @@ export default function EventCreatePage() {
         </div>
       </div>
       <form onSubmit={submit} className="card">
+        <PlanningFields
+          idPrefix="ev-plan"
+          value={planning}
+          onChange={setPlanning}
+          showGoal={false}
+        />
         <div className="field">
           <label className="label" htmlFor="ev-title">
             {t("events.fieldTitle")}

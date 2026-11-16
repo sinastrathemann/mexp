@@ -53,7 +53,7 @@ describe("Projektplan-Meta (Verantwortlich + EXM-Notiz)", () => {
     const ws = asUser("ws", ["werkstudent"]);
     const res = await app().request(URL, { headers: ws });
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({
+    expect(await res.json()).toMatchObject({
       meta: { responsibleId: null, responsibleName: null, exmNote: null },
     });
     expect(eventPlanMetaStore.size).toBe(0);
@@ -65,7 +65,7 @@ describe("Projektplan-Meta (Verantwortlich + EXM-Notiz)", () => {
     const res = await put(ws, { responsibleId: "eo", exmNote: "Nur intern: Budget knapp" });
     expect(res.status).toBe(200);
     const got = await app().request(URL, { headers: ws });
-    expect(((await got.json()) as { meta: unknown }).meta).toEqual({
+    expect(((await got.json()) as { meta: unknown }).meta).toMatchObject({
       responsibleId: "eo",
       responsibleName: "Name eo",
       exmNote: "Nur intern: Budget knapp",

@@ -6,6 +6,7 @@ import { ProtectedRoute } from "./auth/protected-route";
 import { BASE_PATH } from "./base-path";
 import { Sidebar } from "./components/sidebar";
 import AdminPage from "./pages/admin";
+import ContentPlanPage from "./pages/content-plan";
 import DashboardPage from "./pages/dashboard";
 import EventCreatePage from "./pages/event-create";
 import EventDetailPage from "./pages/event-detail";
@@ -14,6 +15,7 @@ import EventsListPage from "./pages/events-list";
 import HomePage from "./pages/home";
 import ReportsPage from "./pages/reports";
 import VendorPage from "./pages/vendor";
+import YearPlanPage from "./pages/year-plan";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -77,6 +79,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute roles={["admin", "manager", "event_office"]}>
             <ReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/content-plan"
+        element={
+          <ProtectedRoute roles={["admin", "manager", "event_office", "werkstudent"]}>
+            <ContentPlanPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/year-plan"
+        element={
+          <ProtectedRoute roles={["admin", "manager", "event_office", "werkstudent"]}>
+            <YearPlanPage />
           </ProtectedRoute>
         }
       />

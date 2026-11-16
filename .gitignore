@@ -56,3 +56,4 @@ apps/api/web-dist/
 
 # Lokale Brainstorming-Mockups (mindCoder Visual Companion)
 .mindCoder/
+.superpowers/

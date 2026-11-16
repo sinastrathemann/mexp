@@ -14,6 +14,7 @@ import { adminUserRoutes } from "./routes/admin-users.js";
 import { authRoutes } from "./routes/auth.js";
 import { blueprintRoutes } from "./routes/blueprints.js";
 import { budgetRoutes } from "./routes/budget.js";
+import { contentPlanRoutes } from "./routes/content-plan.js";
 import { dashboardRoutes } from "./routes/dashboard.js";
 import { documentRoutes } from "./routes/documents.js";
 import { eventPlanMetaRoutes } from "./routes/event-plan-meta.js";
@@ -29,6 +30,7 @@ import { tenderRoutes } from "./routes/tenders.js";
 import { toolRoutes } from "./routes/tools.js";
 import { userSearchRoutes } from "./routes/user-search.js";
 import { vendorRoutes } from "./routes/vendors.js";
+import { yearPlanRoutes } from "./routes/year-plan.js";
 import { mountStatic } from "./static-serve.js";
 
 const log = rootLogger.child({ module: "api" });
@@ -86,6 +88,8 @@ app.route("/api/users", userSearchRoutes);
 app.route("/api/tools", toolRoutes);
 app.route("/api", eventTaskRoutes);
 app.route("/api", eventPlanMetaRoutes);
+app.route("/api", contentPlanRoutes);
+app.route("/api", yearPlanRoutes);
 
 // Serve SPA (last so API routes win on their prefixes)
 const webRoot = process.env.MEXP_WEB_DIST ?? resolve(process.cwd(), "web-dist");

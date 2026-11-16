@@ -491,5 +491,105 @@
     "blueprintTasksTitle": "Aufgaben der Vorlage „{{name}}“",
     "blueprintTasksHint": "Werden beim Anlegen eines Events aus dieser Vorlage übernommen. Fälligkeit = Event-Start minus Tage.",
     "daysBefore": "Tage vorher"
+  },
+  "planning": {
+    "teamOnly": "nur EXM-Team",
+    "empty": "keine Planungsangaben",
+    "kindLabel": "Was legst du an?",
+    "kind": {
+      "event": "🎉 Event",
+      "project": "📁 Projekt"
+    },
+    "kindHint": {
+      "event": "Mit Anmeldung und Teilnehmerliste, für Mitarbeitende sichtbar (je nach Teilnehmerkreis).",
+      "project": "Internes Vorhaben ohne Anmeldung und Teilnehmerliste (z. B. Smoothiebike BGM, Bürokonzept). Nur fürs Team sichtbar."
+    },
+    "targetCount": "Zielanzahl",
+    "targetCountPlaceholder": "z. B. 140 MA (60 C)",
+    "targetShort": "Ziel",
+    "categories": "Kategorien",
+    "categoriesShort": "Kat.",
+    "categoriesHint": "1 = bis 3 Jahre, 2 = bis 5 Jahre, 3 = länger als 5 Jahre dabei",
+    "recurrence": "Status",
+    "recurrenceLabel": {
+      "N": "neu",
+      "W": "wiederkehrend",
+      "R": "regelmäßig",
+      "V": "Variation"
+    },
+    "alternativeDate": "Alternativtermin (Option)",
+    "alternativeShort": "Option",
+    "goalReached": "Ziel erreicht?",
+    "goal": {
+      "missed": "nicht erreicht",
+      "reached": "erreicht",
+      "exceeded": "übertroffen"
+    },
+    "contentPlanTitle": "Contentplan",
+    "contentPlanNav": "Contentplan",
+    "yearPlanTitle": "Jahresplanung",
+    "yearPlanNav": "Jahresplanung",
+    "week": "KW {{week}}",
+    "today": "Heute",
+    "view": {
+      "week": "Woche",
+      "list": "Liste"
+    },
+    "weekday": {
+      "0": "So",
+      "1": "Mo",
+      "2": "Di",
+      "3": "Mi",
+      "4": "Do",
+      "5": "Fr",
+      "6": "Sa"
+    },
+    "channelLabel": "Kanal",
+    "allChannels": "Alle Kanäle",
+    "channel": {
+      "general": "Allgemein",
+      "mail": "Mail",
+      "teams": "Teams",
+      "outlook": "Outlook",
+      "communities": "Communities",
+      "location": "Standort",
+      "other": "Sonstiges"
+    },
+    "personLabel": "Verantwortlich",
+    "allPersons": "Alle Personen",
+    "responsible": "Verantwortlich",
+    "addEntry": "Eintrag",
+    "editEntry": "Eintrag bearbeiten",
+    "date": "Datum",
+    "titleLabel": "Titel",
+    "titlePlaceholder": "z. B. Reminder mindcon",
+    "linkedEvent": "Event/Projekt",
+    "note": "Notiz",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "confirmDelete": "Eintrag wirklich löschen?",
+    "noEntries": "Keine Einträge in diesem Zeitraum.",
+    "filter": {
+      "internal": "Intern",
+      "external": "Extern",
+      "holidays": "Feiertage/Ferien"
+    },
+    "addExternal": "Termin eintragen",
+    "entryKind": "Art",
+    "entry": "Termin",
+    "rowKind": {
+      "external": "Externer Termin",
+      "school_holiday": "Ferien",
+      "holiday": "Feiertag"
+    },
+    "externalPlaceholder": "z. B. Boardmeeting",
+    "from": "Von",
+    "toOptional": "Bis (optional)",
+    "option": "Option",
+    "archived": "archiviert",
+    "eventContentTitle": "Geplante Kommunikation",
+    "openContentPlan": "Zum Contentplan",
+    "eventContentEmpty": "Noch keine Einträge im Contentplan mit diesem Event verknüpft."
   }
 }

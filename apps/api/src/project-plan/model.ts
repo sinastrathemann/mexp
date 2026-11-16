@@ -72,11 +72,35 @@ export const toolStore = persistentMap<ToolList>("tools");
 export interface EventPlanMeta {
   responsibleId: string | null;
   exmNote: string | null;
+  // --- Feedback-Runde 5 (alle optional; fehlen bei älteren Einträgen → Default beim Lesen) ---
+  /** Event oder internes Projekt. Fehlt → "event". Projekte sind nur fürs Team sichtbar. */
+  kind?: EventKind;
+  /** Zielanzahl als Freitext, z. B. "140 MA (60 C)". */
+  targetCount?: string | null;
+  /** Zielgruppen-Kategorien 1–3 (Betriebszugehörigkeit). */
+  targetCategories?: number[];
+  /** N = neu, W = wiederkehrend, R = regelmäßig, V = Variation. */
+  recurrence?: Recurrence | null;
+  goalReached?: GoalReached | null;
+  /** Alternativtermin („Option – 26.02. oder 05.03."), YYYY-MM-DD. */
+  alternativeDate?: string | null;
   updatedBy: string;
   updatedAt: string;
 }
 
+export const EVENT_KINDS = ["event", "project"] as const;
+export type EventKind = (typeof EVENT_KINDS)[number];
+export const RECURRENCES = ["N", "W", "R", "V"] as const;
+export type Recurrence = (typeof RECURRENCES)[number];
+export const GOAL_RESULTS = ["missed", "reached", "exceeded"] as const;
+export type GoalReached = (typeof GOAL_RESULTS)[number];
+
 export const eventPlanMetaStore = persistentMap<EventPlanMeta>("event-plan-meta");
+
+/** Ist das Event als internes Projekt markiert? (fehlender Eintrag = Event) */
+export function isProject(eventId: string): boolean {
+  return eventPlanMetaStore.get(eventId)?.kind === "project";
+}
 
 // Nur https: verhindert javascript:-Links und unverschlüsselte Ziele.
 export const httpsUrlSchema = z

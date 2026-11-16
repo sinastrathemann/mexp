@@ -2,7 +2,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../api/client";
-import type { AssigneeDto, EventPlanMetaDto } from "./project-plan-types";
+import { PlanningFields, planningSummary } from "./planning-fields";
+import {
+  type AssigneeDto,
+  EMPTY_PLANNING,
+  type EventPlanMetaDto,
+  type PlanningFieldsValue,
+} from "./project-plan-types";
 import type { EventDto } from "./types";
 
 /**
@@ -25,15 +31,23 @@ export function PlanMetaCard({ event }: { event: EventDto }) {
   const [editing, setEditing] = useState(false);
   const [responsibleId, setResponsibleId] = useState("");
   const [exmNote, setExmNote] = useState("");
+  const [planning, setPlanning] = useState<PlanningFieldsValue>(EMPTY_PLANNING);
 
   const saveMut = useMutation({
     mutationFn: () =>
       apiFetch<{ meta: EventPlanMetaDto }>(`/events/${event.id}/plan-meta`, {
         method: "PUT",
-        body: JSON.stringify({ responsibleId: responsibleId || null, exmNote: exmNote || null }),
+        body: JSON.stringify({
+          responsibleId: responsibleId || null,
+          exmNote: exmNote || null,
+          ...planning,
+          targetCount: planning.targetCount?.trim() || null,
+        }),
       }),
     onSuccess: (res) => {
       qc.setQueryData(metaKey, res);
+      // Event/Projekt wirkt auf Listen, Jahresplanung und Teilnehmersicht
+      qc.invalidateQueries({ queryKey: ["year-plan"] });
       setEditing(false);
     },
   });
@@ -45,6 +59,7 @@ export function PlanMetaCard({ event }: { event: EventDto }) {
   function startEdit() {
     setResponsibleId(meta?.responsibleId ?? "");
     setExmNote(meta?.exmNote ?? "");
+    setPlanning(meta ? pickPlanning(meta) : EMPTY_PLANNING);
     saveMut.reset();
     setEditing(true);
   }
@@ -107,6 +122,7 @@ export function PlanMetaCard({ event }: { event: EventDto }) {
               {t("projectPlan.metaExmNoteHint")}
             </div>
           </div>
+          <PlanningFields idPrefix="pm" value={planning} onChange={setPlanning} />
           {saveMut.error instanceof Error && (
             <div className="alert alert-error">
               {t("projectPlan.metaSaveError", { message: saveMut.error.message })}
@@ -152,6 +168,14 @@ export function PlanMetaCard({ event }: { event: EventDto }) {
               {t("projectPlan.metaEdit")}
             </button>
           </div>
+          {meta && (
+            <div style={{ marginTop: "var(--space-2)" }}>
+              <span className={`badge ${meta.kind === "project" ? "badge-orange" : ""}`}>
+                {t(`planning.kind.${meta.kind}`)}
+              </span>{" "}
+              <span className="muted">{planningSummary(meta, t) ?? t("planning.empty")}</span>
+            </div>
+          )}
           <div style={{ marginTop: "var(--space-2)" }}>
             <div className="muted">🔒 {t("projectPlan.metaExmNote")}</div>
             {meta?.exmNote ? (
@@ -164,4 +188,15 @@ export function PlanMetaCard({ event }: { event: EventDto }) {
       )}
     </div>
   );
+}
+
+function pickPlanning(m: EventPlanMetaDto): PlanningFieldsValue {
+  return {
+    kind: m.kind,
+    targetCount: m.targetCount,
+    targetCategories: m.targetCategories,
+    recurrence: m.recurrence,
+    goalReached: m.goalReached,
+    alternativeDate: m.alternativeDate,
+  };
 }
