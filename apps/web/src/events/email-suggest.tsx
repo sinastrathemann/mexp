@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../api/client";
-import { parseEmails } from "./email-list";
+import { parseEmails, pendingToken } from "./email-list";
 import type { UserSearchResult } from "./types";
 
 const MIN_QUERY_LENGTH = 2;
@@ -24,10 +24,12 @@ export function EmailSuggest({
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
+  // Suchbegriff: das eigene Suchfeld, sonst der angefangene Name im E-Mail-Textfeld.
+  const effective = query.trim() || pendingToken(currentRaw).trim();
   useEffect(() => {
-    const timer = setTimeout(() => setDebounced(query.trim()), DEBOUNCE_MS);
+    const timer = setTimeout(() => setDebounced(effective), DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [effective]);
 
   const searchQ = useQuery({
     queryKey: ["user-search", debounced],
