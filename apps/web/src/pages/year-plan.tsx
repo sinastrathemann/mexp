@@ -272,8 +272,12 @@ export default function YearPlanPage() {
                     <td>
                       {r.kind === "internal" && e ? (
                         <>
-                          <strong>I |</strong> {e.kind === "project" && "📁 "}
-                          <Link to={`/events/${e.id}`}>{r.title}</Link>
+                          <strong>I |</strong> <Link to={`/events/${e.id}`}>{r.title}</Link>
+                          {e.kind === "project" && (
+                            <span className="badge badge-orange" style={{ marginLeft: 6 }}>
+                              {t("planning.kind.project")}
+                            </span>
+                          )}
                           {r.isOption && (
                             <span className="badge" style={{ marginLeft: 6 }}>
                               {t("planning.option")}

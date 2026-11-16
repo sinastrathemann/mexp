@@ -497,8 +497,8 @@
     "empty": "no planning details",
     "kindLabel": "What are you creating?",
     "kind": {
-      "event": "🎉 Event",
-      "project": "📁 Project"
+      "event": "Event",
+      "project": "Project"
     },
     "kindHint": {
       "event": "With registration and participant list, visible to employees (depending on audience).",

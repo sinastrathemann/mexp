@@ -497,8 +497,8 @@
     "empty": "keine Planungsangaben",
     "kindLabel": "Was legst du an?",
     "kind": {
-      "event": "🎉 Event",
-      "project": "📁 Projekt"
+      "event": "Event",
+      "project": "Projekt"
     },
     "kindHint": {
       "event": "Mit Anmeldung und Teilnehmerliste, für Mitarbeitende sichtbar (je nach Teilnehmerkreis).",
