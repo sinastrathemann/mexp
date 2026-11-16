@@ -744,6 +744,17 @@ legend {
   background: #fdf2f2;
   color: #b42318;
 }
+/* Nicht dabei (declined): wie abgemeldet hervorgehoben, aber in Orange */
+.table tr.row-declined td {
+  background: #fff6ed;
+  color: #b54708;
+}
+.table tr.row-divider td {
+  background: var(--bg-subtle, #f5f5f5);
+  font-weight: 600;
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+}
 .badge-outline {
   background: transparent;
   border: 1px solid var(--border-strong);
@@ -2183,4 +2194,18 @@ output.alert {
   font-size: var(--text-base);
   color: var(--fg-strong);
   outline: none;
+}
+
+/* Namensvorschläge für die E-Mail-Sichtbarkeitsliste */
+.email-suggest-list {
+  list-style: none;
+  margin: var(--space-1) 0 0;
+  padding: 0;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.email-suggest-list .btn {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
 }

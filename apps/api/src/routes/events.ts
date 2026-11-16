@@ -134,6 +134,38 @@ export function isEventArchived(
   return isOneNoteEventId(eventId);
 }
 
+/** Anmeldung vom Event-Team per Button geschlossen? Fehlt das Feld: offen. */
+export function isRegistrationManuallyClosed(override: Record<string, unknown> | undefined) {
+  return override?._registrationClosed === true;
+}
+
+/**
+ * Warum eine Selbst-Anmeldung gerade nicht geht (null = möglich, soweit es Frist und
+ * manuelles Schließen betrifft). Prüft das zusammengeführte Event (Basis + Override),
+ * damit auch eine schon beim Anlegen gesetzte Frist greift.
+ */
+function registrationBlock(id: string): { code: string; message: string } | null {
+  const base = findDevBaseEvent(id);
+  const event = base ? applyOverride(base) : undefined;
+  if (isRegistrationManuallyClosed(devEventOverrideStore.get(id))) {
+    return {
+      code: "REGISTRATION_CLOSED",
+      message: "Die Anmeldung wurde vom Event-Team geschlossen.",
+    };
+  }
+  const deadline = event?.registrationDeadline;
+  if (typeof deadline === "string") {
+    const ms = new Date(deadline).getTime();
+    if (Number.isFinite(ms) && ms < Date.now()) {
+      return {
+        code: "REGISTRATION_CLOSED",
+        message: "Die Anmeldefrist für dieses Event ist abgelaufen.",
+      };
+    }
+  }
+  return null;
+}
+
 // Dev-Mode (file-store — Design-Spec §3.4): Store für neu angelegte Events.
 // Persistiert in apps/api/data/created-events.json — bleibt bei Neustarts erhalten.
 // Ergänzt die statische Mock-Liste um "echte" per POST /api/events angelegte Events,
@@ -389,6 +421,7 @@ eventRoutes.get("/", zValidator("query", listQuerySchema), async (c) => {
         const participants = getDevParticipants(e.id);
         return {
           ...e,
+          registrationClosed: isRegistrationManuallyClosed(devEventOverrideStore.get(e.id)),
           registeredCount: participants.filter(
             (p) => p.status === "registered" || p.status === "attended",
           ).length,
@@ -632,7 +665,11 @@ eventRoutes.get("/:id", async (c) => {
       return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
     }
     return c.json({
-      event: { ...merged, archived: isEventArchived(id, devEventOverrideStore.get(id)) },
+      event: {
+        ...merged,
+        archived: isEventArchived(id, devEventOverrideStore.get(id)),
+        registrationClosed: isRegistrationManuallyClosed(devEventOverrideStore.get(id)),
+      },
     });
   }
   const event = await getEvent(id, { events });
@@ -892,6 +929,37 @@ eventRoutes.post("/:id/archive", requireMexpRole("admin"), (c) =>
 );
 eventRoutes.post("/:id/unarchive", requireMexpRole("admin"), (c) =>
   setEventArchived(c, c.req.param("id"), false),
+);
+
+// Anmeldung manuell schließen / wieder öffnen (Feedback-Runde 4). Das Event bleibt in
+// seiner Phase; geschrieben wird nur das Override-Feld `_registrationClosed`.
+eventRoutes.put(
+  "/:id/registration-closed",
+  requireMexpRole(...WRITE_ROLES),
+  zValidator("json", z.object({ closed: z.boolean() })),
+  (c) => {
+    if (env.DATABASE_URL) {
+      return c.json(
+        { error: { code: "NOT_SUPPORTED", message: "Nur im Datei-Modus verfügbar." } },
+        501,
+      );
+    }
+    const id = c.req.param("id");
+    const base = findDevBaseEvent(id);
+    const current = devEventOverrideStore.get(id) ?? {};
+    if (!base || current._deleted === true) {
+      return c.json({ error: { code: "NOT_FOUND", message: "Event nicht gefunden" } }, 404);
+    }
+    const next = { ...current, _registrationClosed: c.req.valid("json").closed };
+    devEventOverrideStore.set(id, next);
+    return c.json({
+      event: {
+        ...applyOverride(base),
+        archived: isEventArchived(id, next),
+        registrationClosed: isRegistrationManuallyClosed(next),
+      },
+    });
+  },
 );
 
 // Event "löschen" — nur Admin. Dev-Mode: in Override-Store als hidden markieren.
@@ -1218,23 +1286,9 @@ eventRoutes.post("/:id/register", async (c) => {
   const id = c.req.param("id");
   const actorId = getHubUser(c).id;
   if (!env.DATABASE_URL) {
-    // Anmeldefrist prüfen
-    const override = devEventOverrideStore.get(id) ?? {};
-    const deadline = (override as { registrationDeadline?: string | null }).registrationDeadline;
-    if (deadline) {
-      const deadlineMs = new Date(deadline).getTime();
-      if (Number.isFinite(deadlineMs) && deadlineMs < Date.now()) {
-        return c.json(
-          {
-            error: {
-              code: "REGISTRATION_CLOSED",
-              message: "Die Anmeldefrist für dieses Event ist abgelaufen.",
-            },
-          },
-          409,
-        );
-      }
-    }
+    // Anmeldefrist (auch aus dem Anlegen) und manuelles Schließen prüfen
+    const block = registrationBlock(id);
+    if (block) return c.json({ error: block }, 409);
 
     // Optional: Antworten + persönliche Notiz lesen
     let answers: DevAnswer[] = [];
@@ -1421,12 +1475,7 @@ eventRoutes.patch("/:id/my-registration", zValidator("json", selfEditSchema), as
 
   const base = findDevBaseEvent(id);
   const event = base ? applyOverride(base) : undefined;
-  const deadline = event?.registrationDeadline;
-  const deadlinePassed =
-    typeof deadline === "string" &&
-    Number.isFinite(new Date(deadline).getTime()) &&
-    new Date(deadline).getTime() < Date.now();
-  if (event?.status !== "open" || deadlinePassed) {
+  if (event?.status !== "open" || registrationBlock(id)) {
     return c.json(
       {
         error: {

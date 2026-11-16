@@ -117,6 +117,8 @@
     "hiddenCount": "({{hidden}} ausgeblendet)"
   },
   "events": {
+    "emailSuggestPlaceholder": "Person suchen und hinzufügen …",
+    "emailSuggestEmpty": "Keine Person gefunden.",
     "navLink": "Events",
     "listTitle": "Event-Portfolio",
     "createTitle": "Neues Event anlegen",
@@ -266,6 +268,13 @@
     }
   },
   "participants": {
+    "closeRegistration": "Anmeldung schließen",
+    "reopenRegistration": "Anmeldung wieder öffnen",
+    "confirmCloseRegistration": "Anmeldung jetzt schließen? Mitarbeitende können sich dann nicht mehr anmelden oder ihre Anmeldung ändern.",
+    "confirmReopenRegistration": "Anmeldung wieder öffnen?",
+    "closedByTeam": "Die Anmeldung wurde vom Event-Team geschlossen.",
+    "deadlinePassedHint": "Die Anmeldefrist ist abgelaufen. Zum Verlängern die Frist im Event bearbeiten.",
+    "inactiveSection": "Nicht dabei / abgemeldet ({{count}})",
     "cancelledCount": "{{count}} abgemeldet",
     "declinedCount": "{{count}} nicht dabei",
     "editRegistration": "Bearbeiten",
@@ -426,6 +435,7 @@
     "phaseDraft": "Entwurf",
     "phasePlanned": "Geplant",
     "phaseOpen": "Anmeldung offen",
+    "phaseOpenClosed": "Anmeldung geschlossen",
     "phaseRunning": "Läuft",
     "phaseClosed": "Abgeschlossen",
     "phaseSwitchTo": "Phase wechseln zu „{{phase}}“",

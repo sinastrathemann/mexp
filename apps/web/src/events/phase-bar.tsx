@@ -12,11 +12,13 @@ const PHASES: { status: EventStatus; key: string }[] = [
 interface Props {
   status: EventStatus;
   pending: boolean;
+  // Phase "open", aber Frist abgelaufen oder manuell geschlossen
+  registrationClosed?: boolean;
   onTransition: (status: EventStatus) => void;
 }
 
 /** Status als Fortschrittsleiste; erlaubte Phasen sind klickbar (ersetzt "Status ändern"). */
-export function PhaseBar({ status, pending, onTransition }: Props) {
+export function PhaseBar({ status, pending, registrationClosed = false, onTransition }: Props) {
   const { t } = useTranslation();
   const allowed = allowedTransitions(status);
 
@@ -55,7 +57,10 @@ export function PhaseBar({ status, pending, onTransition }: Props) {
         {PHASES.map((phase, i) => {
           const state = i < currentIndex ? "done" : i === currentIndex ? "current" : "todo";
           const clickable = allowed.includes(phase.status) && !pending;
-          const label = t(phase.key);
+          const label =
+            phase.status === "open" && registrationClosed
+              ? t("projectPlan.phaseOpenClosed")
+              : t(phase.key);
           return (
             <button
               key={phase.status}

@@ -4,6 +4,8 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../api/client";
 import { RichTextEditor } from "../components/rich-text-editor";
+import { appendEmail } from "./email-list";
+import { EmailSuggest } from "./email-suggest";
 import { tbdDateInput, tbdIso } from "./event-date";
 import { EventDateFields } from "./event-date-fields";
 import {
@@ -414,6 +416,11 @@ export function EventEditModal({
                   value={audienceEmailsRaw}
                   onChange={(e) => setAudienceEmailsRaw(e.target.value)}
                   placeholder="max.mustermann@mindsquare.de, lisa.werkstudi@mindsquare.de"
+                />
+                <EmailSuggest
+                  id="ee-aud-emails-suggest"
+                  currentRaw={audienceEmailsRaw}
+                  onPick={(email) => setAudienceEmailsRaw((raw) => appendEmail(raw, email))}
                 />
                 <p className="help-text">
                   Nur diese Personen sehen das Event in ihrer Event-Liste.

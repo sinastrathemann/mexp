@@ -117,6 +117,8 @@
     "hiddenCount": "({{hidden}} hidden)"
   },
   "events": {
+    "emailSuggestPlaceholder": "Search and add a person …",
+    "emailSuggestEmpty": "No person found.",
     "navLink": "Events",
     "listTitle": "Event portfolio",
     "createTitle": "Create new event",
@@ -266,6 +268,13 @@
     }
   },
   "participants": {
+    "closeRegistration": "Close registration",
+    "reopenRegistration": "Reopen registration",
+    "confirmCloseRegistration": "Close registration now? Employees can then no longer register or change their registration.",
+    "confirmReopenRegistration": "Reopen registration?",
+    "closedByTeam": "Registration has been closed by the event team.",
+    "deadlinePassedHint": "The registration deadline has passed. Edit the event to extend it.",
+    "inactiveSection": "Not attending / cancelled ({{count}})",
     "cancelledCount": "{{count}} cancelled",
     "declinedCount": "{{count}} not attending",
     "editRegistration": "Edit",
@@ -426,6 +435,7 @@
     "phaseDraft": "Draft",
     "phasePlanned": "Planned",
     "phaseOpen": "Registration open",
+    "phaseOpenClosed": "Registration closed",
     "phaseRunning": "Running",
     "phaseClosed": "Closed",
     "phaseSwitchTo": "Switch phase to “{{phase}}”",

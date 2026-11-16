@@ -5,6 +5,8 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ApiRequestError, apiFetch } from "../api/client";
 import { RichTextEditor } from "../components/rich-text-editor";
+import { appendEmail } from "../events/email-list";
+import { EmailSuggest } from "../events/email-suggest";
 import { tbdIso } from "../events/event-date";
 import { EventDateFields } from "../events/event-date-fields";
 import type { AssigneeDto } from "../events/project-plan-types";
@@ -462,6 +464,11 @@ export default function EventCreatePage() {
                 value={audienceEmailsRaw}
                 onChange={(e) => setAudienceEmailsRaw(e.target.value)}
                 placeholder="max.mustermann@mindsquare.de, lisa.werkstudi@mindsquare.de"
+              />
+              <EmailSuggest
+                id="ev-aud-emails-suggest"
+                currentRaw={audienceEmailsRaw}
+                onPick={(email) => setAudienceEmailsRaw((raw) => appendEmail(raw, email))}
               />
               <p className="help-text">Nur diese Personen sehen das Event in ihrer Event-Liste.</p>
             </div>
