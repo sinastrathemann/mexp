@@ -247,4 +247,83 @@ describe("Event-Aufgaben-API", () => {
     });
     expect(eventTaskStore.get("evt1")).toHaveLength(200);
   });
+  it("Priorität: fehlt bei Altbestand → mittel beim Lesen, ohne den Datensatz zu ändern", async () => {
+    const ws = asUser("ws", ["werkstudent"]);
+    const legacy = {
+      id: "alt",
+      title: "Altaufgabe",
+      dueDate: null,
+      assigneeId: null,
+      assigneeName: null,
+      linkLabel: null,
+      linkUrl: null,
+      done: false,
+      doneBy: null,
+      doneAt: null,
+      createdBy: "x",
+      createdAt: "2026-11-01T00:00:00.000Z",
+    };
+    eventTaskStore.set("evt1", [legacy]);
+    const res = await app().request(URL_BASE, { headers: ws });
+    const { tasks } = (await res.json()) as { tasks: { priority: string }[] };
+    expect(tasks[0]?.priority).toBe("medium");
+    expect(eventTaskStore.get("evt1")?.[0]).toEqual(legacy);
+  });
+
+  it("Priorität setzen beim Anlegen und Bearbeiten, ungültige Werte abgelehnt", async () => {
+    const ws = asUser("ws", ["werkstudent"]);
+    const created = await createTask(ws, { title: "Wichtig", priority: "high" });
+    expect(created.status).toBe(201);
+    const { task } = (await created.json()) as { task: { id: string; priority: string } };
+    expect(task.priority).toBe("high");
+    const patched = await app().request(`${URL_BASE}/${task.id}`, {
+      method: "PATCH",
+      headers: ws,
+      body: JSON.stringify({ priority: "low" }),
+    });
+    expect(((await patched.json()) as { task: { priority: string } }).task.priority).toBe("low");
+    const bad = await createTask(ws, { title: "x", priority: "urgent" });
+    expect(bad.status).toBe(400);
+  });
+
+  it("Reihenfolge speichern: nur vollständige Permutation der vorhandenen Aufgaben", async () => {
+    const ws = asUser("ws", ["werkstudent"]);
+    const ids: string[] = [];
+    for (const title of ["A", "B", "C"]) {
+      const r = await createTask(ws, { title });
+      ids.push(((await r.json()) as { task: { id: string } }).task.id);
+    }
+    const [a, b, c] = ids as [string, string, string];
+    const ok = await app().request(`${URL_BASE}/order`, {
+      method: "PUT",
+      headers: ws,
+      body: JSON.stringify({ ids: [c, a, b] }),
+    });
+    expect(ok.status).toBe(200);
+    expect(eventTaskStore.get("evt1")?.map((t) => t.title)).toEqual(["C", "A", "B"]);
+
+    const missing = await app().request(`${URL_BASE}/order`, {
+      method: "PUT",
+      headers: ws,
+      body: JSON.stringify({ ids: [a, b] }),
+    });
+    expect(missing.status).toBe(400);
+    const dup = await app().request(`${URL_BASE}/order`, {
+      method: "PUT",
+      headers: ws,
+      body: JSON.stringify({ ids: [a, a, b] }),
+    });
+    expect(dup.status).toBe(400);
+    expect(eventTaskStore.get("evt1")?.map((t) => t.title)).toEqual(["C", "A", "B"]);
+  });
+
+  it("Mitarbeitende dürfen die Reihenfolge nicht ändern", async () => {
+    const emp = asUser("emp", ["employee"]);
+    const res = await app().request(`${URL_BASE}/order`, {
+      method: "PUT",
+      headers: emp,
+      body: JSON.stringify({ ids: [] }),
+    });
+    expect(res.status).toBe(403);
+  });
 });

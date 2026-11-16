@@ -3,7 +3,6 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../api/client";
 import type { BlueprintTaskDto } from "../events/project-plan-types";
-import { sortBlueprintTasks } from "../events/task-utils";
 
 interface Row {
   // Nur für React: stabiler Schlüssel (bei Serverdaten = id), wird nicht gespeichert.
@@ -57,7 +56,7 @@ export function BlueprintTasksModal({ blueprintId, name, onClose }: Props) {
   // null = noch nicht aus den Serverdaten übernommen
   const [rows, setRows] = useState<Row[] | null>(null);
   useEffect(() => {
-    if (rows === null && q.data) setRows(sortBlueprintTasks(q.data.tasks).map(toRow));
+    if (rows === null && q.data) setRows(q.data.tasks.map(toRow));
   }, [rows, q.data]);
 
   const headingId = useId();

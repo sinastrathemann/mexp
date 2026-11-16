@@ -1,8 +1,13 @@
 // Spiegel der API-Typen aus apps/api/src/project-plan/model.ts
+export const TASK_PRIORITIES = ["high", "medium", "low"] as const;
+export type TaskPriority = (typeof TASK_PRIORITIES)[number];
+
 export interface EventTaskDto {
   id: string;
   title: string;
   dueDate: string | null;
+  // API ergänzt "medium", wenn eine (ältere) Aufgabe keine Priorität gespeichert hat
+  priority: TaskPriority;
   assigneeId: string | null;
   assigneeName: string | null;
   linkLabel: string | null;
