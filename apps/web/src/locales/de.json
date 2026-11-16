@@ -590,6 +590,10 @@
     "archived": "archiviert",
     "eventContentTitle": "Geplante Kommunikation",
     "openContentPlan": "Zum Contentplan",
-    "eventContentEmpty": "Noch keine Einträge im Contentplan mit diesem Event verknüpft."
+    "eventContentEmpty": "Noch keine Einträge im Contentplan mit diesem Event verknüpft.",
+    "projectPhase": {
+      "open": "In Vorbereitung",
+      "running": "In Umsetzung"
+    }
   }
 }

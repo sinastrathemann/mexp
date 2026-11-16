@@ -590,6 +590,10 @@
     "archived": "archived",
     "eventContentTitle": "Planned communication",
     "openContentPlan": "Open content plan",
-    "eventContentEmpty": "No content plan entries linked to this event yet."
+    "eventContentEmpty": "No content plan entries linked to this event yet.",
+    "projectPhase": {
+      "open": "In preparation",
+      "running": "In progress"
+    }
   }
 }

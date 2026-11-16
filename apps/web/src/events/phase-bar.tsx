@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { PROJECT_PHASE_KEYS } from "./status-badge";
 import { type EventStatus, allowedTransitions } from "./types";
 
 const PHASES: { status: EventStatus; key: string }[] = [
@@ -14,11 +15,19 @@ interface Props {
   pending: boolean;
   // Phase "open", aber Frist abgelaufen oder manuell geschlossen
   registrationClosed?: boolean;
+  /** Runde 5: Projekt → Phasen ohne Anmeldung („In Vorbereitung“ / „In Umsetzung“). */
+  project?: boolean;
   onTransition: (status: EventStatus) => void;
 }
 
 /** Status als Fortschrittsleiste; erlaubte Phasen sind klickbar (ersetzt "Status ändern"). */
-export function PhaseBar({ status, pending, registrationClosed = false, onTransition }: Props) {
+export function PhaseBar({
+  status,
+  pending,
+  registrationClosed = false,
+  project = false,
+  onTransition,
+}: Props) {
   const { t } = useTranslation();
   const allowed = allowedTransitions(status);
 
@@ -58,9 +67,11 @@ export function PhaseBar({ status, pending, registrationClosed = false, onTransi
           const state = i < currentIndex ? "done" : i === currentIndex ? "current" : "todo";
           const clickable = allowed.includes(phase.status) && !pending;
           const label =
-            phase.status === "open" && registrationClosed
-              ? t("projectPlan.phaseOpenClosed")
-              : t(phase.key);
+            project && PROJECT_PHASE_KEYS[phase.status]
+              ? t(PROJECT_PHASE_KEYS[phase.status] as string)
+              : phase.status === "open" && registrationClosed
+                ? t("projectPlan.phaseOpenClosed")
+                : t(phase.key);
           return (
             <button
               key={phase.status}

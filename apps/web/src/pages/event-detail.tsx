@@ -123,6 +123,8 @@ export default function EventDetailPage() {
   if (!data) return null;
 
   const event = data.event;
+  // Runde 5: Projekte = Projektplan ohne Anmeldung/Teilnehmer
+  const isProject = event.kind === "project";
   const fmtDate = (iso: string) => formatEventDate(iso, event.timeTbd, i18n.language);
 
   return (
@@ -135,7 +137,7 @@ export default function EventDetailPage() {
           <div className="eyebrow">{eventTypeLabel(event, t)}</div>
           <h1 className="page-title">{event.title}</h1>
           <div className="row" style={{ marginTop: "var(--space-2)" }}>
-            <EventStatusBadge status={event.status} />
+            <EventStatusBadge status={event.status} project={isProject} />
             {event.archived && <span className="badge badge-orange">{t("events.archived")}</span>}
             <span className="badge badge-muted">{t(`events.visibility.${event.visibility}`)}</span>
             {event.audienceScope === "teams" && (event.audienceTeams?.length ?? 0) > 0 && (
@@ -159,7 +161,7 @@ export default function EventDetailPage() {
           >
             📅 In Kalender speichern
           </a>
-          {canManage && (
+          {canManage && !isProject && (
             <button type="button" className="btn btn-outline" onClick={copyRegistrationLink}>
               {linkCopied ? `✓ ${t("events.linkCopied")}` : t("events.copyRegistrationLink")}
             </button>
@@ -243,6 +245,7 @@ export default function EventDetailPage() {
           <PhaseBar
             status={event.status}
             pending={transitionMut.isPending}
+            project={isProject}
             registrationClosed={
               registrationState(event) === "closed_manual" ||
               registrationState(event) === "closed_deadline"
@@ -256,7 +259,7 @@ export default function EventDetailPage() {
             <TaskChecklist eventId={event.id} />
             <div className="project-plan-side">
               <ToolsCard />
-              <KeyFiguresCard event={event} />
+              {!isProject && <KeyFiguresCard event={event} />}
               <BudgetLinkCard />
             </div>
           </div>
@@ -292,11 +295,15 @@ export default function EventDetailPage() {
               <span style={{ whiteSpace: "pre-wrap" }}>{event.locationDetails}</span>
             </>
           )}
-          <div className="label" style={{ margin: 0 }}>
-            {t("events.fieldCapacity")}
-          </div>
-          <span>{event.capacity ?? "—"}</span>
-          {event.registrationDeadline && (
+          {!isProject && (
+            <>
+              <div className="label" style={{ margin: 0 }}>
+                {t("events.fieldCapacity")}
+              </div>
+              <span>{event.capacity ?? "—"}</span>
+            </>
+          )}
+          {!isProject && event.registrationDeadline && (
             <>
               <div className="label" style={{ margin: 0 }}>
                 Anmeldung
@@ -317,11 +324,11 @@ export default function EventDetailPage() {
         </div>
       </div>
 
-      <RegistrationFormPanel event={event} />
-      <ParticipantsPanel event={event} />
+      {!isProject && <RegistrationFormPanel event={event} />}
+      {!isProject && <ParticipantsPanel event={event} />}
       <TenderPanel event={event} />
       <DocumentsPanel event={event} />
-      <FeedbackPanel event={event} />
+      {!isProject && <FeedbackPanel event={event} />}
     </div>
   );
 }

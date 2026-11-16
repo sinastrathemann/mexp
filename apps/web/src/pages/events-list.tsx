@@ -191,7 +191,7 @@ export default function EventsListPage() {
               )}
               <div className="event-card-head">
                 <span className="event-card-type">{eventTypeLabel(e, t)}</span>
-                <EventStatusBadge status={e.status} />
+                <EventStatusBadge status={e.status} project={e.kind === "project"} />
               </div>
 
               <h2 className="event-card-title">{e.title}</h2>

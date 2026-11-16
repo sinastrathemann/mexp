@@ -69,6 +69,8 @@ export function EventEditModal({
   onDelete,
 }: Props) {
   const { t } = useTranslation();
+  // Runde 5: Projekte haben keine Anmeldung → Kapazität, Frist und Teilnehmerkreis ausblenden
+  const isProject = event.kind === "project";
   const [title, setTitle] = useState(event.title);
   const [description, setDescription] = useState(event.description);
   const [eventType, setEventType] = useState<EventType>(event.eventType);
@@ -271,20 +273,22 @@ export function EventEditModal({
                 placeholder="z. B. Bielefeld HQ, Heidewald, Online"
               />
             </div>
-            <div className="field">
-              <label className="label" htmlFor="ee-cap">
-                {t("events.fieldCapacity")}
-              </label>
-              <input
-                id="ee-cap"
-                className="input"
-                type="number"
-                min={1}
-                value={capacity}
-                onChange={(e) => setCapacity(e.target.value)}
-                placeholder="Optional"
-              />
-            </div>
+            {!isProject && (
+              <div className="field">
+                <label className="label" htmlFor="ee-cap">
+                  {t("events.fieldCapacity")}
+                </label>
+                <input
+                  id="ee-cap"
+                  className="input"
+                  type="number"
+                  min={1}
+                  value={capacity}
+                  onChange={(e) => setCapacity(e.target.value)}
+                  placeholder="Optional"
+                />
+              </div>
+            )}
           </div>
 
           <div className="field">
@@ -304,214 +308,218 @@ export function EventEditModal({
             />
           </div>
 
-          <div className="field">
-            <label className="label" htmlFor="ee-deadline">
-              Anmeldung schließt am
-            </label>
-            <input
-              id="ee-deadline"
-              className="input"
-              type="datetime-local"
-              value={registrationDeadline}
-              onChange={(e) => setRegistrationDeadline(e.target.value)}
-            />
-            <p className="help-text">
-              Nach diesem Datum können Mitarbeiter sich nicht mehr selbst anmelden.
-            </p>
-          </div>
+          {!isProject && (
+            <div className="field">
+              <label className="label" htmlFor="ee-deadline">
+                Anmeldung schließt am
+              </label>
+              <input
+                id="ee-deadline"
+                className="input"
+                type="datetime-local"
+                value={registrationDeadline}
+                onChange={(e) => setRegistrationDeadline(e.target.value)}
+              />
+              <p className="help-text">
+                Nach diesem Datum können Mitarbeiter sich nicht mehr selbst anmelden.
+              </p>
+            </div>
+          )}
 
-          <fieldset
-            style={{
-              border: "1px solid var(--border-default)",
-              borderRadius: "var(--radius-md)",
-              padding: "var(--space-3) var(--space-4) var(--space-4)",
-              margin: "var(--space-4) 0",
-            }}
-          >
-            <legend
+          {!isProject && (
+            <fieldset
               style={{
-                padding: "0 var(--space-2)",
-                fontFamily: "var(--font-mono)",
-                fontSize: "var(--label-size)",
-                fontWeight: 700,
-                letterSpacing: "var(--tracking-wider)",
-                textTransform: "uppercase",
-                color: "var(--fg-strong)",
+                border: "1px solid var(--border-default)",
+                borderRadius: "var(--radius-md)",
+                padding: "var(--space-3) var(--space-4) var(--space-4)",
+                margin: "var(--space-4) 0",
               }}
             >
-              Teilnehmerkreis
-            </legend>
-            <p className="help-text" style={{ marginTop: 0 }}>
-              Wer darf dieses Event sehen? Verwaltungs-Rollen sehen es immer.
-            </p>
-            <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-              {(
-                [
-                  ["all", "Alle Mitarbeiter"],
-                  ["roles", "Nur bestimmte Rollen"],
-                  ["emails", "Nur bestimmte Personen"],
-                  ["teams", "Nur bestimmte Teams"],
-                  ["departments", "Nur bestimmte Bereiche"],
-                ] as const
-              ).map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  className={
-                    audienceScope === key ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm"
-                  }
-                  onClick={() => setAudienceScope(key)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+              <legend
+                style={{
+                  padding: "0 var(--space-2)",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "var(--label-size)",
+                  fontWeight: 700,
+                  letterSpacing: "var(--tracking-wider)",
+                  textTransform: "uppercase",
+                  color: "var(--fg-strong)",
+                }}
+              >
+                Teilnehmerkreis
+              </legend>
+              <p className="help-text" style={{ marginTop: 0 }}>
+                Wer darf dieses Event sehen? Verwaltungs-Rollen sehen es immer.
+              </p>
+              <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+                {(
+                  [
+                    ["all", "Alle Mitarbeiter"],
+                    ["roles", "Nur bestimmte Rollen"],
+                    ["emails", "Nur bestimmte Personen"],
+                    ["teams", "Nur bestimmte Teams"],
+                    ["departments", "Nur bestimmte Bereiche"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className={
+                      audienceScope === key ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm"
+                    }
+                    onClick={() => setAudienceScope(key)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
 
-            {audienceScope === "roles" && (
-              <div className="field" style={{ margin: "var(--space-3) 0 0" }}>
-                <label className="label" htmlFor="allowed-roles">
-                  Erlaubte Rollen
-                </label>
-                <div id="allowed-roles" className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-                  {(
-                    [
-                      "participant",
-                      "werkstudent",
-                      "event_office",
-                      "budget_owner",
-                      "manager",
-                      "read_only",
-                    ] as const
-                  ).map((r) => {
-                    const checked = audienceRoles.includes(r);
-                    return (
-                      <button
-                        key={r}
-                        type="button"
-                        className={checked ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm"}
-                        onClick={() =>
-                          setAudienceRoles((cur) =>
-                            checked ? cur.filter((x) => x !== r) : [...cur, r],
-                          )
-                        }
-                      >
-                        {checked ? "✓ " : ""}
-                        {r}
-                      </button>
-                    );
-                  })}
+              {audienceScope === "roles" && (
+                <div className="field" style={{ margin: "var(--space-3) 0 0" }}>
+                  <label className="label" htmlFor="allowed-roles">
+                    Erlaubte Rollen
+                  </label>
+                  <div id="allowed-roles" className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+                    {(
+                      [
+                        "participant",
+                        "werkstudent",
+                        "event_office",
+                        "budget_owner",
+                        "manager",
+                        "read_only",
+                      ] as const
+                    ).map((r) => {
+                      const checked = audienceRoles.includes(r);
+                      return (
+                        <button
+                          key={r}
+                          type="button"
+                          className={checked ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm"}
+                          onClick={() =>
+                            setAudienceRoles((cur) =>
+                              checked ? cur.filter((x) => x !== r) : [...cur, r],
+                            )
+                          }
+                        >
+                          {checked ? "✓ " : ""}
+                          {r}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {audienceScope === "emails" && (
-              <div className="field" style={{ margin: "var(--space-3) 0 0" }}>
-                <label className="label" htmlFor="ee-aud-emails">
-                  E-Mail-Liste (kommagetrennt)
-                </label>
-                <textarea
-                  id="ee-aud-emails"
-                  className="textarea"
-                  rows={3}
-                  value={audienceEmailsRaw}
-                  onChange={(e) => setAudienceEmailsRaw(e.target.value)}
-                  placeholder="max.mustermann@mindsquare.de, lisa.werkstudi@mindsquare.de"
-                />
-                <EmailSuggest
-                  id="ee-aud-emails-suggest"
-                  currentRaw={audienceEmailsRaw}
-                  onPick={(email) => setAudienceEmailsRaw((raw) => appendEmail(raw, email))}
-                />
-                <p className="help-text">
-                  Nur diese Personen sehen das Event in ihrer Event-Liste.
-                </p>
-              </div>
-            )}
+              {audienceScope === "emails" && (
+                <div className="field" style={{ margin: "var(--space-3) 0 0" }}>
+                  <label className="label" htmlFor="ee-aud-emails">
+                    E-Mail-Liste (kommagetrennt)
+                  </label>
+                  <textarea
+                    id="ee-aud-emails"
+                    className="textarea"
+                    rows={3}
+                    value={audienceEmailsRaw}
+                    onChange={(e) => setAudienceEmailsRaw(e.target.value)}
+                    placeholder="max.mustermann@mindsquare.de, lisa.werkstudi@mindsquare.de"
+                  />
+                  <EmailSuggest
+                    id="ee-aud-emails-suggest"
+                    currentRaw={audienceEmailsRaw}
+                    onPick={(email) => setAudienceEmailsRaw((raw) => appendEmail(raw, email))}
+                  />
+                  <p className="help-text">
+                    Nur diese Personen sehen das Event in ihrer Event-Liste.
+                  </p>
+                </div>
+              )}
 
-            {audienceScope === "teams" && (
-              <div className="field" style={{ margin: "var(--space-3) 0 0" }}>
-                <label className="label" htmlFor="ee-aud-teams">
-                  Sichtbar für Teams
-                </label>
-                {facets.isLoading && <p className="muted text-sm">Lade Teams…</p>}
-                {facets.error instanceof Error && (
-                  <p className="help-text">{facets.error.message}</p>
-                )}
-                <div
-                  id="ee-aud-teams"
-                  style={{
-                    maxHeight: 220,
-                    overflow: "auto",
-                    border: "1px solid var(--border-default)",
-                    borderRadius: "var(--radius-md)",
-                    padding: "var(--space-2) var(--space-3)",
-                  }}
-                >
-                  {facets.data?.teams.map((team) => (
-                    <label key={team} style={{ display: "block", padding: "2px 0" }}>
-                      <input
-                        type="checkbox"
-                        checked={audienceTeams.includes(team)}
-                        onChange={(e) => {
-                          if (e.target.checked) setAudienceTeams((cur) => [...cur, team]);
-                          else setAudienceTeams((cur) => cur.filter((t) => t !== team));
-                        }}
-                      />{" "}
-                      {team}
-                    </label>
-                  ))}
-                  {facets.data && facets.data.teams.length === 0 && (
-                    <p className="muted text-sm">Keine Teams gefunden.</p>
+              {audienceScope === "teams" && (
+                <div className="field" style={{ margin: "var(--space-3) 0 0" }}>
+                  <label className="label" htmlFor="ee-aud-teams">
+                    Sichtbar für Teams
+                  </label>
+                  {facets.isLoading && <p className="muted text-sm">Lade Teams…</p>}
+                  {facets.error instanceof Error && (
+                    <p className="help-text">{facets.error.message}</p>
                   )}
+                  <div
+                    id="ee-aud-teams"
+                    style={{
+                      maxHeight: 220,
+                      overflow: "auto",
+                      border: "1px solid var(--border-default)",
+                      borderRadius: "var(--radius-md)",
+                      padding: "var(--space-2) var(--space-3)",
+                    }}
+                  >
+                    {facets.data?.teams.map((team) => (
+                      <label key={team} style={{ display: "block", padding: "2px 0" }}>
+                        <input
+                          type="checkbox"
+                          checked={audienceTeams.includes(team)}
+                          onChange={(e) => {
+                            if (e.target.checked) setAudienceTeams((cur) => [...cur, team]);
+                            else setAudienceTeams((cur) => cur.filter((t) => t !== team));
+                          }}
+                        />{" "}
+                        {team}
+                      </label>
+                    ))}
+                    {facets.data && facets.data.teams.length === 0 && (
+                      <p className="muted text-sm">Keine Teams gefunden.</p>
+                    )}
+                  </div>
+                  <p className="help-text">
+                    Nur Mitglieder dieser Teams (aus dem Personio-Sync) sehen das Event.
+                  </p>
                 </div>
-                <p className="help-text">
-                  Nur Mitglieder dieser Teams (aus dem Personio-Sync) sehen das Event.
-                </p>
-              </div>
-            )}
+              )}
 
-            {audienceScope === "departments" && (
-              <div className="field" style={{ margin: "var(--space-3) 0 0" }}>
-                <label className="label" htmlFor="ee-aud-departments">
-                  Sichtbar für Bereiche
-                </label>
-                {facets.isLoading && <p className="muted text-sm">Lade Bereiche…</p>}
-                {facets.error instanceof Error && (
-                  <p className="help-text">{facets.error.message}</p>
-                )}
-                <div
-                  id="ee-aud-departments"
-                  style={{
-                    maxHeight: 220,
-                    overflow: "auto",
-                    border: "1px solid var(--border-default)",
-                    borderRadius: "var(--radius-md)",
-                    padding: "var(--space-2) var(--space-3)",
-                  }}
-                >
-                  {facets.data?.departments.map((dept) => (
-                    <label key={dept} style={{ display: "block", padding: "2px 0" }}>
-                      <input
-                        type="checkbox"
-                        checked={audienceDepartments.includes(dept)}
-                        onChange={(e) => {
-                          if (e.target.checked) setAudienceDepartments((cur) => [...cur, dept]);
-                          else setAudienceDepartments((cur) => cur.filter((d) => d !== dept));
-                        }}
-                      />{" "}
-                      {dept}
-                    </label>
-                  ))}
-                  {facets.data && facets.data.departments.length === 0 && (
-                    <p className="muted text-sm">Keine Bereiche gefunden.</p>
+              {audienceScope === "departments" && (
+                <div className="field" style={{ margin: "var(--space-3) 0 0" }}>
+                  <label className="label" htmlFor="ee-aud-departments">
+                    Sichtbar für Bereiche
+                  </label>
+                  {facets.isLoading && <p className="muted text-sm">Lade Bereiche…</p>}
+                  {facets.error instanceof Error && (
+                    <p className="help-text">{facets.error.message}</p>
                   )}
+                  <div
+                    id="ee-aud-departments"
+                    style={{
+                      maxHeight: 220,
+                      overflow: "auto",
+                      border: "1px solid var(--border-default)",
+                      borderRadius: "var(--radius-md)",
+                      padding: "var(--space-2) var(--space-3)",
+                    }}
+                  >
+                    {facets.data?.departments.map((dept) => (
+                      <label key={dept} style={{ display: "block", padding: "2px 0" }}>
+                        <input
+                          type="checkbox"
+                          checked={audienceDepartments.includes(dept)}
+                          onChange={(e) => {
+                            if (e.target.checked) setAudienceDepartments((cur) => [...cur, dept]);
+                            else setAudienceDepartments((cur) => cur.filter((d) => d !== dept));
+                          }}
+                        />{" "}
+                        {dept}
+                      </label>
+                    ))}
+                    {facets.data && facets.data.departments.length === 0 && (
+                      <p className="muted text-sm">Keine Bereiche gefunden.</p>
+                    )}
+                  </div>
+                  <p className="help-text">
+                    Nur Mitglieder dieser Bereiche (aus dem Personio-Sync) sehen das Event.
+                  </p>
                 </div>
-                <p className="help-text">
-                  Nur Mitglieder dieser Bereiche (aus dem Personio-Sync) sehen das Event.
-                </p>
-              </div>
-            )}
-          </fieldset>
+              )}
+            </fieldset>
+          )}
 
           {error && (
             <div className="alert alert-error" role="alert" style={{ marginTop: "var(--space-3)" }}>
