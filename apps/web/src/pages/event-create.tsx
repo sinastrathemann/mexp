@@ -7,6 +7,7 @@ import { ApiRequestError, apiFetch } from "../api/client";
 import { RichTextEditor } from "../components/rich-text-editor";
 import { tbdIso } from "../events/event-date";
 import { EventDateFields } from "../events/event-date-fields";
+import type { AssigneeDto } from "../events/project-plan-types";
 import {
   EVENT_TYPES,
   EVENT_VISIBILITIES,
@@ -64,6 +65,14 @@ export default function EventCreatePage() {
   const [audienceEmailsRaw, setAudienceEmailsRaw] = useState("");
   const [audienceTeams, setAudienceTeams] = useState<string[]>([]);
   const [audienceDepartments, setAudienceDepartments] = useState<string[]>([]);
+  // Projektplan-Meta (Feedback-Runde 3) — separat gespeichert, nur für EXM sichtbar
+  const [responsibleId, setResponsibleId] = useState("");
+  const [exmNote, setExmNote] = useState("");
+
+  const assigneesQ = useQuery({
+    queryKey: ["task-assignees"],
+    queryFn: () => apiFetch<{ assignees: AssigneeDto[] }>("/task-assignees"),
+  });
 
   const facets = useQuery({
     queryKey: ["users", "facets"],
@@ -129,6 +138,16 @@ export default function EventCreatePage() {
         body: JSON.stringify(input),
       }),
     onSuccess: async (res) => {
+      if (responsibleId || exmNote.trim()) {
+        // Fehler hier dürfen das angelegte Event nicht blockieren — im Projektplan nachpflegbar
+        await apiFetch(`/events/${res.event.id}/plan-meta`, {
+          method: "PUT",
+          body: JSON.stringify({
+            responsibleId: responsibleId || null,
+            exmNote: exmNote.trim() || null,
+          }),
+        }).catch(() => undefined);
+      }
       if (requestId) {
         // Anfrage mit dem neuen Event verknüpfen und als genehmigt markieren
         await apiFetch(`/event-requests/${requestId}`, {
@@ -293,6 +312,42 @@ export default function EventCreatePage() {
             onChange={(e) => setLocationDetails(e.target.value)}
             placeholder="z. B. Barrierefrei, Parkplätze begrenzt, Meetingraum im 2. OG"
           />
+        </div>
+
+        <div className="field">
+          <label className="label" htmlFor="ev-responsible">
+            {t("projectPlan.metaResponsible")}
+          </label>
+          <select
+            id="ev-responsible"
+            className="select"
+            value={responsibleId}
+            onChange={(e) => setResponsibleId(e.target.value)}
+          >
+            <option value="">{t("projectPlan.metaResponsibleDefault")}</option>
+            {(assigneesQ.data?.assignees ?? []).map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.displayName}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="field">
+          <label className="label" htmlFor="ev-exm-note">
+            🔒 {t("projectPlan.metaExmNote")}
+          </label>
+          <textarea
+            id="ev-exm-note"
+            className="textarea"
+            rows={3}
+            maxLength={5000}
+            value={exmNote}
+            onChange={(e) => setExmNote(e.target.value)}
+          />
+          <div className="muted" style={{ fontSize: "0.85em" }}>
+            {t("projectPlan.metaExmNoteHint")}
+          </div>
         </div>
 
         <div className="field">

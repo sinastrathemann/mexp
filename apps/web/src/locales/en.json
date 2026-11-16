@@ -152,7 +152,8 @@
       "team": "Team event",
       "strategy": "Strategy event",
       "division": "Division event",
-      "local_experience": "Local Experience"
+      "local_experience": "Local Experience",
+      "personal_moments": "Personal moments / anniversary"
     },
     "visibility": {
       "internal": "Internal",
@@ -409,6 +410,17 @@
     }
   },
   "projectPlan": {
+    "metaResponsible": "Responsible",
+    "metaResponsibleDefault": "Person creating the event (default)",
+    "metaResponsibleFallback": "created by",
+    "metaResponsibleUnknown": "Not set",
+    "metaExmNote": "Note (visible to EXM only)",
+    "metaExmNoteHint": "Only the Experience Management team sees this, not employees.",
+    "metaExmNoteEmpty": "No internal note yet.",
+    "metaEdit": "Edit",
+    "metaSave": "Save",
+    "metaCancel": "Cancel",
+    "metaSaveError": "Could not be saved: {{message}}",
     "loading": "Loading …",
     "loadError": "Could not be loaded: {{message}}",
     "phaseDraft": "Draft",

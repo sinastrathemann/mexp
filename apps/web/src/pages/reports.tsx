@@ -23,6 +23,7 @@ const TYPE_LABELS: Record<string, string> = {
   strategy: "Strategieevent",
   division: "Bereichsevent",
   local_experience: "Local Experience",
+  personal_moments: "Persönliche Momente / Jubiläum",
 };
 
 const TYPE_FILL: Record<string, string> = {
@@ -33,6 +34,7 @@ const TYPE_FILL: Record<string, string> = {
   strategy: "fill-cobalt",
   division: "fill-orange",
   local_experience: "fill-yellow",
+  personal_moments: "fill-lime",
 };
 
 export default function ReportsPage() {
