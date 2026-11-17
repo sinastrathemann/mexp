@@ -2247,6 +2247,14 @@ output.alert {
   min-height: 90px;
   font-size: 0.9em;
 }
+.content-day-today {
+  border-color: var(--brand-orange);
+  border-top: 4px solid var(--brand-orange);
+  background: var(--brand-orange-light);
+}
+.content-day-today .content-day-head {
+  color: var(--brand-orange);
+}
 .content-day-outside {
   opacity: 0.45;
 }

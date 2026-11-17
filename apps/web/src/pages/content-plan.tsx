@@ -32,7 +32,8 @@ export default function ContentPlanPage() {
   const qc = useQueryClient();
   const [view, setView] = useState<View>("week");
   // Bezugsdatum für alle Ansichten; Woche/Liste starten am Montag, Monat am 1.
-  const [anchor, setAnchor] = useState(() => toIsoDate(new Date()));
+  const today = toIsoDate(new Date());
+  const [anchor, setAnchor] = useState(today);
   const monday = mondayOf(anchor);
   const weeks = monthWeeks(anchor);
   const [channel, setChannel] = useState<ContentChannel | "">("");
@@ -95,10 +96,8 @@ export default function ContentPlanPage() {
   const events = eventsQ.data?.events ?? [];
   const eventTitle = (id: string | null) =>
     id ? (events.find((e) => e.id === id)?.title ?? null) : null;
-  // Verknüpftes Event oder Freitext (noch nicht angelegt)
-  const eventLabel = (e: ContentPlanEntryDto) =>
-    eventTitle(e.eventId) ??
-    (e.eventName ? `${e.eventName} (${t("planning.notCreatedYet")})` : null);
+  // Verknüpftes Event oder Freitext
+  const eventLabel = (e: ContentPlanEntryDto) => eventTitle(e.eventId) ?? e.eventName ?? null;
   const entries = (entriesQ.data?.entries ?? [])
     .filter((e) => (channel ? e.channel === channel : true))
     .filter((e) => (person ? e.responsibleId === person : true));
@@ -171,11 +170,7 @@ export default function ContentPlanPage() {
         <button type="button" className="btn btn-outline btn-sm" onClick={() => step(1)}>
           ›
         </button>
-        <button
-          type="button"
-          className="btn btn-ghost btn-sm"
-          onClick={() => setAnchor(toIsoDate(new Date()))}
-        >
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAnchor(today)}>
           {t("planning.today")}
         </button>
         <span style={{ flex: 1 }} />
@@ -246,7 +241,7 @@ export default function ContentPlanPage() {
       {view === "week" ? (
         <div className="content-week">
           {Array.from({ length: WEEKDAYS }, (_, i) => addDays(monday, i)).map((day) => (
-            <div key={day} className="content-day">
+            <div key={day} className={`content-day${day === today ? " content-day-today" : ""}`}>
               <div className="content-day-head">
                 {t(`planning.weekday.${parseIsoDate(day).getDay()}`)} {fmtIsoDate(day, false)}
               </div>
@@ -270,7 +265,7 @@ export default function ContentPlanPage() {
                 key={day}
                 className={`content-day content-month-day${
                   day.slice(0, 7) === anchor.slice(0, 7) ? "" : " content-day-outside"
-                }`}
+                }${day === today ? " content-day-today" : ""}`}
               >
                 <div className="row" style={{ justifyContent: "space-between" }}>
                   <span className="content-day-head">{fmtIsoDate(day, false)}</span>
