@@ -91,6 +91,8 @@ export interface ContentPlanEntryDto {
   responsibleId: string | null;
   responsibleName: string | null;
   eventId: string | null;
+  /** Freitext, wenn das Event noch nicht in mEXP angelegt ist */
+  eventName: string | null;
   note: string | null;
 }
 

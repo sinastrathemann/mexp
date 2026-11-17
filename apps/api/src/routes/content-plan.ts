@@ -31,6 +31,8 @@ export interface ContentPlanEntry {
   channel: (typeof CONTENT_CHANNELS)[number];
   responsibleId: string | null;
   eventId: string | null;
+  /** Freitext für Events, die (noch) nicht in mEXP angelegt sind. Fehlt bei Alteinträgen. */
+  eventName?: string | null;
   note: string | null;
   createdBy: string;
   createdAt: string;
@@ -46,6 +48,7 @@ const baseSchema = z.object({
   channel: z.enum(CONTENT_CHANNELS),
   responsibleId: z.string().min(1).nullable().optional(),
   eventId: z.string().min(1).max(200).nullable().optional(),
+  eventName: z.string().trim().max(200).nullable().optional(),
   note: z.string().trim().max(2000).nullable().optional(),
 });
 const patchSchema = baseSchema
@@ -67,6 +70,7 @@ function toDto(e: ContentPlanEntry) {
     responsibleId: e.responsibleId,
     responsibleName: user ? (user.displayName ?? user.email ?? user.id) : null,
     eventId: e.eventId,
+    eventName: e.eventName ?? null,
     note: e.note,
   };
 }
@@ -112,6 +116,8 @@ contentPlanRoutes.post(
       channel: input.channel,
       responsibleId: input.responsibleId ?? null,
       eventId: input.eventId ?? null,
+      // Verknüpfung hat Vorrang: entweder angelegtes Event oder Freitext
+      eventName: input.eventId ? null : input.eventName || null,
       note: input.note || null,
       createdBy: actor,
       createdAt: now,
@@ -134,6 +140,9 @@ contentPlanRoutes.patch(
     if (input.responsibleId && !teamMember(input.responsibleId)) {
       return c.json(invalidResponsible, 400);
     }
+    const eventId = input.eventId === undefined ? current.eventId : input.eventId;
+    const eventName =
+      input.eventName === undefined ? (current.eventName ?? null) : input.eventName || null;
     const next: ContentPlanEntry = {
       ...current,
       date: input.date ?? current.date,
@@ -141,7 +150,8 @@ contentPlanRoutes.patch(
       channel: input.channel ?? current.channel,
       responsibleId:
         input.responsibleId === undefined ? current.responsibleId : input.responsibleId,
-      eventId: input.eventId === undefined ? current.eventId : input.eventId,
+      eventId,
+      eventName: eventId ? null : eventName,
       note: input.note === undefined ? current.note : input.note || null,
       updatedBy: getHubUser(c).id,
       updatedAt: new Date().toISOString(),

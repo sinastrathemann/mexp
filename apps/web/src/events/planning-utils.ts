@@ -25,6 +25,30 @@ export function mondayOf(iso: string): string {
   return addDays(iso, -offset);
 }
 
+/** Erster Tag des Monats, in dem `iso` liegt. */
+export function firstOfMonth(iso: string): string {
+  return `${iso.slice(0, 7)}-01`;
+}
+
+/** Erster Tag des Monats, `months` Monate von `iso` entfernt. */
+export function addMonths(iso: string, months: number): string {
+  const d = parseIsoDate(firstOfMonth(iso));
+  d.setMonth(d.getMonth() + months);
+  return toIsoDate(d);
+}
+
+/** Montage aller Wochen, die mindestens einen Werktag (Mo–Fr) im Monat von `iso` haben. */
+export function monthWeeks(iso: string): string[] {
+  const first = firstOfMonth(iso);
+  const next = addMonths(first, 1);
+  const weeks: string[] = [];
+  for (let monday = mondayOf(first); monday < next; monday = addDays(monday, 7)) {
+    // Woche nur, wenn einer ihrer Werktage im Monat liegt
+    if (addDays(monday, 4) >= first) weeks.push(monday);
+  }
+  return weeks;
+}
+
 /** ISO-Kalenderwoche (KW) nach DIN 1355 / ISO 8601. */
 export function isoWeek(iso: string): number {
   const d = parseIsoDate(iso);

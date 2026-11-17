@@ -9,8 +9,14 @@ export interface ContentFormValue {
   channel: ContentChannel;
   responsibleId: string;
   eventId: string;
+  /** Freitext für noch nicht angelegte Events (nur wenn eventId leer ist) */
+  eventName: string;
+  /** Formular zeigt das Freitextfeld */
+  eventFreeText: boolean;
   note: string;
 }
+
+const FREE_TEXT = "__free__";
 
 /** Formular für einen Contentplan-Eintrag (neu oder bearbeiten). */
 export function ContentEntryForm({
@@ -121,10 +127,15 @@ export function ContentEntryForm({
           <select
             id="cp-event"
             className="select"
-            value={value.eventId}
-            onChange={(e) => set({ eventId: e.target.value })}
+            value={value.eventFreeText ? FREE_TEXT : value.eventId}
+            onChange={(e) =>
+              e.target.value === FREE_TEXT
+                ? set({ eventId: "", eventFreeText: true })
+                : set({ eventId: e.target.value, eventFreeText: false, eventName: "" })
+            }
           >
             <option value="">–</option>
+            <option value={FREE_TEXT}>{t("planning.eventFreeTextOption")}</option>
             {sortedEvents.map((ev) => (
               <option key={ev.id} value={ev.id}>
                 {ev.title}
@@ -133,6 +144,21 @@ export function ContentEntryForm({
           </select>
         </div>
       </div>
+      {value.eventFreeText && (
+        <div className="field">
+          <label className="label" htmlFor="cp-event-name">
+            {t("planning.eventFreeTextLabel")}
+          </label>
+          <input
+            id="cp-event-name"
+            className="input"
+            maxLength={200}
+            placeholder={t("planning.eventFreeTextPlaceholder")}
+            value={value.eventName}
+            onChange={(e) => set({ eventName: e.target.value })}
+          />
+        </div>
+      )}
       <div className="field">
         <label className="label" htmlFor="cp-note">
           {t("planning.note")}

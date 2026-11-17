@@ -1,7 +1,34 @@
 import { describe, expect, it } from "vitest";
-import { addDays, fmtIsoDate, inRange, isoWeek, mondayOf } from "./planning-utils";
+import {
+  addDays,
+  addMonths,
+  fmtIsoDate,
+  inRange,
+  isoWeek,
+  mondayOf,
+  monthWeeks,
+} from "./planning-utils";
 
 describe("planning-utils", () => {
+  it("Monatsansicht: Wochen mit Werktagen im Monat", () => {
+    // 1.11.2026 ist ein Sonntag → Woche ab 26.10. hat keinen November-Werktag
+    expect(monthWeeks("2026-11-17")).toEqual([
+      "2026-11-02",
+      "2026-11-09",
+      "2026-11-16",
+      "2026-11-23",
+      "2026-11-30",
+    ]);
+    expect(monthWeeks("2027-02-10")).toEqual([
+      "2027-02-01",
+      "2027-02-08",
+      "2027-02-15",
+      "2027-02-22",
+    ]);
+    expect(addMonths("2026-12-31", 1)).toBe("2027-01-01");
+    expect(addMonths("2026-01-31", -1)).toBe("2025-12-01");
+  });
+
   it("mondayOf: Montag der Woche, auch über Monats-/Jahresgrenzen", () => {
     expect(mondayOf("2026-11-16")).toBe("2026-11-16");
     expect(mondayOf("2026-11-22")).toBe("2026-11-16");
