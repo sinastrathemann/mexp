@@ -533,6 +533,7 @@
     "today": "Heute",
     "view": {
       "week": "Woche",
+      "month": "Monat",
       "list": "Liste"
     },
     "weekday": {
@@ -564,6 +565,10 @@
     "titleLabel": "Titel",
     "titlePlaceholder": "z. B. Reminder mindcon",
     "linkedEvent": "Event/Projekt",
+    "eventFreeTextOption": "Freitext (noch nicht angelegt) …",
+    "eventFreeTextLabel": "Event/Projekt (Freitext)",
+    "eventFreeTextPlaceholder": "z. B. Sommerfest 2027",
+    "notCreatedYet": "noch nicht angelegt",
     "note": "Notiz",
     "save": "Speichern",
     "cancel": "Abbrechen",

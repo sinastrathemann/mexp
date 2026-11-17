@@ -192,6 +192,40 @@ describe("Contentplan", () => {
     expect(contentPlanStore.size).toBe(1);
   });
 
+  it("Freitext für noch nicht angelegte Events; schließt Verknüpfung aus", async () => {
+    const h = team();
+    const res = await app().request("/api/content-plan", {
+      method: "POST",
+      headers: h,
+      body: JSON.stringify({
+        date: "2026-11-18",
+        title: "Save the Date",
+        channel: "mail",
+        eventName: "  Sommerfest 2027 ",
+      }),
+    });
+    const { entry } = await res.json();
+    expect(res.status).toBe(201);
+    expect(entry).toMatchObject({ eventId: null, eventName: "Sommerfest 2027" });
+
+    // Später angelegt → verknüpfen ersetzt den Freitext
+    const linked = await app().request(`/api/content-plan/${entry.id}`, {
+      method: "PATCH",
+      headers: h,
+      body: JSON.stringify({ eventId: "e1" }),
+    });
+    expect((await linked.json()).entry).toMatchObject({ eventId: "e1", eventName: null });
+
+    // Alteinträge ohne eventName liefern null
+    const legacy = { ...contentPlanStore.get(entry.id) } as Record<string, unknown>;
+    delete legacy.eventName;
+    contentPlanStore.set(entry.id, legacy as never);
+    const list = await (
+      await app().request("/api/content-plan?from=2026-11-18&to=2026-11-18", { headers: h })
+    ).json();
+    expect(list.entries[0].eventName).toBeNull();
+  });
+
   it("nur Event-Team; Verantwortliche müssen zum Team gehören", async () => {
     expect((await app().request("/api/content-plan", { headers: participant() })).status).toBe(403);
     participant();

@@ -6,8 +6,11 @@ import { apiFetch } from "../api/client";
 import { ContentEntryForm, type ContentFormValue } from "../events/content-entry-form";
 import {
   addDays,
+  addMonths,
+  firstOfMonth,
   fmtIsoDate,
   isoWeek,
+  monthWeeks,
   mondayOf,
   parseIsoDate,
   toIsoDate,
@@ -21,21 +24,31 @@ import {
 import type { EventDto } from "../events/types";
 
 const WEEKDAYS = 5;
-type View = "week" | "list";
+type View = "week" | "month" | "list";
 
 /** Contentplan des EXM-Teams (Feedback-Runde 5) — ersetzt die Excel „Contentplan 2026". */
 export default function ContentPlanPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const qc = useQueryClient();
   const [view, setView] = useState<View>("week");
-  const [monday, setMonday] = useState(() => mondayOf(toIsoDate(new Date())));
+  // Bezugsdatum für alle Ansichten; Woche/Liste starten am Montag, Monat am 1.
+  const [anchor, setAnchor] = useState(() => toIsoDate(new Date()));
+  const monday = mondayOf(anchor);
+  const weeks = monthWeeks(anchor);
   const [channel, setChannel] = useState<ContentChannel | "">("");
   const [person, setPerson] = useState("");
   const [form, setForm] = useState<ContentFormValue | null>(null);
 
-  // Woche: Mo–Fr; Liste: die nächsten 8 Wochen ab dem gewählten Montag.
-  const from = monday;
-  const to = view === "week" ? addDays(monday, 6) : addDays(monday, 7 * 8 - 1);
+  // Woche: Mo–Fr; Monat: alle Wochen mit Werktagen im Monat; Liste: 8 Wochen ab Montag.
+  const from = view === "month" ? (weeks[0] ?? monday) : monday;
+  const to =
+    view === "week"
+      ? addDays(monday, 6)
+      : view === "month"
+        ? addDays(weeks[weeks.length - 1] ?? monday, 6)
+        : addDays(monday, 7 * 8 - 1);
+  const step = (dir: 1 | -1) =>
+    setAnchor(view === "month" ? addMonths(anchor, dir) : addDays(monday, 7 * dir));
 
   const entriesQ = useQuery({
     queryKey: ["content-plan", from, to],
@@ -59,6 +72,7 @@ export default function ContentPlanPage() {
         channel: v.channel,
         responsibleId: v.responsibleId || null,
         eventId: v.eventId || null,
+        eventName: (!v.eventId && v.eventFreeText && v.eventName.trim()) || null,
         note: v.note.trim() || null,
       });
       return v.id
@@ -81,6 +95,10 @@ export default function ContentPlanPage() {
   const events = eventsQ.data?.events ?? [];
   const eventTitle = (id: string | null) =>
     id ? (events.find((e) => e.id === id)?.title ?? null) : null;
+  // Verknüpftes Event oder Freitext (noch nicht angelegt)
+  const eventLabel = (e: ContentPlanEntryDto) =>
+    eventTitle(e.eventId) ??
+    (e.eventName ? `${e.eventName} (${t("planning.notCreatedYet")})` : null);
   const entries = (entriesQ.data?.entries ?? [])
     .filter((e) => (channel ? e.channel === channel : true))
     .filter((e) => (person ? e.responsibleId === person : true));
@@ -94,6 +112,8 @@ export default function ContentPlanPage() {
       channel: "general",
       responsibleId: "",
       eventId: "",
+      eventName: "",
+      eventFreeText: false,
       note: "",
     });
   }
@@ -106,6 +126,8 @@ export default function ContentPlanPage() {
       channel: e.channel,
       responsibleId: e.responsibleId ?? "",
       eventId: e.eventId ?? "",
+      eventName: e.eventName ?? "",
+      eventFreeText: !e.eventId && !!e.eventName,
       note: e.note ?? "",
     });
   }
@@ -121,7 +143,7 @@ export default function ContentPlanPage() {
       <span className="muted text-sm">
         {t(`planning.channel.${e.channel}`)}
         {e.responsibleName ? ` · ${e.responsibleName}` : ""}
-        {eventTitle(e.eventId) ? ` · 🔗 ${eventTitle(e.eventId)}` : ""}
+        {eventLabel(e) ? ` · ${eventLabel(e)}` : ""}
       </span>
     </button>
   );
@@ -135,33 +157,29 @@ export default function ContentPlanPage() {
         className="row"
         style={{ gap: "var(--space-2)", flexWrap: "wrap", alignItems: "center" }}
       >
-        <button
-          type="button"
-          className="btn btn-outline btn-sm"
-          onClick={() => setMonday(addDays(monday, -7))}
-        >
+        <button type="button" className="btn btn-outline btn-sm" onClick={() => step(-1)}>
           ‹
         </button>
         <strong>
-          {t("planning.week", { week: isoWeek(monday) })} · {fmtIsoDate(monday, false)}–
-          {fmtIsoDate(addDays(monday, 4))}
+          {view === "month"
+            ? parseIsoDate(firstOfMonth(anchor)).toLocaleDateString(i18n.language, {
+                month: "long",
+                year: "numeric",
+              })
+            : `${t("planning.week", { week: isoWeek(monday) })} · ${fmtIsoDate(monday, false)}–${fmtIsoDate(addDays(monday, 4))}`}
         </strong>
-        <button
-          type="button"
-          className="btn btn-outline btn-sm"
-          onClick={() => setMonday(addDays(monday, 7))}
-        >
+        <button type="button" className="btn btn-outline btn-sm" onClick={() => step(1)}>
           ›
         </button>
         <button
           type="button"
           className="btn btn-ghost btn-sm"
-          onClick={() => setMonday(mondayOf(toIsoDate(new Date())))}
+          onClick={() => setAnchor(toIsoDate(new Date()))}
         >
           {t("planning.today")}
         </button>
         <span style={{ flex: 1 }} />
-        {(["week", "list"] as const).map((v) => (
+        {(["week", "month", "list"] as const).map((v) => (
           <button
             key={v}
             type="button"
@@ -239,6 +257,38 @@ export default function ContentPlanPage() {
             </div>
           ))}
         </div>
+      ) : view === "month" ? (
+        <div className="content-month">
+          {[1, 2, 3, 4, 5].map((d) => (
+            <div key={d} className="content-month-head">
+              {t(`planning.weekday.${d}`)}
+            </div>
+          ))}
+          {weeks.flatMap((w) =>
+            Array.from({ length: WEEKDAYS }, (_, i) => addDays(w, i)).map((day) => (
+              <div
+                key={day}
+                className={`content-day content-month-day${
+                  day.slice(0, 7) === anchor.slice(0, 7) ? "" : " content-day-outside"
+                }`}
+              >
+                <div className="row" style={{ justifyContent: "space-between" }}>
+                  <span className="content-day-head">{fmtIsoDate(day, false)}</span>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    aria-label={t("planning.addEntry")}
+                    title={t("planning.addEntry")}
+                    onClick={() => openNew(day)}
+                  >
+                    +
+                  </button>
+                </div>
+                {entries.filter((e) => e.date === day).map(entryCard)}
+              </div>
+            )),
+          )}
+        </div>
       ) : (
         <div className="card">
           <div className="row" style={{ justifyContent: "flex-end" }}>
@@ -282,7 +332,7 @@ export default function ContentPlanPage() {
                       {e.eventId && eventTitle(e.eventId) ? (
                         <Link to={`/events/${e.eventId}`}>{eventTitle(e.eventId)}</Link>
                       ) : (
-                        "–"
+                        (eventLabel(e) ?? "–")
                       )}
                     </td>
                   </tr>
