@@ -52,6 +52,11 @@ export function isOverdue(task: EventTaskDto, today: string): boolean {
   return !task.done && task.dueDate !== null && task.dueDate < today;
 }
 
+/** „ab"-Datum noch nicht erreicht → Aufgabe wird gedimmt (Überfällig hängt nur an dueDate). */
+export function isNotYetDue(task: EventTaskDto, today: string): boolean {
+  return !task.done && task.startDate !== null && task.startDate > today;
+}
+
 /** Heutiges Datum in lokaler Zeit als YYYY-MM-DD. */
 export function todayIso(): string {
   const d = new Date();

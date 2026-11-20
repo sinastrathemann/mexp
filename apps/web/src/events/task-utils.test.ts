@@ -1,12 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { EventTaskDto } from "./project-plan-types";
-import { isOverdue, moveTask, sortTasks, taskProgress, todayIso } from "./task-utils";
+import { isNotYetDue, isOverdue, moveTask, sortTasks, taskProgress, todayIso } from "./task-utils";
 
 function task(id: string, over: Partial<EventTaskDto> = {}): EventTaskDto {
   return {
     id,
     title: id,
     dueDate: null,
+    startDate: null,
     assigneeId: null,
     assigneeName: null,
     linkLabel: null,
@@ -126,5 +127,21 @@ describe("moveTask", () => {
     expect(moveTask(list, "a", -1)).toBeNull();
     expect(moveTask(list, "c", 1)).toBeNull();
     expect(moveTask(list, "x", 1)).toBeNull();
+  });
+});
+
+describe("isNotYetDue (ab-Datum)", () => {
+  const today = "2027-03-10";
+  it("ab-Datum in der Zukunft → noch nicht fällig", () => {
+    expect(isNotYetDue(task("a", { startDate: "2027-03-11" }), today)).toBe(true);
+  });
+  it("ab heute → fällig", () => {
+    expect(isNotYetDue(task("a", { startDate: today }), today)).toBe(false);
+  });
+  it("erledigt → nie gedimmt", () => {
+    expect(isNotYetDue(task("a", { startDate: "2027-04-01", done: true }), today)).toBe(false);
+  });
+  it("ohne ab-Datum → fällig", () => {
+    expect(isNotYetDue(task("a"), today)).toBe(false);
   });
 });

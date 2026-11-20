@@ -6,6 +6,8 @@ export interface EventTaskDto {
   id: string;
   title: string;
   dueDate: string | null;
+  // „ab"-Datum (Runde 6); API liefert null, wenn nicht gesetzt
+  startDate: string | null;
   // API ergänzt "medium", wenn eine (ältere) Aufgabe keine Priorität gespeichert hat
   priority: TaskPriority;
   assigneeId: string | null;

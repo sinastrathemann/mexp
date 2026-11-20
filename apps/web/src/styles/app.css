@@ -2104,6 +2104,14 @@ legend {
   text-decoration: line-through;
   opacity: 0.6;
 }
+.task-item--not-yet-due .task-main {
+  opacity: 0.6;
+}
+.task-date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 .task-overdue {
   color: #b42318;
   font-weight: 600;

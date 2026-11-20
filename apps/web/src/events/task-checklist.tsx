@@ -12,6 +12,7 @@ import {
 import {
   TASK_SORT_MODES,
   type TaskSortMode,
+  isNotYetDue,
   isOverdue,
   moveTask,
   sortTasks,
@@ -45,6 +46,7 @@ const PRIORITY_LABEL: Record<TaskPriority, string> = {
 
 interface Draft {
   title: string;
+  startDate: string;
   dueDate: string;
   priority: TaskPriority;
   assigneeId: string;
@@ -54,6 +56,7 @@ interface Draft {
 
 const emptyDraft: Draft = {
   title: "",
+  startDate: "",
   dueDate: "",
   priority: "medium",
   assigneeId: "",
@@ -64,6 +67,7 @@ const emptyDraft: Draft = {
 function toDraft(task: EventTaskDto): Draft {
   return {
     title: task.title,
+    startDate: task.startDate ?? "",
     dueDate: task.dueDate ?? "",
     priority: task.priority,
     assigneeId: task.assigneeId ?? "",
@@ -76,6 +80,7 @@ function toPayload(d: Draft) {
   const hasLink = d.linkLabel.trim() !== "" || d.linkUrl.trim() !== "";
   return {
     title: d.title.trim(),
+    startDate: d.startDate || null,
     dueDate: d.dueDate || null,
     priority: d.priority,
     assigneeId: d.assigneeId || null,
@@ -165,13 +170,28 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
         value={draft.title}
         onChange={(e) => setDraft({ ...draft, title: e.target.value })}
       />
-      <input
-        className="input"
-        type="date"
-        aria-label={t("projectPlan.taskDue")}
-        value={draft.dueDate}
-        onChange={(e) => setDraft({ ...draft, dueDate: e.target.value })}
-      />
+      <label className="task-date-field">
+        <span className="muted text-xs">{t("projectPlan.taskStart")}</span>
+        <input
+          className="input"
+          type="date"
+          aria-label={t("projectPlan.taskStart")}
+          value={draft.startDate}
+          max={draft.dueDate || undefined}
+          onChange={(e) => setDraft({ ...draft, startDate: e.target.value })}
+        />
+      </label>
+      <label className="task-date-field">
+        <span className="muted text-xs">{t("projectPlan.taskDue")}</span>
+        <input
+          className="input"
+          type="date"
+          min={draft.startDate || undefined}
+          aria-label={t("projectPlan.taskDue")}
+          value={draft.dueDate}
+          onChange={(e) => setDraft({ ...draft, dueDate: e.target.value })}
+        />
+      </label>
       <select
         className="input"
         aria-label={t("projectPlan.taskPriority")}
@@ -279,7 +299,10 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
           editingId === task.id ? (
             <li key={task.id}>{form}</li>
           ) : (
-            <li key={task.id} className={`task-item${task.done ? " task-item--done" : ""}`}>
+            <li
+              key={task.id}
+              className={`task-item${task.done ? " task-item--done" : ""}${isNotYetDue(task, today) ? " task-item--not-yet-due" : ""}`}
+            >
               <input
                 type="checkbox"
                 checked={task.done}
@@ -304,7 +327,16 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
                 </span>
                 <span className="muted text-xs">
                   {task.assigneeName ?? ""}
-                  {task.assigneeName && task.dueDate ? " · " : ""}
+                  {task.assigneeName && (task.startDate || task.dueDate) ? " · " : ""}
+                  {task.startDate && (
+                    <span>
+                      {t("projectPlan.taskStartOn", {
+                        date: fmtDay(task.startDate, i18n.language),
+                      })}
+                      {isNotYetDue(task, today) ? ` · ${t("projectPlan.taskNotYetDue")}` : ""}
+                      {task.dueDate ? " – " : ""}
+                    </span>
+                  )}
                   {task.dueDate && (
                     <span className={isOverdue(task, today) ? "task-overdue" : undefined}>
                       {t("projectPlan.taskDueOn", { date: fmtDay(task.dueDate, i18n.language) })}
