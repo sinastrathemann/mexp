@@ -155,7 +155,9 @@
       "strategy": "Strategy event",
       "division": "Division event",
       "local_experience": "Local Experience",
-      "personal_moments": "Personal moments / anniversary"
+      "personal_moments": "Personal moments / anniversary",
+      "top_management_circle": "Top Management Circle",
+      "management_circle": "Management Circle"
     },
     "visibility": {
       "internal": "Internal",

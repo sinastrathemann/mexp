@@ -17,6 +17,8 @@ export const EVENT_TYPES = [
   "division",
   "local_experience",
   "personal_moments",
+  "top_management_circle",
+  "management_circle",
 ] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 
