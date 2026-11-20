@@ -5,6 +5,8 @@ Alle nennenswerten Änderungen an mEXP. Format: [Keep a Changelog](https://keepa
 ## [Unreleased]
 
 ### Added
+- Eventtypen „Top-Management-Zirkel“ und „Management-Zirkel“.
+- Aufgaben: optionales „ab“-Datum (Erledigen ab) zusätzlich zum „bis“-Datum; noch nicht fällige Aufgaben werden blass angezeigt.
 - Archiv für Events: Admins archivieren und stellen wieder her; Eventliste mit Umschalter „Aktiv / Archiv“; OneNote-Termine liegen standardmäßig im Archiv; Dashboard zählt archivierte Events nicht.
 - Persönliche Postfächer für Eventanfragen: Eingang (Admin) → Weiterleiten → „Mein Postfach“; Admins sehen „Alle Postfächer“ und das Archiv. Event anlegen archiviert die Anfrage.
 - Anmelde-Formular: Häkchen „Teilnahme-Frage“ bei Ja/Nein-Fragen (bei „Bist du dabei?“ automatisch). Wer „Nein“ antwortet, steht in einer eigenen Liste „Nicht dabei“, zählt nicht als Teilnehmer:in und belegt keinen Platz; Änderung der Antwort stellt den Status um.
