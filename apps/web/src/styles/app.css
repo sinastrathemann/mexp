@@ -2335,3 +2335,15 @@ output.alert {
   border-color: var(--color-orange, #f28c00);
   background: rgba(242, 140, 0, 0.06);
 }
+.doc-file-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+.doc-file-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}

@@ -410,12 +410,14 @@
     "summarizing": "Wird erstellt …"
   },
   "documents": {
+    "uploadCount": "{{count}} Dateien hochladen",
+    "removeFile": "Entfernen",
     "deleteConfirm": "Dokument und Datei wirklich löschen?",
     "tooLarge": "Die Datei ist größer als 25 MB.",
     "noFile": "keine Datei",
     "upload": "Hochladen",
-    "dropHint": "oder Datei hierher ziehen",
-    "chooseFile": "Datei auswählen",
+    "dropHint": "oder Dateien hierher ziehen (mehrere möglich)",
+    "chooseFile": "Dateien auswählen",
     "title": "Dokumente",
     "empty": "Noch keine Dokumente hinterlegt.",
     "addItem": "Dokument hinzufügen",

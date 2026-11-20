@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type DragEvent, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiRequestError, apiFetch, apiUpload, apiUrl } from "../api/client";
+import { mergeFiles, partitionBySize } from "./doc-upload-utils";
 import { useAuth } from "../auth/auth-context";
 import {
   DOCUMENT_VISIBILITIES,
@@ -25,7 +26,8 @@ export function DocumentsPanel({ event }: DocumentsPanelProps) {
   // Löschen nur Admin (Sina's Regel: Anlegen/Bearbeiten dürfen mehr Rollen, Löschen nicht).
   const canDelete = hasRole("admin");
   const [showForm, setShowForm] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [progress, setProgress] = useState<string | null>(null);
   const [visibility, setVisibility] = useState<DocumentVisibility>("event_staff");
   const [dragOver, setDragOver] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -39,18 +41,36 @@ export function DocumentsPanel({ event }: DocumentsPanelProps) {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["events", event.id, "documents"] });
 
   const reset = () => {
-    setFile(null);
+    setFiles([]);
+    setProgress(null);
     setVisibility("event_staff");
     setLocalError(null);
     if (inputRef.current) inputRef.current.value = "";
   };
 
+  // Mehrere Dateien nacheinander hochladen; bei Fehler stoppen, Rest bleibt ausgewählt
   const uploadMut = useMutation({
-    mutationFn: (body: FormData) =>
-      apiUpload<{ document: DocumentDto }>(`/events/${event.id}/documents/upload`, body),
+    mutationFn: async (list: File[]) => {
+      for (const [i, f] of list.entries()) {
+        setProgress(`${i + 1}/${list.length}`);
+        const body = new FormData();
+        body.append("file", f);
+        body.append("visibility", visibility);
+        try {
+          await apiUpload<{ document: DocumentDto }>(`/events/${event.id}/documents/upload`, body);
+        } catch (err) {
+          setFiles(list.slice(i));
+          if (err instanceof Error) err.message = `${f.name}: ${err.message}`;
+          throw err;
+        }
+      }
+    },
     onSuccess: () => {
       reset();
       setShowForm(false);
+    },
+    onSettled: () => {
+      setProgress(null);
       invalidate();
     },
   });
@@ -72,22 +92,23 @@ export function DocumentsPanel({ event }: DocumentsPanelProps) {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const pick = (f: File | null | undefined) => {
+  const pick = (list: FileList | null | undefined) => {
     uploadMut.reset();
-    if (!f) return;
-    if (f.size > MAX_UPLOAD_BYTES) {
-      setFile(null);
-      setLocalError(t("documents.tooLarge"));
-      return;
-    }
-    setLocalError(null);
-    setFile(f);
+    if (!list || list.length === 0) return;
+    const { ok, tooLarge } = partitionBySize(Array.from(list), MAX_UPLOAD_BYTES);
+    setLocalError(
+      tooLarge.length > 0
+        ? `${t("documents.tooLarge")} (${tooLarge.map((f) => f.name).join(", ")})`
+        : null,
+    );
+    setFiles((cur) => mergeFiles(cur, ok));
+    if (inputRef.current) inputRef.current.value = "";
   };
 
   const onDrop = (e: DragEvent) => {
     e.preventDefault();
     setDragOver(false);
-    pick(e.dataTransfer.files[0]);
+    pick(e.dataTransfer.files);
   };
 
   const uploadError = uploadMut.error;
@@ -101,11 +122,8 @@ export function DocumentsPanel({ event }: DocumentsPanelProps) {
 
   const handleUpload = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) return;
-    const body = new FormData();
-    body.append("file", file);
-    body.append("visibility", visibility);
-    uploadMut.mutate(body);
+    if (files.length === 0) return;
+    uploadMut.mutate(files);
   };
 
   // Mitarbeiter (ohne Verwaltungs-Rolle) sehen den Dokumente-Bereich komplett nicht
@@ -144,8 +162,9 @@ export function DocumentsPanel({ event }: DocumentsPanelProps) {
               ref={inputRef}
               id="doc-file"
               type="file"
+              multiple
               style={{ display: "none" }}
-              onChange={(e) => pick(e.target.files?.[0])}
+              onChange={(e) => pick(e.target.files)}
             />
             <button
               type="button"
@@ -154,9 +173,27 @@ export function DocumentsPanel({ event }: DocumentsPanelProps) {
             >
               {t("documents.chooseFile")}
             </button>
-            <span className="muted text-sm">
-              {file ? `${file.name} · ${fmtSize(file.size)}` : t("documents.dropHint")}
-            </span>
+            {files.length === 0 && <span className="muted text-sm">{t("documents.dropHint")}</span>}
+            {files.length > 0 && (
+              <ul className="doc-file-list">
+                {files.map((f) => (
+                  <li key={`${f.name}|${f.size}`}>
+                    <span className="text-sm">
+                      {f.name} <span className="muted">· {fmtSize(f.size)}</span>
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      aria-label={`${t("documents.removeFile")}: ${f.name}`}
+                      disabled={uploadMut.isPending}
+                      onClick={() => setFiles((cur) => cur.filter((x) => x !== f))}
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
           <div className="field">
             <label className="label" htmlFor="doc-vis">
@@ -178,10 +215,14 @@ export function DocumentsPanel({ event }: DocumentsPanelProps) {
           <div className="form-actions">
             <button
               type="submit"
-              disabled={!file || uploadMut.isPending}
+              disabled={files.length === 0 || uploadMut.isPending}
               className="btn btn-primary"
             >
-              {uploadMut.isPending ? "…" : t("documents.upload")}
+              {uploadMut.isPending
+                ? `${t("documents.upload")} … ${progress ?? ""}`
+                : files.length > 1
+                  ? t("documents.uploadCount", { count: files.length })
+                  : t("documents.upload")}
             </button>
             {errorText && <span className="err-msg">{errorText}</span>}
           </div>

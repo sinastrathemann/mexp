@@ -410,12 +410,14 @@
     "summarizing": "Generating …"
   },
   "documents": {
+    "uploadCount": "Upload {{count}} files",
+    "removeFile": "Remove",
     "deleteConfirm": "Really delete document and file?",
     "tooLarge": "The file is larger than 25 MB.",
     "noFile": "no file",
     "upload": "Upload",
-    "dropHint": "or drop a file here",
-    "chooseFile": "Choose file",
+    "dropHint": "or drop files here (multiple allowed)",
+    "chooseFile": "Choose files",
     "title": "Documents",
     "empty": "No documents yet.",
     "addItem": "Add document",
