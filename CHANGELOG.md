@@ -5,6 +5,9 @@ Alle nennenswerten Änderungen an mEXP. Format: [Keep a Changelog](https://keepa
 ## [Unreleased]
 
 ### Added
+- Dokumente: echte Dateien vom Rechner hochladen (Auswahl oder Drag & Drop, max. 25 MB); Klick auf den Namen öffnet bzw. lädt die Datei. Ablage im Hub-Volume (kein Backup, SharePoint folgt). Ältere Einträge ohne Datei zeigen „keine Datei“.
+- Anmelde-Formular: Folgefragen („Nur anzeigen, wenn …“) klappen für Teilnehmende erst bei passender Antwort auf; Antworten auf zugeklappte Fragen werden nicht gespeichert.
+- Event duplizieren: übernimmt Inhalte, Zielgruppe, Formular, Planungsdaten und Aufgaben (offen, ohne Datum); neues Datum im Dialog, Kopie startet als Entwurf.
 - Eventtypen „Top-Management-Zirkel“ und „Management-Zirkel“.
 - Aufgaben: optionales „ab“-Datum (Erledigen ab) zusätzlich zum „bis“-Datum; noch nicht fällige Aufgaben werden blass angezeigt.
 - Archiv für Events: Admins archivieren und stellen wieder her; Eventliste mit Umschalter „Aktiv / Archiv“; OneNote-Termine liegen standardmäßig im Archiv; Dashboard zählt archivierte Events nicht.
