@@ -37,3 +37,28 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   }
   return body as T;
 }
+
+/**
+ * Datei-Upload (multipart) — ohne JSON-Content-Type, damit der Browser die
+ * Boundary setzt. Fehlerantworten ohne JSON (z. B. 413 vom Proxy) werden abgefangen.
+ */
+export async function apiUpload<T>(path: string, body: FormData): Promise<T> {
+  const url = withBasePath(path.startsWith("/api") ? path : `/api${path}`);
+  const res = await fetch(url, { method: "POST", body, credentials: "include" });
+  const text = await res.text();
+  let parsed: unknown = null;
+  try {
+    parsed = text ? JSON.parse(text) : null;
+  } catch {
+    parsed = text;
+  }
+  if (!res.ok) {
+    throw new ApiRequestError(res.status, parsed as { error?: ApiError } | string);
+  }
+  return parsed as T;
+}
+
+/** URL einer Datei-Ressource der API (z. B. Dokument öffnen) inkl. Basispfad. */
+export function apiUrl(path: string): string {
+  return withBasePath(path.startsWith("/api") ? path : `/api${path}`);
+}

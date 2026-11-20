@@ -195,6 +195,8 @@ export interface DocumentDto {
   visibility: DocumentVisibility;
   uploadedBy: string;
   uploadedAt: string;
+  // Runde 6: echte Datei vorhanden (ältere Einträge haben nur Metadaten)
+  hasFile: boolean;
 }
 
 export interface BudgetItemDto {

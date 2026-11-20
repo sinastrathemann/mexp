@@ -72,3 +72,8 @@ export function persistentMap<T>(name: string): Map<string, T> {
 
   return map;
 }
+
+/** Pfad unterhalb des Datenverzeichnisses (Volume) — z. B. für hochgeladene Dateien. */
+export function dataDirPath(...parts: string[]): string {
+  return join(dataDir, ...parts);
+}

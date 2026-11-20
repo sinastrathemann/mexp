@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { type DragEvent, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { apiFetch } from "../api/client";
+import { ApiRequestError, apiFetch, apiUpload, apiUrl } from "../api/client";
 import { useAuth } from "../auth/auth-context";
 import {
   DOCUMENT_VISIBILITIES,
@@ -14,19 +14,8 @@ interface DocumentsPanelProps {
   event: EventDto;
 }
 
-interface FormState {
-  name: string;
-  mimeType: string;
-  fileSize: string;
-  visibility: DocumentVisibility;
-}
-
-const initialForm: FormState = {
-  name: "",
-  mimeType: "application/pdf",
-  fileSize: "0",
-  visibility: "event_staff",
-};
+/** Muss zur API passen (MAX_UPLOAD_BYTES in apps/api/src/routes/documents.ts). */
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 
 export function DocumentsPanel({ event }: DocumentsPanelProps) {
   const { t, i18n } = useTranslation();
@@ -35,8 +24,12 @@ export function DocumentsPanel({ event }: DocumentsPanelProps) {
   const canWrite = hasRole("admin", "manager", "event_office", "werkstudent");
   // Löschen nur Admin (Sina's Regel: Anlegen/Bearbeiten dürfen mehr Rollen, Löschen nicht).
   const canDelete = hasRole("admin");
-  const [form, setForm] = useState<FormState>(initialForm);
   const [showForm, setShowForm] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [visibility, setVisibility] = useState<DocumentVisibility>("event_staff");
+  const [dragOver, setDragOver] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const docsQ = useQuery({
     queryKey: ["events", event.id, "documents"],
@@ -45,14 +38,18 @@ export function DocumentsPanel({ event }: DocumentsPanelProps) {
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["events", event.id, "documents"] });
 
-  const createMut = useMutation({
-    mutationFn: (body: unknown) =>
-      apiFetch<{ document: DocumentDto }>(`/events/${event.id}/documents`, {
-        method: "POST",
-        body: JSON.stringify(body),
-      }),
+  const reset = () => {
+    setFile(null);
+    setVisibility("event_staff");
+    setLocalError(null);
+    if (inputRef.current) inputRef.current.value = "";
+  };
+
+  const uploadMut = useMutation({
+    mutationFn: (body: FormData) =>
+      apiUpload<{ document: DocumentDto }>(`/events/${event.id}/documents/upload`, body),
     onSuccess: () => {
-      setForm(initialForm);
+      reset();
       setShowForm(false);
       invalidate();
     },
@@ -75,16 +72,40 @@ export function DocumentsPanel({ event }: DocumentsPanelProps) {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const handleCreate = (e: React.FormEvent) => {
+  const pick = (f: File | null | undefined) => {
+    uploadMut.reset();
+    if (!f) return;
+    if (f.size > MAX_UPLOAD_BYTES) {
+      setFile(null);
+      setLocalError(t("documents.tooLarge"));
+      return;
+    }
+    setLocalError(null);
+    setFile(f);
+  };
+
+  const onDrop = (e: DragEvent) => {
     e.preventDefault();
-    const size = Number(form.fileSize);
-    if (!Number.isFinite(size) || size < 0) return;
-    createMut.mutate({
-      name: form.name,
-      mimeType: form.mimeType,
-      fileSize: size,
-      visibility: form.visibility,
-    });
+    setDragOver(false);
+    pick(e.dataTransfer.files[0]);
+  };
+
+  const uploadError = uploadMut.error;
+  const errorText =
+    localError ??
+    (uploadError instanceof ApiRequestError && uploadError.status === 413
+      ? t("documents.tooLarge")
+      : uploadError instanceof Error
+        ? uploadError.message
+        : null);
+
+  const handleUpload = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file) return;
+    const body = new FormData();
+    body.append("file", file);
+    body.append("visibility", visibility);
+    uploadMut.mutate(body);
   };
 
   // Mitarbeiter (ohne Verwaltungs-Rolle) sehen den Dokumente-Bereich komplett nicht
@@ -94,61 +115,49 @@ export function DocumentsPanel({ event }: DocumentsPanelProps) {
     <section className="card">
       <div className="card-header">
         <h2 className="card-title">{t("documents.title")}</h2>
-        {canWrite && (
-          <button
-            type="button"
-            onClick={() => setShowForm((s) => !s)}
-            className={showForm ? "btn btn-outline btn-sm" : "btn btn-primary btn-sm"}
-          >
-            {showForm ? t("common.cancel") : `+ ${t("documents.addItem")}`}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => {
+            reset();
+            setShowForm((s) => !s);
+          }}
+          className={showForm ? "btn btn-outline btn-sm" : "btn btn-primary btn-sm"}
+        >
+          {showForm ? t("common.cancel") : `+ ${t("documents.addItem")}`}
+        </button>
       </div>
-      {canWrite && <p className="muted text-xs">{t("documents.uploadHint")}</p>}
+      <p className="muted text-xs">{t("documents.uploadHint")}</p>
 
-      {showForm && canWrite && (
-        <form onSubmit={handleCreate} className="card-flat">
-          <div className="field">
-            <label className="label" htmlFor="doc-name">
-              {t("documents.fieldName")}
-            </label>
+      {showForm && (
+        <form onSubmit={handleUpload} className="card-flat">
+          <section
+            aria-label={t("documents.chooseFile")}
+            className={`doc-dropzone${dragOver ? " doc-dropzone--over" : ""}`}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={onDrop}
+          >
             <input
-              id="doc-name"
-              className="input"
-              type="text"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              required
+              ref={inputRef}
+              id="doc-file"
+              type="file"
+              style={{ display: "none" }}
+              onChange={(e) => pick(e.target.files?.[0])}
             />
-          </div>
-          <div className="field-row">
-            <div className="field">
-              <label className="label" htmlFor="doc-mime">
-                {t("documents.fieldMimeType")}
-              </label>
-              <input
-                id="doc-mime"
-                className="input"
-                type="text"
-                value={form.mimeType}
-                onChange={(e) => setForm({ ...form, mimeType: e.target.value })}
-                required
-              />
-            </div>
-            <div className="field">
-              <label className="label" htmlFor="doc-size">
-                {t("documents.fieldFileSize")}
-              </label>
-              <input
-                id="doc-size"
-                className="input"
-                type="number"
-                min={0}
-                value={form.fileSize}
-                onChange={(e) => setForm({ ...form, fileSize: e.target.value })}
-              />
-            </div>
-          </div>
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={() => inputRef.current?.click()}
+            >
+              {t("documents.chooseFile")}
+            </button>
+            <span className="muted text-sm">
+              {file ? `${file.name} · ${fmtSize(file.size)}` : t("documents.dropHint")}
+            </span>
+          </section>
           <div className="field">
             <label className="label" htmlFor="doc-vis">
               {t("documents.fieldVisibility")}
@@ -156,10 +165,8 @@ export function DocumentsPanel({ event }: DocumentsPanelProps) {
             <select
               id="doc-vis"
               className="select"
-              value={form.visibility}
-              onChange={(e) =>
-                setForm({ ...form, visibility: e.target.value as DocumentVisibility })
-              }
+              value={visibility}
+              onChange={(e) => setVisibility(e.target.value as DocumentVisibility)}
             >
               {DOCUMENT_VISIBILITIES.map((v) => (
                 <option key={v} value={v}>
@@ -169,12 +176,14 @@ export function DocumentsPanel({ event }: DocumentsPanelProps) {
             </select>
           </div>
           <div className="form-actions">
-            <button type="submit" disabled={createMut.isPending} className="btn btn-primary">
-              {t("common.save")}
+            <button
+              type="submit"
+              disabled={!file || uploadMut.isPending}
+              className="btn btn-primary"
+            >
+              {uploadMut.isPending ? "…" : t("documents.upload")}
             </button>
-            {createMut.error instanceof Error && (
-              <span className="err-msg">{createMut.error.message}</span>
-            )}
+            {errorText && <span className="err-msg">{errorText}</span>}
           </div>
         </form>
       )}
@@ -198,9 +207,19 @@ export function DocumentsPanel({ event }: DocumentsPanelProps) {
           <tbody>
             {docs.map((doc) => (
               <tr key={doc.id}>
-                <td className="text-bold">{doc.name}</td>
+                <td className="text-bold">
+                  {doc.hasFile ? (
+                    <a href={apiUrl(`/documents/${doc.id}/file`)} target="_blank" rel="noreferrer">
+                      {doc.name}
+                    </a>
+                  ) : (
+                    <>
+                      {doc.name} <span className="muted text-xs">({t("documents.noFile")})</span>
+                    </>
+                  )}
+                </td>
                 <td className="muted text-sm">{doc.mimeType}</td>
-                <td style={{ textAlign: "right" }}>{fmtSize(doc.fileSize)}</td>
+                <td style={{ textAlign: "right" }}>{doc.hasFile ? fmtSize(doc.fileSize) : "–"}</td>
                 <td>
                   <span className="badge badge-muted">
                     {t(`documents.visibility.${doc.visibility}`)}
@@ -211,7 +230,9 @@ export function DocumentsPanel({ event }: DocumentsPanelProps) {
                   <td>
                     <button
                       type="button"
-                      onClick={() => deleteMut.mutate(doc.id)}
+                      onClick={() => {
+                        if (window.confirm(t("documents.deleteConfirm"))) deleteMut.mutate(doc.id);
+                      }}
                       disabled={deleteMut.isPending}
                       className="btn btn-ghost btn-sm"
                     >

@@ -2319,3 +2319,19 @@ output.alert {
 .year-row-external td {
   color: var(--muted, #777);
 }
+
+/* Runde 6: Dokument-Upload */
+.doc-dropzone {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+  border: 2px dashed var(--border-default);
+  border-radius: 8px;
+}
+.doc-dropzone--over {
+  border-color: var(--color-orange, #f28c00);
+  background: rgba(242, 140, 0, 0.06);
+}
