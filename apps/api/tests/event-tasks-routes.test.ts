@@ -326,4 +326,80 @@ describe("Event-Aufgaben-API", () => {
     });
     expect(res.status).toBe(403);
   });
+  describe("ab-Datum (startDate, Runde 6)", () => {
+    async function patch(headers: Record<string, string>, id: string, body: object) {
+      return app().request(`${URL_BASE}/${id}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify(body),
+      });
+    }
+
+    it("legt Aufgabe mit ab-Datum an", async () => {
+      const ws = asUser("ws", ["werkstudent"]);
+      const res = await createTask(ws, {
+        title: "Raum buchen",
+        startDate: "2027-02-01",
+        dueDate: "2027-03-01",
+      });
+      expect(res.status).toBe(201);
+      const { task } = (await res.json()) as { task: { startDate: string | null } };
+      expect(task.startDate).toBe("2027-02-01");
+    });
+
+    it("ab nach bis wird abgelehnt (POST und PATCH)", async () => {
+      const ws = asUser("ws", ["werkstudent"]);
+      const bad = await createTask(ws, {
+        title: "Raum buchen",
+        startDate: "2027-03-02",
+        dueDate: "2027-03-01",
+      });
+      expect(bad.status).toBe(400);
+      expect(((await bad.json()) as { error: { code: string } }).error.code).toBe(
+        "INVALID_DATE_RANGE",
+      );
+      const ok = await createTask(ws, { title: "Raum buchen", dueDate: "2027-03-01" });
+      const { task } = (await ok.json()) as { task: { id: string } };
+      const res = await patch(ws, task.id, { startDate: "2027-03-05" });
+      expect(res.status).toBe(400);
+    });
+
+    it("PATCH startDate null löscht, fehlendes Feld lässt unverändert", async () => {
+      const ws = asUser("ws", ["werkstudent"]);
+      const created = await createTask(ws, { title: "Raum buchen", startDate: "2027-02-01" });
+      const { task } = (await created.json()) as { task: { id: string } };
+      const keep = await patch(ws, task.id, { title: "Raum buchen (Büro)" });
+      expect(((await keep.json()) as { task: { startDate: string | null } }).task.startDate).toBe(
+        "2027-02-01",
+      );
+      const cleared = await patch(ws, task.id, { startDate: null });
+      expect(
+        ((await cleared.json()) as { task: { startDate: string | null } }).task.startDate,
+      ).toBeNull();
+    });
+
+    it("Bestandsaufgabe ohne Feld liefert startDate null", async () => {
+      const ws = asUser("ws", ["werkstudent"]);
+      eventTaskStore.set("evt1", [
+        {
+          id: "alt",
+          title: "Alte Aufgabe",
+          dueDate: null,
+          assigneeId: null,
+          assigneeName: null,
+          linkLabel: null,
+          linkUrl: null,
+          done: false,
+          doneBy: null,
+          doneAt: null,
+          createdBy: "x",
+          createdAt: "2026-11-01T00:00:00.000Z",
+        },
+      ]);
+      const res = await app().request(URL_BASE, { headers: ws });
+      const { tasks } = (await res.json()) as { tasks: { startDate: string | null }[] };
+      expect(tasks[0]?.startDate).toBeNull();
+      expect(eventTaskStore.get("evt1")?.[0]).not.toHaveProperty("startDate");
+    });
+  });
 });

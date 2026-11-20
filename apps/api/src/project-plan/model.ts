@@ -18,6 +18,9 @@ export interface EventTask {
   id: string;
   title: string;
   dueDate: string | null; // YYYY-MM-DD
+  // Optional (Runde 6): „ab"-Datum. Bestandsaufgaben haben das Feld nicht —
+  // beim Lesen gilt null, gespeichert wird es nur bei aktiver Änderung.
+  startDate?: string | null; // YYYY-MM-DD
   // Optional (Feedback-Runde 3): Bestandsaufgaben haben das Feld nicht und werden
   // nie nachträglich beschrieben — beim Lesen gilt dann DEFAULT_TASK_PRIORITY.
   priority?: TaskPriority;
@@ -56,8 +59,14 @@ export interface ToolList {
 export const eventTaskStore = persistentMap<EventTask[]>("event-tasks");
 
 /** API-Sicht einer Aufgabe: Priorität immer gesetzt, gespeicherter Datensatz bleibt unverändert. */
-export function withTaskDefaults(task: EventTask): EventTask & { priority: TaskPriority } {
-  return { ...task, priority: task.priority ?? DEFAULT_TASK_PRIORITY };
+export function withTaskDefaults(
+  task: EventTask,
+): EventTask & { priority: TaskPriority; startDate: string | null } {
+  return {
+    ...task,
+    priority: task.priority ?? DEFAULT_TASK_PRIORITY,
+    startDate: task.startDate ?? null,
+  };
 }
 export const blueprintTaskStore = persistentMap<BlueprintTask[]>("blueprint-tasks");
 export const toolStore = persistentMap<ToolList>("tools");

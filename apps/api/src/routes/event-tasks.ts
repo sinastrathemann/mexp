@@ -34,6 +34,7 @@ const linkPairMessage = { message: "Link braucht Text und https-URL.", path: ["l
 const createSchema = z
   .object({
     title: taskTitleSchema,
+    startDate: dateSchema.nullable().optional(),
     dueDate: dateSchema.nullable().optional(),
     assigneeId: z.string().min(1).nullable().optional(),
     priority: z.enum(TASK_PRIORITIES).optional(),
@@ -47,6 +48,7 @@ const orderSchema = z.object({ ids: z.array(z.string().min(1)).max(MAX_TASKS_PER
 const updateSchema = z
   .object({
     title: taskTitleSchema.optional(),
+    startDate: dateSchema.nullable().optional(),
     dueDate: dateSchema.nullable().optional(),
     assigneeId: z.string().min(1).nullable().optional(),
     priority: z.enum(TASK_PRIORITIES).optional(),
@@ -75,6 +77,15 @@ const notFound = { error: { code: "NOT_FOUND", message: "Aufgabe nicht gefunden.
 
 // Projektplan-Aufgaben je Event. Die eventId wird bewusst nicht geprüft (Spec: Events
 // kommen im Datei-Modus aus drei Quellen); Aufgaben ohne Event werden nirgends angezeigt.
+const invalidDateRange = {
+  error: { code: "INVALID_DATE_RANGE", message: "Das ab-Datum liegt nach dem bis-Datum." },
+};
+
+/** „ab" darf nicht nach „bis" liegen (beide optional). */
+function dateRangeOk(task: { startDate?: string | null; dueDate: string | null }): boolean {
+  return !task.startDate || !task.dueDate || task.startDate <= task.dueDate;
+}
+
 export const eventTaskRoutes = new Hono();
 
 eventTaskRoutes.get("/events/:eventId/tasks", requireMexpRole(...TEAM_ROLES), (c) =>
@@ -111,6 +122,7 @@ eventTaskRoutes.post(
       id: randomUUID(),
       title: input.title,
       dueDate: input.dueDate ?? null,
+      ...(input.startDate ? { startDate: input.startDate } : {}),
       priority: input.priority ?? "medium",
       assigneeId: assignee?.id ?? null,
       assigneeName: assignee?.displayName ?? null,
@@ -122,6 +134,7 @@ eventTaskRoutes.post(
       createdBy: getHubUser(c).id,
       createdAt: new Date().toISOString(),
     };
+    if (!dateRangeOk(task)) return c.json(invalidDateRange, 400);
     eventTaskStore.set(eventId, [...(eventTaskStore.get(eventId) ?? []), task]);
     return c.json({ task: withTaskDefaults(task) }, 201);
   },
@@ -140,6 +153,8 @@ eventTaskRoutes.patch(
     const updated: EventTask = { ...current };
     if (input.title !== undefined) updated.title = input.title;
     if (input.dueDate !== undefined) updated.dueDate = input.dueDate;
+    if (input.startDate !== undefined) updated.startDate = input.startDate;
+    if (!dateRangeOk(updated)) return c.json(invalidDateRange, 400);
     if (input.priority !== undefined) updated.priority = input.priority;
     if (input.linkLabel !== undefined) updated.linkLabel = input.linkLabel;
     if (input.linkUrl !== undefined) updated.linkUrl = input.linkUrl;
