@@ -16,12 +16,36 @@ export function isAttendanceQuestion(q: RegistrationQuestion): boolean {
 }
 
 // Wer bei einer Teilnahme-Frage "Nein" sagt, muss die übrigen Fragen nicht mehr beantworten
+export function declinesAttendance(
+  questions: RegistrationQuestion[],
+  values: AnswerValues,
+): boolean {
+  return questions.some((q) => isAttendanceQuestion(q) && values[q.id] === false);
+}
+
+/**
+ * Runde 6: Folgefragen (showIf) klappen erst auf, wenn die auslösende Frage passend
+ * beantwortet ist — Spiegel von visibleQuestionIds() in der API.
+ */
+export function conditionMet(q: RegistrationQuestion, values: AnswerValues): boolean {
+  if (!q.showIf) return true;
+  const v = values[q.showIf.questionId];
+  return Array.isArray(v) ? v.includes(String(q.showIf.equals)) : v === q.showIf.equals;
+}
+
 export function activeQuestions(
   questions: RegistrationQuestion[],
   values: AnswerValues,
 ): RegistrationQuestion[] {
-  const declined = questions.some((q) => isAttendanceQuestion(q) && values[q.id] === false);
-  return declined ? questions.filter(isAttendanceQuestion) : questions;
+  const base = declinesAttendance(questions, values)
+    ? questions.filter(isAttendanceQuestion)
+    : questions;
+  const visible = new Set<string>();
+  return base.filter((q) => {
+    const ok = conditionMet(q, values) && (!q.showIf || visible.has(q.showIf.questionId));
+    if (ok) visible.add(q.id);
+    return ok;
+  });
 }
 
 // Liefert die erste Fehlermeldung oder null, wenn alles passt

@@ -1355,7 +1355,7 @@ eventRoutes.post("/:id/register", async (c) => {
         409,
       );
     }
-    devAnswerStore.set(participationId, normalizeAnswers(answers));
+    devAnswerStore.set(participationId, normalizeAnswers(answers, questions));
     // Nach einer Abmeldung neu anmelden: alten Status-Override (cancelled) verwerfen
     devParticipationOverrideStore.delete(participationId);
 
@@ -1519,7 +1519,7 @@ eventRoutes.patch("/:id/my-registration", zValidator("json", selfEditSchema), as
       return c.json({ error: { code: "INVALID_ANSWERS", message: validation.message } }, 400);
     }
   }
-  devAnswerStore.set(own.id, normalizeAnswers(input.answers));
+  devAnswerStore.set(own.id, normalizeAnswers(input.answers, questions));
 
   // Zu- oder Absage über die Teilnahme-Frage geändert → Status mitziehen
   const patch = devAttendancePatch(id, own, input.answers);
@@ -1661,7 +1661,10 @@ eventRoutes.patch(
       });
     }
     if (input.answers) {
-      devAnswerStore.set(participationId, normalizeAnswers(input.answers));
+      devAnswerStore.set(
+        participationId,
+        normalizeAnswers(input.answers, devFormStore.get(eventId) ?? []),
+      );
     }
 
     return c.json({

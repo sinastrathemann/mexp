@@ -132,7 +132,7 @@ export function RegistrationFormPanel({ event }: Props) {
     mutationFn: (qs: RegistrationQuestion[]) =>
       apiFetch<{ questions: RegistrationQuestion[] }>(`/events/${event.id}/registration-form`, {
         method: "PUT",
-        body: JSON.stringify({ questions: qs }),
+        body: JSON.stringify({ questions: withValidConditions(qs) }),
       }),
     onSuccess: () => {
       setDirty(false);
@@ -285,6 +285,7 @@ export function RegistrationFormPanel({ event }: Props) {
               onRemove={() => removeQuestion(q.id)}
               onMoveUp={idx > 0 ? () => move(q.id, -1) : undefined}
               onMoveDown={idx < questions.length - 1 ? () => move(q.id, 1) : undefined}
+              triggers={questions.slice(0, idx).filter(canTrigger)}
             />
           ))}
         </div>
@@ -374,6 +375,23 @@ interface EditorProps {
   onRemove: () => void;
   onMoveUp: (() => void) | undefined;
   onMoveDown: (() => void) | undefined;
+  /** Frühere Ja/Nein- oder Auswahl-Fragen, die diese Frage aufklappen können (Runde 6) */
+  triggers: RegistrationQuestion[];
+}
+
+function canTrigger(q: RegistrationQuestion): boolean {
+  return q.type === "yes_no" || q.type === "single_choice" || q.type === "multi_choice";
+}
+
+/** Folgefragen ohne gültigen Auslöser weiter oben (gelöscht/verschoben) werden normale Fragen. */
+function withValidConditions(qs: RegistrationQuestion[]): RegistrationQuestion[] {
+  return qs.map((q, idx) => {
+    if (!q.showIf) return q;
+    const trigger = qs.slice(0, idx).find((x) => x.id === q.showIf?.questionId);
+    if (trigger && canTrigger(trigger)) return q;
+    const { showIf: _drop, ...rest } = q;
+    return rest;
+  });
 }
 
 function QuestionEditor({
@@ -383,6 +401,7 @@ function QuestionEditor({
   onRemove,
   onMoveUp,
   onMoveDown,
+  triggers,
 }: EditorProps) {
   const isChoice = question.type === "single_choice" || question.type === "multi_choice";
   const isDate = question.type === "date_pick";
@@ -546,6 +565,9 @@ function QuestionEditor({
               </span>
             </label>
           )}
+          {triggers.length > 0 && (
+            <ConditionEditor question={question} triggers={triggers} onChange={onChange} />
+          )}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -597,4 +619,82 @@ function toIso(local: string): string {
   const d = new Date(local);
   if (Number.isNaN(d.getTime())) return local;
   return d.toISOString();
+}
+
+/** Runde 6: „Nur anzeigen, wenn …" — Folgefrage klappt erst bei passender Antwort auf. */
+function ConditionEditor({
+  question,
+  triggers,
+  onChange,
+}: {
+  question: RegistrationQuestion;
+  triggers: RegistrationQuestion[];
+  onChange: (patch: Partial<RegistrationQuestion>) => void;
+}) {
+  const cond = question.showIf;
+  const trigger = triggers.find((t) => t.id === cond?.questionId);
+  const values: { value: boolean | string; label: string }[] =
+    trigger?.type === "yes_no"
+      ? [
+          { value: true, label: "Ja" },
+          { value: false, label: "Nein" },
+        ]
+      : (trigger?.options ?? []).map((o) => ({ value: o, label: o }));
+  const setTrigger = (id: string) => {
+    const t = triggers.find((x) => x.id === id);
+    if (!t) {
+      onChange({ showIf: undefined });
+      return;
+    }
+    onChange({
+      showIf: { questionId: t.id, equals: t.type === "yes_no" ? true : (t.options[0] ?? "") },
+    });
+  };
+  return (
+    <div
+      className="text-sm"
+      style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 6, flexWrap: "wrap" }}
+    >
+      <span>Nur anzeigen, wenn</span>
+      <select
+        className="input"
+        style={{ width: "auto", maxWidth: 260 }}
+        aria-label="Auslösende Frage"
+        value={cond?.questionId ?? ""}
+        onChange={(e) => setTrigger(e.target.value)}
+      >
+        <option value="">– immer anzeigen –</option>
+        {triggers.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.label || "(ohne Text)"}
+          </option>
+        ))}
+      </select>
+      {cond && trigger && (
+        <>
+          <span>=</span>
+          <select
+            className="input"
+            style={{ width: "auto", maxWidth: 200 }}
+            aria-label="Antwort, bei der die Frage aufklappt"
+            value={String(cond.equals)}
+            onChange={(e) => {
+              const picked = values.find((v) => String(v.value) === e.target.value);
+              if (picked)
+                onChange({ showIf: { questionId: cond.questionId, equals: picked.value } });
+            }}
+          >
+            {values.map((v) => (
+              <option key={String(v.value)} value={String(v.value)}>
+                {v.label}
+              </option>
+            ))}
+          </select>
+        </>
+      )}
+      {cond && (
+        <span className="muted text-xs">– klappt für Teilnehmende erst bei dieser Antwort auf</span>
+      )}
+    </div>
+  );
 }

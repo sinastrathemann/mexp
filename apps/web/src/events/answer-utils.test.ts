@@ -67,3 +67,36 @@ describe("activeQuestions", () => {
     expect(activeQuestions([dabei, city], {})).toHaveLength(2);
   });
 });
+
+describe("activeQuestions mit Folgefragen (Runde 6)", () => {
+  const q = (id: string, over: Partial<RegistrationQuestion> = {}): RegistrationQuestion => ({
+    id,
+    order: 0,
+    type: "yes_no",
+    label: id,
+    required: true,
+    options: [],
+    ...over,
+  });
+  const hotel = q("hotel");
+  const nights = q("nights", {
+    type: "single_choice",
+    options: ["1", "2"],
+    showIf: { questionId: "hotel", equals: true },
+  });
+  const room = q("room", { type: "free_text", showIf: { questionId: "nights", equals: "2" } });
+  const ids = (vals: Record<string, boolean | string | null>) =>
+    activeQuestions([hotel, nights, room], vals).map((x) => x.id);
+
+  it("zugeklappt, solange nicht passend beantwortet", () => {
+    expect(ids({})).toEqual(["hotel"]);
+    expect(ids({ hotel: false })).toEqual(["hotel"]);
+  });
+  it("klappt bei passender Antwort auf", () => {
+    expect(ids({ hotel: true })).toEqual(["hotel", "nights"]);
+    expect(ids({ hotel: true, nights: "2" })).toEqual(["hotel", "nights", "room"]);
+  });
+  it("Kette: zugeklappte Zwischenfrage klappt auch Folgefrage zu", () => {
+    expect(ids({ hotel: false, nights: "2" })).toEqual(["hotel"]);
+  });
+});

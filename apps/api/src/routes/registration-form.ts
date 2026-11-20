@@ -27,6 +27,10 @@ const questionSchema = z.object({
   attendance: z.boolean().optional(),
   // Antworten sehen auch Teilnehmende ohne Schreibrolle (Abstimmung mit Namen)
   answersPublic: z.boolean().optional(),
+  // Runde 6: Folgefrage — nur sichtbar, wenn eine frühere Frage passend beantwortet ist
+  showIf: z
+    .object({ questionId: z.string().min(1), equals: z.union([z.boolean(), z.string().max(200)]) })
+    .optional(),
 });
 
 const formSchema = z.object({
@@ -65,6 +69,35 @@ export interface DevRegistrationQuestion {
   allowOther?: boolean | undefined;
   attendance?: boolean | undefined;
   answersPublic?: boolean | undefined;
+  showIf?: { questionId: string; equals: boolean | string } | undefined;
+}
+
+/**
+ * Runde 6: IDs der aktuell sichtbaren Fragen. Eine Folgefrage ist sichtbar, wenn ihre
+ * auslösende Frage (weiter oben) sichtbar ist und die Antwort passt — Ja/Nein und
+ * Einfachauswahl: gleicher Wert, Mehrfachauswahl: Wert ist mit ausgewählt.
+ * Fragen ohne showIf sind immer sichtbar.
+ */
+export function visibleQuestionIds(
+  questions: DevRegistrationQuestion[],
+  answers: Pick<DevAnswer, "questionId" | "value">[],
+): Set<string> {
+  const byQ = new Map(answers.map((a) => [a.questionId, a.value]));
+  const visible = new Set<string>();
+  for (const q of [...questions].sort((a, b) => a.order - b.order)) {
+    const cond = q.showIf;
+    if (!cond) {
+      visible.add(q.id);
+      continue;
+    }
+    if (!visible.has(cond.questionId)) continue;
+    const value = byQ.get(cond.questionId);
+    const match = Array.isArray(value)
+      ? value.includes(String(cond.equals))
+      : value === cond.equals;
+    if (match) visible.add(q.id);
+  }
+  return visible;
 }
 
 // Formulare von vor dem Teilnahme-Häkchen: die Vorlage "Bist du dabei?" gilt weiter als Teilnahme-Frage
@@ -121,9 +154,10 @@ export function validateAnswers(
 ): { ok: true } | { ok: false; message: string } {
   const byQ = new Map(answers.map((a) => [a.questionId, a]));
   // "Nicht dabei": weitere Pflichtfragen (z. B. Stadt-Abstimmung) entfallen
-  const relevant = declinesAttendance(questions, answers)
-    ? questions.filter(isAttendanceQuestion)
-    : questions;
+  const visible = visibleQuestionIds(questions, answers);
+  const relevant = (
+    declinesAttendance(questions, answers) ? questions.filter(isAttendanceQuestion) : questions
+  ).filter((q) => visible.has(q.id));
   for (const q of relevant) {
     const a = byQ.get(q.id);
     const otherText = a?.otherText?.trim() ?? "";
@@ -185,9 +219,20 @@ export function validateAnswers(
   return { ok: true };
 }
 
-// Freitext "Andere" getrimmt speichern, leere Texte weglassen
-export function normalizeAnswers(answers: DevAnswer[]): DevAnswer[] {
-  return answers.map(({ otherText, ...rest }) => {
+// Freitext "Andere" getrimmt speichern, leere Texte weglassen.
+// Mit Formular: Antworten auf ausgeblendete Folgefragen verwerfen (Runde 6).
+export function normalizeAnswers(
+  answers: DevAnswer[],
+  questions?: DevRegistrationQuestion[],
+): DevAnswer[] {
+  const visible = questions ? visibleQuestionIds(questions, answers) : null;
+  const kept = visible
+    ? answers.filter((a) => {
+        const q = questions?.find((x) => x.id === a.questionId);
+        return !q?.showIf || visible.has(a.questionId);
+      })
+    : answers;
+  return kept.map(({ otherText, ...rest }) => {
     const trimmed = otherText?.trim() ?? "";
     return trimmed === "" ? rest : { ...rest, otherText: trimmed };
   });
@@ -221,6 +266,26 @@ registrationFormRoutes.put(
     const { questions } = c.req.valid("json");
     if (env.DATABASE_URL) {
       return c.json({ error: { code: "NOT_IMPLEMENTED", message: "Dev-only" } }, 501);
+    }
+    // Folgefragen: Auslöser muss weiter oben stehen und Ja/Nein oder Auswahl sein
+    for (const q of questions) {
+      if (!q.showIf) continue;
+      const trigger = questions.find((x) => x.id === q.showIf?.questionId);
+      const okType =
+        trigger?.type === "yes_no" ||
+        trigger?.type === "single_choice" ||
+        trigger?.type === "multi_choice";
+      if (!trigger || !okType || trigger.order >= q.order) {
+        return c.json(
+          {
+            error: {
+              code: "INVALID_QUESTION",
+              message: `"${q.label}": Folgefrage braucht eine Ja/Nein- oder Auswahl-Frage weiter oben`,
+            },
+          },
+          400,
+        );
+      }
     }
     // Validierung: bei choice/date_pick muss mind. eine Option vorhanden sein
     for (const q of questions) {

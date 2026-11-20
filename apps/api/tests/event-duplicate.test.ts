@@ -182,6 +182,18 @@ describe("Event duplizieren (Runde 6)", () => {
     expect(meta?.alternativeDate ?? null).toBeNull();
   });
 
+  it("Folgefragen verweisen in der Kopie auf die neuen Frage-IDs", async () => {
+    const form = devFormStore.get("src") ?? [];
+    devFormStore.set("src", [
+      form[0] as never,
+      { ...(form[1] as object), showIf: { questionId: "q1", equals: true } } as never,
+    ]);
+    const res = await duplicate(asUser("exm", ["event_office"]));
+    const { event } = (await res.json()) as { event: { id: string } };
+    const [first, second] = devFormStore.get(event.id) ?? [];
+    expect(second?.showIf?.questionId).toBe(first?.id);
+  });
+
   it("Original bleibt unverändert", async () => {
     const before = JSON.stringify([
       devCreatedEventsStore.get("src"),

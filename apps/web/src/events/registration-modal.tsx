@@ -9,6 +9,7 @@ import {
   activeQuestions,
   buildAnswers,
   checkAnswers,
+  declinesAttendance,
 } from "./answer-utils";
 import { formatEventDate } from "./event-date";
 import type { EventDto, RegistrationAnswer, RegistrationQuestion } from "./types";
@@ -67,7 +68,7 @@ export function RegistrationModal({
   };
 
   const shownQuestions = activeQuestions(questions, values);
-  const skipsQuestions = shownQuestions.length < questions.length;
+  const skipsQuestions = declinesAttendance(questions, values) && questions.length > 1;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

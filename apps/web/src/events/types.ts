@@ -154,6 +154,8 @@ export interface RegistrationQuestion {
   attendance?: boolean;
   // Antworten für alle sichtbar (Ergebnis pro Option mit Namen)
   answersPublic?: boolean;
+  // Runde 6: Folgefrage — erst sichtbar, wenn eine frühere Frage passend beantwortet ist
+  showIf?: { questionId: string; equals: boolean | string } | undefined;
 }
 
 // Antwort kann sein: boolean (yes_no), string (single_choice),

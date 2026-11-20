@@ -12,9 +12,21 @@ export function copyEventExtras(sourceId: string, targetId: string, actorId: str
 
   const questions = devFormStore.get(sourceId);
   if (questions?.length) {
+    const newIds = new Map(questions.map((q) => [q.id, randomUUID()]));
     devFormStore.set(
       targetId,
-      questions.map((q) => ({ ...q, id: randomUUID() })),
+      questions.map((q) => ({
+        ...q,
+        id: newIds.get(q.id) ?? randomUUID(),
+        ...(q.showIf
+          ? {
+              showIf: {
+                ...q.showIf,
+                questionId: newIds.get(q.showIf.questionId) ?? q.showIf.questionId,
+              },
+            }
+          : {}),
+      })),
     );
   }
 
