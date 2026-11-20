@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type DragEvent, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiRequestError, apiFetch, apiUpload, apiUrl } from "../api/client";
-import { mergeFiles, partitionBySize } from "./doc-upload-utils";
 import { useAuth } from "../auth/auth-context";
+import { mergeFiles, partitionBySize } from "./doc-upload-utils";
 import {
   DOCUMENT_VISIBILITIES,
   type DocumentDto,
