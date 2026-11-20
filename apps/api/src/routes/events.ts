@@ -35,6 +35,7 @@ import {
   type ExportQuestion,
   buildParticipantsWorkbook,
 } from "../participants-export.js";
+import { copyEventExtras } from "../project-plan/duplicate-extras.js";
 import { TEAM_ROLES, isProject } from "../project-plan/model.js";
 import { mexpUserStore, requireMexpRole, resolveMexpRoles } from "./_user-resolution.js";
 import {
@@ -759,7 +760,8 @@ const duplicateEventSchema = z.object({
 });
 
 // Event duplizieren — für wiederkehrende Coworking-Wochen, Bereichsevents etc.
-// Kopiert NICHT: Teilnehmer, Anmeldungen, Budget, Feedback, Deleted-Flag, ID, CreatedAt.
+// Kopiert NICHT: Teilnehmer, Anmeldungen, Budget, Feedback, Dokumente, Deleted-Flag, ID, CreatedAt.
+// Formular, Aufgaben (zurückgesetzt) und Planungsdaten kommen mit (Runde 6, copyEventExtras).
 // Neues Event startet immer als "draft" (macht createDevEvent automatisch).
 eventRoutes.post(
   "/:id/duplicate",
@@ -797,7 +799,13 @@ eventRoutes.post(
         capacity: (merged.capacity as number | null) ?? null,
         registrationDeadline: (merged.registrationDeadline as string | null | undefined) ?? null,
         ownerId: actorId,
+        audienceScope: (merged.audienceScope as string | undefined) ?? "all",
+        audienceRoles: (merged.audienceRoles as string[] | undefined) ?? [],
+        audienceEmails: (merged.audienceEmails as string[] | undefined) ?? [],
+        audienceTeams: (merged.audienceTeams as string[] | undefined) ?? [],
+        audienceDepartments: (merged.audienceDepartments as string[] | undefined) ?? [],
       });
+      copyEventExtras(sourceId, event.id, actorId);
       return c.json({ event }, 201);
     }
 

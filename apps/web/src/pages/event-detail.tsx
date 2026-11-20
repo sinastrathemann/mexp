@@ -8,6 +8,7 @@ import { withBasePath } from "../base-path";
 import { RichText } from "../components/rich-text";
 import { BudgetLinkCard } from "../events/budget-link-card";
 import { DocumentsPanel } from "../events/documents-panel";
+import { DuplicateEventModal } from "../events/duplicate-event-modal";
 import { EventContentCard } from "../events/event-content-card";
 import { formatEventDate } from "../events/event-date";
 import { EventEditModal } from "../events/event-edit-modal";
@@ -53,6 +54,7 @@ export default function EventDetailPage() {
   const myWaitlistPosition = myParticipationQ.data?.participation?.waitlistPosition;
 
   const [editOpen, setEditOpen] = useState(false);
+  const [duplicateOpen, setDuplicateOpen] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
   // Link, der das Event direkt mit geöffnetem Anmeldeformular zeigt
@@ -171,6 +173,15 @@ export default function EventDetailPage() {
               ✎ Bearbeiten
             </button>
           )}
+          {canManage && (
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() => setDuplicateOpen(true)}
+            >
+              ⧉ {t("events.duplicateAction")}
+            </button>
+          )}
           {hasRole("admin") && (
             <button
               type="button"
@@ -216,6 +227,10 @@ export default function EventDetailPage() {
             {t("participants.yourStatusWaitlisted", { position: myWaitlistPosition ?? "?" })}
           </strong>
         </output>
+      )}
+
+      {duplicateOpen && (
+        <DuplicateEventModal event={event} onClose={() => setDuplicateOpen(false)} />
       )}
 
       {editOpen && (
