@@ -8,7 +8,9 @@ import {
   blueprintTaskStore,
   httpsUrlSchema,
   linkLabelSchema,
+  taskInfoSchema,
   taskTitleSchema,
+  withBlueprintTaskDefaults,
 } from "../project-plan/model.js";
 import { requireMexpRole } from "./_user-resolution.js";
 
@@ -22,6 +24,7 @@ const putSchema = z.object({
           daysBefore: z.number().int().min(0).max(365).nullable(),
           linkLabel: linkLabelSchema.nullable(),
           linkUrl: httpsUrlSchema.nullable(),
+          info: taskInfoSchema.optional(),
         })
         .refine((t) => (t.linkLabel === null) === (t.linkUrl === null), {
           message: "Link braucht Text und https-URL.",
@@ -43,7 +46,7 @@ export function createBlueprintTaskRoutes(blueprintExists: (id: string) => Promi
   routes.get("/:id/tasks", requireMexpRole(...TEAM_ROLES), async (c) => {
     const id = c.req.param("id");
     if (!(await blueprintExists(id))) return c.json(notFound, 404);
-    return c.json({ tasks: blueprintTaskStore.get(id) ?? [] });
+    return c.json({ tasks: (blueprintTaskStore.get(id) ?? []).map(withBlueprintTaskDefaults) });
   });
 
   routes.put(
@@ -59,9 +62,10 @@ export function createBlueprintTaskRoutes(blueprintExists: (id: string) => Promi
         daysBefore: t.daysBefore,
         linkLabel: t.linkLabel,
         linkUrl: t.linkUrl,
+        ...(t.info ? { info: t.info } : {}),
       }));
       blueprintTaskStore.set(id, tasks);
-      return c.json({ tasks });
+      return c.json({ tasks: tasks.map(withBlueprintTaskDefaults) });
     },
   );
 

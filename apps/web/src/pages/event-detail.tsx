@@ -5,6 +5,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
 import { withBasePath } from "../base-path";
+import { CopyLinkButton } from "../components/copy-link-button";
 import { RichText } from "../components/rich-text";
 import { BudgetLinkCard } from "../events/budget-link-card";
 import { DocumentsPanel } from "../events/documents-panel";
@@ -13,7 +14,7 @@ import { EventContentCard } from "../events/event-content-card";
 import { formatEventDate } from "../events/event-date";
 import { EventEditModal } from "../events/event-edit-modal";
 import { eventTypeLabel } from "../events/event-type-label";
-import { FeedbackPanel } from "../events/feedback-panel";
+import { FeedbackPanel, feedbackOpen } from "../events/feedback-panel";
 import { KeyFiguresCard } from "../events/key-figures-card";
 import { ParticipantsPanel } from "../events/participants-panel";
 import { PhaseBar } from "../events/phase-bar";
@@ -167,6 +168,13 @@ export default function EventDetailPage() {
             <button type="button" className="btn btn-outline" onClick={copyRegistrationLink}>
               {linkCopied ? `✓ ${t("events.linkCopied")}` : t("events.copyRegistrationLink")}
             </button>
+          )}
+          {/* Runde 7: Feedback-Link, sobald Feedback möglich ist (Laufend/Abgeschlossen) */}
+          {canManage && !isProject && feedbackOpen(event.status) && (
+            <CopyLinkButton
+              path={`/events/${event.id}?feedback=1`}
+              label={t("feedback.copyLink")}
+            />
           )}
           {canManage && (
             <button type="button" className="btn btn-outline" onClick={() => setEditOpen(true)}>

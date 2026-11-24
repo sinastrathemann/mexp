@@ -5,6 +5,9 @@ Alle nennenswerten Änderungen an mEXP. Format: [Keep a Changelog](https://keepa
 ## [Unreleased]
 
 ### Added
+- Aufgaben: aufklappbares Feld „Infos“ je Aufgabe (wie die OneNote-Spalte) für Hinweise, Textbausteine und Zwischenstände; in Aufgaben-Vorlagen vorausfüllbar, wird beim Anwenden und beim Duplizieren übernommen. Bestandsaufgaben bleiben unverändert (Infos leer).
+- Feedback-Link kopieren (oben im Event-Kopf und im Feedback-Bereich), sobald das Event läuft oder abgeschlossen ist; der Link springt direkt zum Feedback.
+- Teilnehmerliste: eigener Scrollbereich mit immer sichtbarem seitlichem Scrollbalken; Kopfzeile und Name bleiben beim Scrollen stehen (kleine Bildschirme).
 - Dokumente: echte Dateien vom Rechner hochladen, auch mehrere auf einmal (Auswahl oder Drag & Drop, max. 25 MB je Datei); Klick auf den Namen öffnet bzw. lädt die Datei. Ablage im Hub-Volume (kein Backup, SharePoint folgt). Ältere Einträge ohne Datei zeigen „keine Datei“.
 - Anmelde-Formular: Folgefragen („Nur anzeigen, wenn …“) klappen für Teilnehmende erst bei passender Antwort auf; Antworten auf zugeklappte Fragen werden nicht gespeichert.
 - Event duplizieren: übernimmt Inhalte, Zielgruppe, Formular, Planungsdaten und Aufgaben (offen, ohne Datum); neues Datum im Dialog, Kopie startet als Entwurf.

@@ -76,7 +76,13 @@ describe("Blueprint anwenden und löschen (Aufgaben)", () => {
             linkLabel: "Coworking-Copilot",
             linkUrl: "https://personal-hub.mindsquare.de/coworking-copilot/",
           },
-          { title: "Einladung verschicken", daysBefore: null, linkLabel: null, linkUrl: null },
+          {
+            title: "Einladung verschicken",
+            daysBefore: null,
+            linkLabel: null,
+            linkUrl: null,
+            info: "Partner/innen mit einladen?",
+          },
         ],
       }),
     });
@@ -98,7 +104,12 @@ describe("Blueprint anwenden und löschen (Aufgaben)", () => {
       dueDate: computeDueDate(startAt, 30),
       linkUrl: "https://personal-hub.mindsquare.de/coworking-copilot/",
     });
-    expect(copied?.[1]).toMatchObject({ title: "Einladung verschicken", dueDate: null });
+    expect(copied?.[1]).toMatchObject({
+      title: "Einladung verschicken",
+      dueDate: null,
+      info: "Partner/innen mit einladen?",
+    });
+    expect(copied?.[0]).not.toHaveProperty("info");
   });
 
   it("löscht die Vorlagen-Aufgaben mit dem Blueprint", async () => {

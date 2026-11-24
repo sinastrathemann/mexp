@@ -443,7 +443,7 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
             </div>
           )}
 
-          <div style={{ marginTop: "var(--space-4)", overflowX: "auto" }}>
+          <div style={{ marginTop: "var(--space-4)" }}>
             {participants.length === 0 ? (
               <p className="muted">{t("participants.empty")}</p>
             ) : (
@@ -474,113 +474,120 @@ export function ParticipantsPanel({ event }: ParticipantsPanelProps) {
                     </span>
                   )}
                 </div>
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: 40 }}>#</th>
-                      <th>{t("participants.colName")}</th>
-                      <th>{t("participants.colStatus")}</th>
-                      <th>{t("participants.colEmail")}</th>
-                      <th>{t("participants.colPosition")}</th>
-                      <th>{t("participants.colRegisteredAt")}</th>
-                      {questions.length > 0 && <th>Antworten</th>}
-                      <th>Notiz</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredParticipants.flatMap((p, index) => [
-                      ...(index === firstInactiveIndex
-                        ? [
-                            <tr key="inactive-divider" className="row-divider">
-                              <td colSpan={questions.length > 0 ? 8 : 7}>
-                                {t("participants.inactiveSection", {
-                                  count: filteredParticipants.length - firstInactiveIndex,
-                                })}
-                              </td>
-                            </tr>,
-                          ]
-                        : []),
-                      <tr
-                        key={p.id}
-                        className={
-                          p.status === "cancelled" || p.status === "no_show"
-                            ? "row-cancelled"
-                            : p.status === "declined"
-                              ? "row-declined"
-                              : undefined
-                        }
-                      >
-                        <td className="muted text-mono">
-                          {isInactive(p.status) ? "–" : index + 1}
-                        </td>
-                        <td className="text-bold" style={{ whiteSpace: "nowrap" }}>
-                          {p.userDisplayName}
-                          <button
-                            type="button"
-                            disabled={editMut.isPending}
-                            onClick={() => setEditing(p)}
-                            className="btn btn-ghost btn-sm"
-                            style={{ marginLeft: 6 }}
-                            title={t("participants.editRegistrationHint")}
-                          >
-                            {t("participants.editRegistration")}
-                          </button>
-                        </td>
-                        <td>
-                          <select
-                            className="select"
-                            aria-label={t("participants.colStatus")}
-                            disabled={editMut.isPending}
-                            value={p.status}
-                            onChange={(e) =>
-                              editMut.mutate({
-                                participationId: p.id,
-                                status: e.target.value as StaffStatus,
-                              })
-                            }
-                            style={{
-                              minWidth: 170,
-                              ...(p.status === "cancelled" || p.status === "no_show"
-                                ? { color: "#b42318", borderColor: "#b42318", fontWeight: 600 }
-                                : p.status === "declined"
-                                  ? { color: "#b54708", borderColor: "#b54708", fontWeight: 600 }
-                                  : {}),
-                            }}
-                          >
-                            {STAFF_STATUSES.map((st) => (
-                              <option key={st} value={st}>
-                                {t(`participants.status.${st}`)}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td className="muted">{p.userEmail}</td>
-                        <td>{p.waitlistPosition ?? "—"}</td>
-                        <td className="text-sm muted">{fmtDate(p.registeredAt)}</td>
-                        {questions.length > 0 && (
-                          <td>
-                            <AnswerSummary questions={questions} answers={p.answers ?? []} />
+                {/* Runde 7: eigener Scrollbereich (max. Bildschirmhöhe), damit der seitliche
+                    Scrollbalken immer sichtbar ist; Kopfzeile und Name bleiben stehen. */}
+                <div className="participant-table-scroll">
+                  <table className="table participant-table">
+                    <thead>
+                      <tr>
+                        <th className="sticky-col sticky-col-1">#</th>
+                        <th className="sticky-col sticky-col-2">{t("participants.colName")}</th>
+                        <th>{t("participants.colStatus")}</th>
+                        <th>{t("participants.colEmail")}</th>
+                        <th>{t("participants.colPosition")}</th>
+                        <th>{t("participants.colRegisteredAt")}</th>
+                        {questions.length > 0 && <th>Antworten</th>}
+                        <th>Notiz</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredParticipants.flatMap((p, index) => [
+                        ...(index === firstInactiveIndex
+                          ? [
+                              <tr key="inactive-divider" className="row-divider">
+                                <td colSpan={questions.length > 0 ? 8 : 7}>
+                                  {t("participants.inactiveSection", {
+                                    count: filteredParticipants.length - firstInactiveIndex,
+                                  })}
+                                </td>
+                              </tr>,
+                            ]
+                          : []),
+                        <tr
+                          key={p.id}
+                          className={
+                            p.status === "cancelled" || p.status === "no_show"
+                              ? "row-cancelled"
+                              : p.status === "declined"
+                                ? "row-declined"
+                                : undefined
+                          }
+                        >
+                          <td className="muted text-mono sticky-col sticky-col-1">
+                            {isInactive(p.status) ? "–" : index + 1}
                           </td>
-                        )}
-                        <td style={{ maxWidth: 200 }}>
-                          {p.personalNote ? (
-                            <span
+                          <td
+                            className="text-bold sticky-col sticky-col-2"
+                            style={{ whiteSpace: "nowrap" }}
+                          >
+                            {p.userDisplayName}
+                            <button
+                              type="button"
+                              disabled={editMut.isPending}
+                              onClick={() => setEditing(p)}
+                              className="btn btn-ghost btn-sm"
+                              style={{ marginLeft: 6 }}
+                              title={t("participants.editRegistrationHint")}
+                            >
+                              {t("participants.editRegistration")}
+                            </button>
+                          </td>
+                          <td>
+                            <select
+                              className="select"
+                              aria-label={t("participants.colStatus")}
+                              disabled={editMut.isPending}
+                              value={p.status}
+                              onChange={(e) =>
+                                editMut.mutate({
+                                  participationId: p.id,
+                                  status: e.target.value as StaffStatus,
+                                })
+                              }
                               style={{
-                                whiteSpace: "pre-wrap",
-                                fontSize: "var(--text-xs)",
-                                color: "var(--fg-strong)",
+                                minWidth: 170,
+                                ...(p.status === "cancelled" || p.status === "no_show"
+                                  ? { color: "#b42318", borderColor: "#b42318", fontWeight: 600 }
+                                  : p.status === "declined"
+                                    ? { color: "#b54708", borderColor: "#b54708", fontWeight: 600 }
+                                    : {}),
                               }}
                             >
-                              {p.personalNote}
-                            </span>
-                          ) : (
-                            <span className="muted text-xs">—</span>
+                              {STAFF_STATUSES.map((st) => (
+                                <option key={st} value={st}>
+                                  {t(`participants.status.${st}`)}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="muted">{p.userEmail}</td>
+                          <td>{p.waitlistPosition ?? "—"}</td>
+                          <td className="text-sm muted">{fmtDate(p.registeredAt)}</td>
+                          {questions.length > 0 && (
+                            <td>
+                              <AnswerSummary questions={questions} answers={p.answers ?? []} />
+                            </td>
                           )}
-                        </td>
-                      </tr>,
-                    ])}
-                  </tbody>
-                </table>
+                          <td style={{ maxWidth: 200 }}>
+                            {p.personalNote ? (
+                              <span
+                                style={{
+                                  whiteSpace: "pre-wrap",
+                                  fontSize: "var(--text-xs)",
+                                  color: "var(--fg-strong)",
+                                }}
+                              >
+                                {p.personalNote}
+                              </span>
+                            ) : (
+                              <span className="muted text-xs">—</span>
+                            )}
+                          </td>
+                        </tr>,
+                      ])}
+                    </tbody>
+                  </table>
+                </div>
               </>
             )}
           </div>

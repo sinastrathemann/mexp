@@ -52,6 +52,7 @@ interface Draft {
   assigneeId: string;
   linkLabel: string;
   linkUrl: string;
+  info: string;
 }
 
 const emptyDraft: Draft = {
@@ -62,6 +63,7 @@ const emptyDraft: Draft = {
   assigneeId: "",
   linkLabel: "",
   linkUrl: "",
+  info: "",
 };
 
 function toDraft(task: EventTaskDto): Draft {
@@ -73,6 +75,7 @@ function toDraft(task: EventTaskDto): Draft {
     assigneeId: task.assigneeId ?? "",
     linkLabel: task.linkLabel ?? "",
     linkUrl: task.linkUrl ?? "",
+    info: task.info ?? "",
   };
 }
 
@@ -86,6 +89,7 @@ function toPayload(d: Draft) {
     assigneeId: d.assigneeId || null,
     linkLabel: hasLink ? d.linkLabel.trim() : null,
     linkUrl: hasLink ? d.linkUrl.trim() : null,
+    info: d.info.trim() === "" ? null : d.info,
   };
 }
 
@@ -113,6 +117,15 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
 
   const [editingId, setEditingId] = useState<string | "new" | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
+  // Aufgeklappte Infos (nur Ansicht, nicht gespeichert)
+  const [openInfos, setOpenInfos] = useState<Set<string>>(() => new Set());
+  const toggleInfo = (id: string) =>
+    setOpenInfos((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   const invalidate = () => qc.invalidateQueries({ queryKey: key });
 
   const saveMut = useMutation({
@@ -237,6 +250,17 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
         value={draft.linkUrl}
         onChange={(e) => setDraft({ ...draft, linkUrl: e.target.value })}
       />
+      <label className="task-date-field">
+        <span className="muted text-xs">{t("projectPlan.taskInfo")}</span>
+        <textarea
+          className="input"
+          rows={4}
+          maxLength={5000}
+          placeholder={t("projectPlan.taskInfoPlaceholder")}
+          value={draft.info}
+          onChange={(e) => setDraft({ ...draft, info: e.target.value })}
+        />
+      </label>
       <div className="row" style={{ gap: "var(--space-2)" }}>
         <button type="submit" className="btn btn-primary btn-sm" disabled={saveMut.isPending}>
           {t("projectPlan.save")}
@@ -369,6 +393,17 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
                   </button>
                 </>
               )}
+              {task.info && (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  aria-expanded={openInfos.has(task.id)}
+                  aria-label={`${t("projectPlan.taskInfo")}: ${task.title}`}
+                  onClick={() => toggleInfo(task.id)}
+                >
+                  ⓘ {t("projectPlan.taskInfo")} {openInfos.has(task.id) ? "▴" : "▾"}
+                </button>
+              )}
               {task.linkUrl && (
                 <a
                   href={task.linkUrl}
@@ -406,6 +441,7 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
                   {t("projectPlan.delete")}
                 </button>
               )}
+              {task.info && openInfos.has(task.id) && <div className="task-info">{task.info}</div>}
             </li>
           ),
         )}

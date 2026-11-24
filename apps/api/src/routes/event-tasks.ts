@@ -10,6 +10,7 @@ import {
   eventTaskStore,
   httpsUrlSchema,
   linkLabelSchema,
+  taskInfoSchema,
   taskTitleSchema,
   withTaskDefaults,
 } from "../project-plan/model.js";
@@ -40,6 +41,7 @@ const createSchema = z
     priority: z.enum(TASK_PRIORITIES).optional(),
     linkLabel: linkLabelSchema.nullable().optional(),
     linkUrl: httpsUrlSchema.nullable().optional(),
+    info: taskInfoSchema.optional(),
   })
   .refine(linkPairOk, linkPairMessage);
 
@@ -54,6 +56,7 @@ const updateSchema = z
     priority: z.enum(TASK_PRIORITIES).optional(),
     linkLabel: linkLabelSchema.nullable().optional(),
     linkUrl: httpsUrlSchema.nullable().optional(),
+    info: taskInfoSchema.optional(),
     done: z.boolean().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "Leeres Update." });
@@ -128,6 +131,7 @@ eventTaskRoutes.post(
       assigneeName: assignee?.displayName ?? null,
       linkLabel: input.linkLabel ?? null,
       linkUrl: input.linkUrl ?? null,
+      ...(input.info ? { info: input.info } : {}),
       done: false,
       doneBy: null,
       doneAt: null,
@@ -158,6 +162,7 @@ eventTaskRoutes.patch(
     if (input.priority !== undefined) updated.priority = input.priority;
     if (input.linkLabel !== undefined) updated.linkLabel = input.linkLabel;
     if (input.linkUrl !== undefined) updated.linkUrl = input.linkUrl;
+    if (input.info !== undefined) updated.info = input.info;
     // Link nur komplett: Teilupdates (nur Text oder nur URL) dürfen keinen halben Link hinterlassen.
     if ((updated.linkLabel === null) !== (updated.linkUrl === null)) {
       return c.json(

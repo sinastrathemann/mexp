@@ -24,6 +24,9 @@ export interface EventTask {
   // Optional (Feedback-Runde 3): Bestandsaufgaben haben das Feld nicht und werden
   // nie nachträglich beschrieben — beim Lesen gilt dann DEFAULT_TASK_PRIORITY.
   priority?: TaskPriority;
+  // Optional (Runde 7): Infos/Notizen zur Aufgabe wie die OneNote-Spalte „Infos“.
+  // Bestandsaufgaben haben das Feld nicht — beim Lesen gilt null.
+  info?: string | null;
   assigneeId: string | null;
   assigneeName: string | null;
   linkLabel: string | null;
@@ -41,6 +44,8 @@ export interface BlueprintTask {
   daysBefore: number | null;
   linkLabel: string | null;
   linkUrl: string | null;
+  // Optional (Runde 7): vorausgefüllte Infos, die beim Anwenden mitkopiert werden.
+  info?: string | null;
 }
 
 export interface ToolLink {
@@ -61,12 +66,20 @@ export const eventTaskStore = persistentMap<EventTask[]>("event-tasks");
 /** API-Sicht einer Aufgabe: Priorität immer gesetzt, gespeicherter Datensatz bleibt unverändert. */
 export function withTaskDefaults(
   task: EventTask,
-): EventTask & { priority: TaskPriority; startDate: string | null } {
+): EventTask & { priority: TaskPriority; startDate: string | null; info: string | null } {
   return {
     ...task,
     priority: task.priority ?? DEFAULT_TASK_PRIORITY,
     startDate: task.startDate ?? null,
+    info: task.info ?? null,
   };
+}
+
+/** API-Sicht einer Vorlagen-Aufgabe: info immer gesetzt (null, wenn nie gespeichert). */
+export function withBlueprintTaskDefaults(
+  task: BlueprintTask,
+): BlueprintTask & { info: string | null } {
+  return { ...task, info: task.info ?? null };
 }
 export const blueprintTaskStore = persistentMap<BlueprintTask[]>("blueprint-tasks");
 export const toolStore = persistentMap<ToolList>("tools");
@@ -120,6 +133,12 @@ export const httpsUrlSchema = z
   .refine((u) => u.startsWith("https://"), { message: "Nur https-Links erlaubt." });
 export const linkLabelSchema = z.string().trim().min(1).max(100);
 export const taskTitleSchema = z.string().trim().min(1).max(200);
+// Infos: mehrzeiliger Freitext; leer/nur Leerzeichen → null (gelöscht).
+export const taskInfoSchema = z
+  .string()
+  .max(5000)
+  .transform((s) => (s.trim() === "" ? null : s.trimEnd()))
+  .nullable();
 
 export const DEFAULT_TOOLS: ToolLink[] = [
   {
@@ -170,6 +189,7 @@ export function copyBlueprintTasksToEvent(
     assigneeName: null,
     linkLabel: t.linkLabel,
     linkUrl: t.linkUrl,
+    ...(t.info ? { info: t.info } : {}),
     done: false,
     doneBy: null,
     doneAt: null,

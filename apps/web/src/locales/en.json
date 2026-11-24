@@ -395,6 +395,8 @@
   },
   "feedback": {
     "title": "Feedback",
+    "copyLink": "Copy feedback link",
+    "linkLater": "You can copy the feedback link once the event is running or closed.",
     "empty": "No feedback yet.",
     "alreadySubmitted": "Thank you — your feedback has been recorded.",
     "submit": "Submit feedback",
@@ -480,6 +482,8 @@
     "taskNoAssignee": "— nobody —",
     "taskLinkLabel": "Link text",
     "taskLinkUrl": "Link (https://…)",
+    "taskInfo": "Notes",
+    "taskInfoPlaceholder": "Hints, text snippets, progress … (e.g. text for the date update, booking status)",
     "taskOverdue": "overdue",
     "taskDueOn": "by {{date}}",
     "taskStart": "Start from",

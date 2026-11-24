@@ -135,4 +135,27 @@ describe("Blueprint-Aufgaben-API", () => {
     });
     expect(res.status).toBe(400);
   });
+
+  it("speichert Infos je Vorlagen-Aufgabe, fehlendes Feld gilt als null (Runde 7)", async () => {
+    const ws = asUser("ws", ["werkstudent"]);
+    await app().request("/api/blueprints/bp1/tasks", {
+      method: "PUT",
+      headers: ws,
+      body: JSON.stringify({
+        tasks: [
+          {
+            title: "Terminupdate",
+            daysBefore: 7,
+            linkLabel: null,
+            linkUrl: null,
+            info: "Instagram-Hinweis",
+          },
+          { title: "Reminder", daysBefore: 1, linkLabel: null, linkUrl: null },
+        ],
+      }),
+    });
+    const get = await app().request("/api/blueprints/bp1/tasks", { headers: ws });
+    const body = (await get.json()) as { tasks: { info: string | null }[] };
+    expect(body.tasks.map((t) => t.info)).toEqual(["Instagram-Hinweis", null]);
+  });
 });

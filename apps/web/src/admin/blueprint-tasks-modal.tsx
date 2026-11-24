@@ -12,6 +12,7 @@ interface Row {
   daysBefore: string;
   linkLabel: string;
   linkUrl: string;
+  info: string;
 }
 
 function toRow(t: BlueprintTaskDto): Row {
@@ -22,6 +23,7 @@ function toRow(t: BlueprintTaskDto): Row {
     daysBefore: t.daysBefore === null ? "" : String(t.daysBefore),
     linkLabel: t.linkLabel ?? "",
     linkUrl: t.linkUrl ?? "",
+    info: t.info ?? "",
   };
 }
 
@@ -35,6 +37,7 @@ function toDto(r: Row): BlueprintTaskDto {
     daysBefore: r.daysBefore === "" ? null : Number(r.daysBefore),
     linkLabel: hasLink ? r.linkLabel.trim() : null,
     linkUrl: hasLink ? r.linkUrl.trim() : null,
+    info: r.info.trim() === "" ? null : r.info,
   };
 }
 
@@ -124,55 +127,75 @@ export function BlueprintTasksModal({ blueprintId, name, onClose }: Props) {
           }}
         >
           {rows?.map((row, i) => (
-            <div key={row.key} className="row" style={{ gap: "var(--space-2)" }}>
-              <input
+            <div
+              key={row.key}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "var(--space-1)",
+                paddingBottom: "var(--space-2)",
+                borderBottom: "1px solid var(--border-default)",
+              }}
+            >
+              <div className="row" style={{ gap: "var(--space-2)" }}>
+                <input
+                  className="input"
+                  style={{ flex: 2 }}
+                  required
+                  maxLength={200}
+                  placeholder={t("projectPlan.taskTitle")}
+                  aria-label={t("projectPlan.taskTitle")}
+                  value={row.title}
+                  onChange={(e) => update(i, { title: e.target.value })}
+                />
+                <input
+                  className="input"
+                  style={{ width: 90 }}
+                  type="number"
+                  min={0}
+                  max={365}
+                  placeholder={t("projectPlan.daysBefore")}
+                  aria-label={t("projectPlan.daysBefore")}
+                  value={row.daysBefore}
+                  onChange={(e) => update(i, { daysBefore: e.target.value })}
+                />
+                <input
+                  className="input"
+                  required={row.linkUrl.trim() !== ""}
+                  maxLength={100}
+                  placeholder={t("projectPlan.taskLinkLabel")}
+                  aria-label={t("projectPlan.taskLinkLabel")}
+                  value={row.linkLabel}
+                  onChange={(e) => update(i, { linkLabel: e.target.value })}
+                />
+                <input
+                  className="input"
+                  type="url"
+                  pattern="https://.*"
+                  required={row.linkLabel.trim() !== ""}
+                  maxLength={2000}
+                  placeholder={t("projectPlan.taskLinkUrl")}
+                  aria-label={t("projectPlan.taskLinkUrl")}
+                  value={row.linkUrl}
+                  onChange={(e) => update(i, { linkUrl: e.target.value })}
+                />
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setRows((r) => r?.filter((_, idx) => idx !== i) ?? null)}
+                >
+                  {t("projectPlan.delete")}
+                </button>
+              </div>
+              <textarea
                 className="input"
-                style={{ flex: 2 }}
-                required
-                maxLength={200}
-                placeholder={t("projectPlan.taskTitle")}
-                aria-label={t("projectPlan.taskTitle")}
-                value={row.title}
-                onChange={(e) => update(i, { title: e.target.value })}
+                rows={2}
+                maxLength={5000}
+                placeholder={`${t("projectPlan.taskInfo")}: ${t("projectPlan.taskInfoPlaceholder")}`}
+                aria-label={t("projectPlan.taskInfo")}
+                value={row.info}
+                onChange={(e) => update(i, { info: e.target.value })}
               />
-              <input
-                className="input"
-                style={{ width: 90 }}
-                type="number"
-                min={0}
-                max={365}
-                placeholder={t("projectPlan.daysBefore")}
-                aria-label={t("projectPlan.daysBefore")}
-                value={row.daysBefore}
-                onChange={(e) => update(i, { daysBefore: e.target.value })}
-              />
-              <input
-                className="input"
-                required={row.linkUrl.trim() !== ""}
-                maxLength={100}
-                placeholder={t("projectPlan.taskLinkLabel")}
-                aria-label={t("projectPlan.taskLinkLabel")}
-                value={row.linkLabel}
-                onChange={(e) => update(i, { linkLabel: e.target.value })}
-              />
-              <input
-                className="input"
-                type="url"
-                pattern="https://.*"
-                required={row.linkLabel.trim() !== ""}
-                maxLength={2000}
-                placeholder={t("projectPlan.taskLinkUrl")}
-                aria-label={t("projectPlan.taskLinkUrl")}
-                value={row.linkUrl}
-                onChange={(e) => update(i, { linkUrl: e.target.value })}
-              />
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => setRows((r) => r?.filter((_, idx) => idx !== i) ?? null)}
-              >
-                {t("projectPlan.delete")}
-              </button>
             </div>
           ))}
         </div>
@@ -184,7 +207,14 @@ export function BlueprintTasksModal({ blueprintId, name, onClose }: Props) {
           onClick={() =>
             setRows((r) => [
               ...(r ?? []),
-              { key: crypto.randomUUID(), title: "", daysBefore: "", linkLabel: "", linkUrl: "" },
+              {
+                key: crypto.randomUUID(),
+                title: "",
+                daysBefore: "",
+                linkLabel: "",
+                linkUrl: "",
+                info: "",
+              },
             ])
           }
         >

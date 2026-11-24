@@ -12,6 +12,7 @@ function task(id: string, over: Partial<EventTaskDto> = {}): EventTaskDto {
     assigneeName: null,
     linkLabel: null,
     linkUrl: null,
+    info: null,
     done: false,
     doneBy: null,
     doneAt: null,

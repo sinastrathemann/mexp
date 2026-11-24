@@ -395,6 +395,8 @@
   },
   "feedback": {
     "title": "Feedback",
+    "copyLink": "Feedback-Link kopieren",
+    "linkLater": "Den Feedback-Link kannst du kopieren, sobald das Event läuft oder abgeschlossen ist.",
     "empty": "Noch kein Feedback eingegangen.",
     "alreadySubmitted": "Danke — dein Feedback wurde gespeichert.",
     "submit": "Feedback absenden",
@@ -480,6 +482,8 @@
     "taskNoAssignee": "— niemand —",
     "taskLinkLabel": "Link-Text",
     "taskLinkUrl": "Link (https://…)",
+    "taskInfo": "Infos",
+    "taskInfoPlaceholder": "Hinweise, Textbausteine, Zwischenstände … (z. B. Text fürs Terminupdate, Stand der Buchung)",
     "taskOverdue": "überfällig",
     "taskDueOn": "bis {{date}}",
     "taskStart": "Erledigen ab",

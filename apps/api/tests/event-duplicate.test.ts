@@ -84,6 +84,7 @@ function seed() {
     {
       id: "t1",
       title: "Raum buchen",
+      info: "Angebot liegt vor, Rabatt angefragt",
       startDate: "2027-01-01",
       dueDate: "2027-02-01",
       priority: "high",
@@ -169,6 +170,8 @@ describe("Event duplizieren (Runde 6)", () => {
     expect(task?.startDate ?? null).toBeNull();
     expect(task?.assigneeId).toBe("u1");
     expect(task?.priority).toBe("high");
+    // Runde 7: Infos werden zur Orientierung mitkopiert
+    expect(task?.info).toBe("Angebot liegt vor, Rabatt angefragt");
   });
 
   it("kopiert Planungsdaten ohne Ergebnis und Alternativtermin", async () => {

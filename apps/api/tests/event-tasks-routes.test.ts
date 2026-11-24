@@ -402,4 +402,66 @@ describe("Event-Aufgaben-API", () => {
       expect(eventTaskStore.get("evt1")?.[0]).not.toHaveProperty("startDate");
     });
   });
+
+  describe("Infos je Aufgabe (Runde 7)", () => {
+    async function patch(headers: Record<string, string>, id: string, body: object) {
+      return app().request(`${URL_BASE}/${id}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify(body),
+      });
+    }
+
+    it("legt Aufgabe mit Infos an, ändert und löscht sie", async () => {
+      const ws = asUser("ws", ["werkstudent"]);
+      const res = await createTask(ws, {
+        title: "Terminupdate",
+        info: "Hinweis für Fotos & Instagram\nBitte meldet euch bei Absage.",
+      });
+      expect(res.status).toBe(201);
+      const { task } = (await res.json()) as { task: { id: string; info: string | null } };
+      expect(task.info).toBe("Hinweis für Fotos & Instagram\nBitte meldet euch bei Absage.");
+
+      const keep = await patch(ws, task.id, { title: "Terminupdate verschicken" });
+      expect(((await keep.json()) as { task: { info: string | null } }).task.info).toContain(
+        "Instagram",
+      );
+      const changed = await patch(ws, task.id, { info: "Mail ist raus (24.11.)" });
+      expect(((await changed.json()) as { task: { info: string | null } }).task.info).toBe(
+        "Mail ist raus (24.11.)",
+      );
+      const cleared = await patch(ws, task.id, { info: "   " });
+      expect(((await cleared.json()) as { task: { info: string | null } }).task.info).toBeNull();
+    });
+
+    it("lehnt Infos über 5000 Zeichen ab", async () => {
+      const ws = asUser("ws", ["werkstudent"]);
+      const res = await createTask(ws, { title: "X", info: "x".repeat(5001) });
+      expect(res.status).toBe(400);
+    });
+
+    it("Bestandsaufgabe ohne Feld liefert info null und bleibt unverändert", async () => {
+      const ws = asUser("ws", ["werkstudent"]);
+      eventTaskStore.set("evt1", [
+        {
+          id: "alt",
+          title: "Alte Aufgabe",
+          dueDate: null,
+          assigneeId: null,
+          assigneeName: null,
+          linkLabel: null,
+          linkUrl: null,
+          done: false,
+          doneBy: null,
+          doneAt: null,
+          createdBy: "x",
+          createdAt: "2026-11-01T00:00:00.000Z",
+        },
+      ]);
+      const res = await app().request(URL_BASE, { headers: ws });
+      const { tasks } = (await res.json()) as { tasks: { info: string | null }[] };
+      expect(tasks[0]?.info).toBeNull();
+      expect(eventTaskStore.get("evt1")?.[0]).not.toHaveProperty("info");
+    });
+  });
 });

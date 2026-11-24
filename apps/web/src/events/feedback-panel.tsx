@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
+import { CopyLinkButton } from "../components/copy-link-button";
 import type { EventDto, EventFeedbackDto, EventFeedbackStatsDto } from "./types";
 
 interface FeedbackPanelProps {
@@ -28,13 +30,30 @@ const Q2 = "Was war dein Highlight oder hat dir besonders gut gefallen?";
 const Q3 = "Was hat dir nicht gefallen? Was können wir besser machen?";
 const Q4 = "Sonstige Anmerkungen";
 
+/** Feedback kann nur bei laufenden oder abgeschlossenen Events abgegeben werden. */
+export function feedbackOpen(status: EventDto["status"]): boolean {
+  return status === "running" || status === "closed";
+}
+
 export function FeedbackPanel({ event }: FeedbackPanelProps) {
   const { t } = useTranslation();
   const { hasRole } = useAuth();
   const qc = useQueryClient();
   const canManage = hasRole("admin", "manager", "event_office", "werkstudent");
-  const canSubmit = event.status === "running" || event.status === "closed";
+  const canSubmit = feedbackOpen(event.status);
   const [form, setForm] = useState<FormState>(initialForm);
+
+  // Feedback-Link (?feedback=1, Runde 7): direkt zum Feedback-Bereich springen
+  const [searchParams, setSearchParams] = useSearchParams();
+  const wantsFeedback = searchParams.get("feedback") === "1";
+  const sectionRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!wantsFeedback) return;
+    sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const next = new URLSearchParams(searchParams);
+    next.delete("feedback");
+    setSearchParams(next, { replace: true });
+  }, [wantsFeedback, searchParams, setSearchParams]);
 
   const ownQ = useQuery({
     queryKey: ["events", event.id, "feedback", "mine"],
@@ -88,8 +107,18 @@ export function FeedbackPanel({ event }: FeedbackPanelProps) {
   const fmtAvg = (v: number | null) => (v === null ? "—" : v.toFixed(2));
 
   return (
-    <section className="card">
-      <h2 className="card-title">{t("feedback.title")}</h2>
+    <section className="card" ref={sectionRef}>
+      <div className="row" style={{ justifyContent: "space-between", gap: "var(--space-2)" }}>
+        <h2 className="card-title">{t("feedback.title")}</h2>
+        {canManage && canSubmit && (
+          <CopyLinkButton
+            path={`/events/${event.id}?feedback=1`}
+            label={t("feedback.copyLink")}
+            className="btn btn-outline btn-sm"
+          />
+        )}
+      </div>
+      {canManage && !canSubmit && <p className="muted text-sm">{t("feedback.linkLater")}</p>}
 
       {canSubmit &&
         (ownQ.data?.feedback ? (

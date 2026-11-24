@@ -14,6 +14,8 @@ export interface EventTaskDto {
   assigneeName: string | null;
   linkLabel: string | null;
   linkUrl: string | null;
+  // Infos/Notizen zur Aufgabe (Runde 7); API liefert null, wenn nicht gesetzt
+  info: string | null;
   done: boolean;
   doneBy: string | null;
   doneAt: string | null;
@@ -25,6 +27,8 @@ export interface BlueprintTaskDto {
   id?: string;
   title: string;
   daysBefore: number | null;
+  // Vorausgefüllte Infos (Runde 7), werden beim Anwenden ins Event kopiert
+  info?: string | null;
   linkLabel: string | null;
   linkUrl: string | null;
 }

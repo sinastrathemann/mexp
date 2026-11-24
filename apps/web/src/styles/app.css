@@ -740,6 +740,40 @@ legend {
   color: #b42318;
 }
 /* Abgemeldete Teilnehmende in der Teilnehmerliste rot hervorheben */
+/* Teilnehmerliste (Runde 7): Scrollbereich mit sichtbarem Scrollbalken,
+   feste Kopfzeile und feste Spalten # + Name */
+.participant-table-scroll {
+  overflow: auto;
+  max-height: calc(100vh - 160px);
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-md, 8px);
+}
+.participant-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg-card);
+}
+.participant-table .sticky-col {
+  position: sticky;
+  z-index: 1;
+  background: var(--bg-card);
+}
+.participant-table th.sticky-col {
+  z-index: 3;
+}
+.participant-table .sticky-col-1 {
+  left: 0;
+  width: 48px;
+  min-width: 48px;
+}
+.participant-table .sticky-col-2 {
+  left: 48px;
+  box-shadow: inset -1px 0 0 var(--border-muted);
+}
+.participant-table tbody tr:hover .sticky-col {
+  background: var(--bg-subtle);
+}
 .table tr.row-cancelled td {
   background: #fdf2f2;
   color: #b42318;
@@ -2115,6 +2149,16 @@ legend {
 .task-overdue {
   color: #b42318;
   font-weight: 600;
+}
+.task-info {
+  flex-basis: 100%;
+  margin-left: calc(var(--space-2) + 16px);
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--brand-orange);
+  background: var(--bg-subtle);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.9em;
 }
 .task-form {
   display: grid;
