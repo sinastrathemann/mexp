@@ -5,6 +5,9 @@ Alle nennenswerten Änderungen an mEXP. Format: [Keep a Changelog](https://keepa
 ## [Unreleased]
 
 ### Added
+- Event ohne Termin anlegen (z. B. während einer Terminumfrage): Datum leer lassen → „Termin offen“. Solche Events bleiben Entwurf, bis ein Termin eingetragen ist; keine Kalenderdatei; in der Eventliste ganz oben.
+- Termin-Eingabe: Datum und Uhrzeit getrennt, Uhrzeit optional (leer = „Uhrzeit folgt“, ohne Endzeit 2 Stunden). Die Checkbox „Uhrzeit steht noch nicht fest“ entfällt, eingegebene Daten gehen nicht mehr verloren.
+- EXM-Notiz und Aufgaben-Infos wachsen mit dem Text mit.
 - Aufgaben: aufklappbares Feld „Infos“ je Aufgabe (wie die OneNote-Spalte) für Hinweise, Textbausteine und Zwischenstände; in Aufgaben-Vorlagen vorausfüllbar, wird beim Anwenden und beim Duplizieren übernommen. Bestandsaufgaben bleiben unverändert (Infos leer).
 - Feedback-Link kopieren (oben im Event-Kopf und im Feedback-Bereich), sobald das Event läuft oder abgeschlossen ist; der Link springt direkt zum Feedback.
 - Teilnehmerliste: eigener Scrollbereich mit immer sichtbarem seitlichem Scrollbalken; Kopfzeile und Name bleiben beim Scrollen stehen (kleine Bildschirme).

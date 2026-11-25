@@ -4,11 +4,12 @@ import type { FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ApiRequestError, apiFetch } from "../api/client";
+import { AutoGrowTextarea } from "../components/auto-grow-textarea";
 import { RichTextEditor } from "../components/rich-text-editor";
 import { appendEmail } from "../events/email-list";
 import { EmailSuggest } from "../events/email-suggest";
-import { tbdIso } from "../events/event-date";
 import { EventDateFields } from "../events/event-date-fields";
+import { type DateInputs, fromDateInputs } from "../events/event-date-input";
 import { PlanningFields } from "../events/planning-fields";
 import {
   type AssigneeDto,
@@ -58,9 +59,13 @@ export default function EventCreatePage() {
   const [description, setDescription] = useState("");
   const [eventType, setEventType] = useState<EventType>("team");
   const [visibility, setVisibility] = useState<EventVisibility>("internal");
-  const [startAt, setStartAt] = useState("");
-  const [endAt, setEndAt] = useState("");
-  const [timeTbd, setTimeTbd] = useState(false);
+  // Runde 7: Termin optional, Uhrzeit optional (Datum und Uhrzeit getrennt)
+  const [dates, setDates] = useState<DateInputs>({
+    startDate: "",
+    startTime: "",
+    endDate: "",
+    endTime: "",
+  });
   const [location, setLocation] = useState("");
   const [locationDetails, setLocationDetails] = useState("");
   const [capacity, setCapacity] = useState("");
@@ -137,8 +142,7 @@ export default function EventCreatePage() {
       }
     }
     if (day) {
-      setStartAt(`${day}T${startTime}`);
-      setEndAt(`${day}T${endTime}`);
+      setDates({ startDate: day, startTime, endDate: "", endTime });
     }
 
     if (req.participantCount > 0) {
@@ -184,14 +188,14 @@ export default function EventCreatePage() {
       .split(/[\s,;]+/)
       .map((s) => s.trim().toLowerCase())
       .filter((s) => s.includes("@"));
+    const dateCheck = fromDateInputs(dates);
+    if (!dateCheck.ok) return;
     createMut.mutate({
       title,
       description,
       eventType,
       visibility,
-      startAt: timeTbd ? tbdIso(startAt, "start") : new Date(startAt).toISOString(),
-      endAt: timeTbd ? tbdIso(endAt, "end") : new Date(endAt).toISOString(),
-      timeTbd,
+      ...dateCheck.value,
       location: location || null,
       locationDetails: locationDetails.trim() === "" ? null : locationDetails.trim(),
       capacity: capacity ? Number.parseInt(capacity, 10) : null,
@@ -284,15 +288,7 @@ export default function EventCreatePage() {
             </select>
           </div>
         </div>
-        <EventDateFields
-          idPrefix="ev"
-          timeTbd={timeTbd}
-          startAt={startAt}
-          endAt={endAt}
-          onTimeTbdChange={setTimeTbd}
-          onStartChange={setStartAt}
-          onEndChange={setEndAt}
-        />
+        <EventDateFields idPrefix="ev" value={dates} onChange={setDates} />
         <div className="field-row">
           <div className="field">
             <label className="label" htmlFor="ev-location">
@@ -362,10 +358,11 @@ export default function EventCreatePage() {
           <label className="label" htmlFor="ev-exm-note">
             🔒 {t("projectPlan.metaExmNote")}
           </label>
-          <textarea
+          <AutoGrowTextarea
             id="ev-exm-note"
             className="textarea"
             rows={3}
+            maxRows={40}
             maxLength={5000}
             value={exmNote}
             onChange={(e) => setExmNote(e.target.value)}

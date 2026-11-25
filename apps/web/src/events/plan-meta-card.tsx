@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../api/client";
+import { AutoGrowTextarea } from "../components/auto-grow-textarea";
 import { PlanningFields, planningSummary } from "./planning-fields";
 import {
   type AssigneeDto,
@@ -111,10 +112,11 @@ export function PlanMetaCard({ event }: { event: EventDto }) {
             <label className="label" htmlFor="pm-exm-note">
               {t("projectPlan.metaExmNote")}
             </label>
-            <textarea
+            <AutoGrowTextarea
               id="pm-exm-note"
               className="textarea"
               rows={3}
+              maxRows={40}
               maxLength={5000}
               value={exmNote}
               onChange={(e) => setExmNote(e.target.value)}

@@ -1,83 +1,76 @@
 import { useTranslation } from "react-i18next";
+import { type DateInputs, fromDateInputs } from "./event-date-input";
 
 interface Props {
   idPrefix: string;
-  timeTbd: boolean;
-  startAt: string;
-  endAt: string;
-  onTimeTbdChange: (v: boolean) => void;
-  onStartChange: (v: string) => void;
-  onEndChange: (v: string) => void;
+  value: DateInputs;
+  onChange: (v: DateInputs) => void;
 }
 
-// Start/Ende eines Events. Bei "Uhrzeit steht noch nicht fest" nur Datumsfelder
-// (Werte "YYYY-MM-DD"), sonst datetime-local ("YYYY-MM-DDTHH:mm").
-export function EventDateFields({
-  idPrefix,
-  timeTbd,
-  startAt,
-  endAt,
-  onTimeTbdChange,
-  onStartChange,
-  onEndChange,
-}: Props) {
+// Termin eines Events (Runde 7): Datum und Uhrzeit getrennt, alles optional.
+// Ohne Uhrzeit → „Uhrzeit folgt“, ohne Datum → Event ohne Termin.
+export function EventDateFields({ idPrefix, value, onChange }: Props) {
   const { t } = useTranslation();
+  const set = (patch: Partial<DateInputs>) => onChange({ ...value, ...patch });
+  const check = fromDateInputs(value);
 
-  const toggle = (checked: boolean) => {
-    onTimeTbdChange(checked);
-    if (checked) {
-      onStartChange(startAt.slice(0, 10));
-      onEndChange(endAt.slice(0, 10));
-    } else {
-      // Datum behalten, Uhrzeit vorbelegen – lässt sich direkt anpassen
-      if (startAt) onStartChange(`${startAt.slice(0, 10)}T09:00`);
-      if (endAt) onEndChange(`${endAt.slice(0, 10)}T17:00`);
-    }
-  };
-
-  const type = timeTbd ? "date" : "datetime-local";
   return (
-    <>
+    <div style={{ marginBottom: "var(--space-4)" }}>
       <div className="field-row">
         <div className="field">
-          <label className="label" htmlFor={`${idPrefix}-start`}>
+          <label className="label" htmlFor={`${idPrefix}-start-date`}>
             {t("events.fieldStart")}
           </label>
-          <input
-            id={`${idPrefix}-start`}
-            className="input"
-            type={type}
-            required
-            value={startAt}
-            onChange={(e) => onStartChange(e.target.value)}
-          />
+          <div className="row" style={{ gap: "var(--space-2)", flexWrap: "nowrap" }}>
+            <input
+              id={`${idPrefix}-start-date`}
+              className="input"
+              type="date"
+              value={value.startDate}
+              onChange={(e) => set({ startDate: e.target.value })}
+            />
+            <input
+              className="input"
+              type="time"
+              aria-label={t("events.fieldStartTime")}
+              style={{ maxWidth: 130 }}
+              value={value.startTime}
+              onChange={(e) => set({ startTime: e.target.value })}
+            />
+          </div>
         </div>
         <div className="field">
-          <label className="label" htmlFor={`${idPrefix}-end`}>
+          <label className="label" htmlFor={`${idPrefix}-end-date`}>
             {t("events.fieldEnd")}
           </label>
-          <input
-            id={`${idPrefix}-end`}
-            className="input"
-            type={type}
-            required
-            value={endAt}
-            onChange={(e) => onEndChange(e.target.value)}
-          />
+          <div className="row" style={{ gap: "var(--space-2)", flexWrap: "nowrap" }}>
+            <input
+              id={`${idPrefix}-end-date`}
+              className="input"
+              type="date"
+              min={value.startDate || undefined}
+              value={value.endDate}
+              onChange={(e) => set({ endDate: e.target.value })}
+            />
+            <input
+              className="input"
+              type="time"
+              aria-label={t("events.fieldEndTime")}
+              style={{ maxWidth: 130 }}
+              value={value.endTime}
+              onChange={(e) => set({ endTime: e.target.value })}
+            />
+          </div>
         </div>
       </div>
-      <label
-        className="text-sm"
-        style={{
-          display: "inline-flex",
-          gap: 6,
-          alignItems: "center",
-          marginBottom: "var(--space-4)",
-        }}
-      >
-        <input type="checkbox" checked={timeTbd} onChange={(e) => toggle(e.target.checked)} />
-        {t("events.fieldTimeTbd")}
-      </label>
-    </>
+      <p className="help-text" style={{ marginTop: 0 }}>
+        {t("events.fieldDateHint")}
+      </p>
+      {!check.ok && (
+        <p className="help-text" role="alert" style={{ color: "#b42318", fontWeight: 600 }}>
+          {t(`events.dateError.${check.error}`)}
+        </p>
+      )}
+    </div>
   );
 }

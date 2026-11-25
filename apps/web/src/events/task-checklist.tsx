@@ -3,6 +3,7 @@ import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/auth-context";
+import { AutoGrowTextarea } from "../components/auto-grow-textarea";
 import {
   type AssigneeDto,
   type EventTaskDto,
@@ -250,17 +251,21 @@ export function TaskChecklist({ eventId }: { eventId: string }) {
         value={draft.linkUrl}
         onChange={(e) => setDraft({ ...draft, linkUrl: e.target.value })}
       />
-      <label className="task-date-field">
-        <span className="muted text-xs">{t("projectPlan.taskInfo")}</span>
-        <textarea
+      <div className="task-date-field">
+        <label className="muted text-xs" htmlFor={`task-info-${editingId ?? "new"}`}>
+          {t("projectPlan.taskInfo")}
+        </label>
+        <AutoGrowTextarea
+          id={`task-info-${editingId ?? "new"}`}
           className="input"
           rows={4}
+          maxRows={30}
           maxLength={5000}
           placeholder={t("projectPlan.taskInfoPlaceholder")}
           value={draft.info}
           onChange={(e) => setDraft({ ...draft, info: e.target.value })}
         />
-      </label>
+      </div>
       <div className="row" style={{ gap: "var(--space-2)" }}>
         <button type="submit" className="btn btn-primary btn-sm" disabled={saveMut.isPending}>
           {t("projectPlan.save")}

@@ -128,7 +128,7 @@ export default function EventDetailPage() {
   const event = data.event;
   // Runde 5: Projekte = Projektplan ohne Anmeldung/Teilnehmer
   const isProject = event.kind === "project";
-  const fmtDate = (iso: string) => formatEventDate(iso, event.timeTbd, i18n.language);
+  const fmtDate = (iso: string | null) => formatEventDate(iso, event.timeTbd, i18n.language);
 
   return (
     <div className="page">
@@ -157,13 +157,16 @@ export default function EventDetailPage() {
           </div>
         </div>
         <div className="row" style={{ gap: 8 }}>
-          <a
-            href={withBasePath(`/api/events/${event.id}/calendar.ics`)}
-            className="btn btn-outline"
-            title="Lädt eine .ics-Datei herunter, die in Outlook, Apple Calendar oder Google Calendar geöffnet werden kann."
-          >
-            📅 In Kalender speichern
-          </a>
+          {/* Runde 7: ohne Termin keine Kalenderdatei */}
+          {event.startAt && (
+            <a
+              href={withBasePath(`/api/events/${event.id}/calendar.ics`)}
+              className="btn btn-outline"
+              title="Lädt eine .ics-Datei herunter, die in Outlook, Apple Calendar oder Google Calendar geöffnet werden kann."
+            >
+              📅 In Kalender speichern
+            </a>
+          )}
           {canManage && !isProject && (
             <button type="button" className="btn btn-outline" onClick={copyRegistrationLink}>
               {linkCopied ? `✓ ${t("events.linkCopied")}` : t("events.copyRegistrationLink")}

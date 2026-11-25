@@ -16,7 +16,10 @@ export function DuplicateEventModal({ event, onClose }: { event: EventDto; onClo
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [title, setTitle] = useState(`${event.title} (${t("events.duplicateCopySuffix")})`);
-  const [day, setDay] = useState(localDay(event.startAt));
+  // Runde 7: Quelle ohne Termin → Kopie ohne Termin (Datum später im Bearbeiten-Dialog)
+  const sourceStart = event.startAt;
+  const sourceEnd = event.endAt;
+  const [day, setDay] = useState(sourceStart ? localDay(sourceStart) : "");
 
   const mut = useMutation({
     mutationFn: () =>
@@ -24,7 +27,7 @@ export function DuplicateEventModal({ event, onClose }: { event: EventDto; onClo
         method: "POST",
         body: JSON.stringify({
           title: title.trim(),
-          ...shiftEventDates(event.startAt, event.endAt, day),
+          ...(sourceStart && sourceEnd ? shiftEventDates(sourceStart, sourceEnd, day) : {}),
         }),
       }),
     onSuccess: ({ event: copy }) => {
@@ -90,16 +93,20 @@ export function DuplicateEventModal({ event, onClose }: { event: EventDto; onClo
             onChange={(e) => setTitle(e.target.value)}
           />
         </label>
-        <label className="field" style={{ marginTop: "var(--space-3)" }}>
-          <span>{t("events.duplicateDate")}</span>
-          <input
-            className="input"
-            type="date"
-            required
-            value={day}
-            onChange={(e) => setDay(e.target.value)}
-          />
-        </label>
+        {sourceStart ? (
+          <label className="field" style={{ marginTop: "var(--space-3)" }}>
+            <span>{t("events.duplicateDate")}</span>
+            <input
+              className="input"
+              type="date"
+              required
+              value={day}
+              onChange={(e) => setDay(e.target.value)}
+            />
+          </label>
+        ) : (
+          <p className="muted text-sm">{t("events.duplicateNoDate")}</p>
+        )}
         {mut.error instanceof Error && (
           <div className="alert alert-error" style={{ marginTop: "var(--space-3)" }}>
             {mut.error.message}

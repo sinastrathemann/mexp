@@ -71,19 +71,21 @@ export default function HomePage() {
   const shown = filters.filtered;
 
   const now = Date.now();
-  const inDays = (iso: string) => Math.round((new Date(iso).getTime() - now) / 86400000);
+  // Laufende/offene/geplante Events haben immer einen Termin (Runde 7: ohne Termin nur Entwurf)
+  const ms = (iso: string | null) => (iso ? new Date(iso).getTime() : Number.POSITIVE_INFINITY);
+  const inDays = (iso: string | null) => Math.round((ms(iso) - now) / 86400000);
 
   const live = shown
     .filter((e) => e.status === "running")
-    .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
+    .sort((a, b) => ms(a.startAt) - ms(b.startAt));
 
   const open = shown
     .filter((e) => e.status === "open")
-    .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
+    .sort((a, b) => ms(a.startAt) - ms(b.startAt));
 
   const upcoming = shown
-    .filter((e) => e.status === "planned" && new Date(e.startAt).getTime() > now)
-    .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
+    .filter((e) => e.status === "planned" && ms(e.startAt) > now)
+    .sort((a, b) => ms(a.startAt) - ms(b.startAt))
     // Ohne Filter nur die nächsten 6, mit Filter alle Treffer
     .slice(0, filters.hasFilter ? undefined : 6);
 
@@ -446,17 +448,21 @@ function EventCardBig({
   highlight?: boolean;
   compact?: boolean;
 }) {
-  const date = new Date(event.startAt);
-  const dateStr = date.toLocaleDateString("de-DE", {
-    day: "2-digit",
-    month: "short",
-  });
-  const timeStr = event.timeTbd
-    ? "Uhrzeit folgt"
-    : date.toLocaleTimeString("de-DE", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+  const date = new Date(event.startAt ?? Number.NaN);
+  const dateStr = event.startAt
+    ? date.toLocaleDateString("de-DE", {
+        day: "2-digit",
+        month: "short",
+      })
+    : "Termin offen";
+  const timeStr = !event.startAt
+    ? ""
+    : event.timeTbd
+      ? "Uhrzeit folgt"
+      : date.toLocaleTimeString("de-DE", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
   const relStr =
     daysFromNow === undefined
       ? null
@@ -477,7 +483,8 @@ function EventCardBig({
     >
       <div className="event-card-head">
         <span className="event-card-type">
-          {dateStr} · {timeStr}
+          {dateStr}
+          {timeStr ? ` · ${timeStr}` : ""}
           {relStr && (
             <span
               style={{
@@ -547,7 +554,8 @@ function MyEventCard({ event, compact }: { event: MyEventShort; compact?: boolea
     >
       <div className="event-card-head">
         <span className="event-card-type">
-          {dateStr} · {timeStr}
+          {dateStr}
+          {timeStr ? ` · ${timeStr}` : ""}
           <span
             style={{ marginLeft: 8, color: "var(--brand-lime)", fontWeight: 700 }}
             className="text-mono text-xs"

@@ -5,17 +5,20 @@
 // europäischen Zeitzonen gleich und Ende > Start gilt auch bei eintägigen Events.
 
 const TBD_TEXT = { de: "Uhrzeit folgt", en: "time to be announced" } as const;
+// Runde 7: Event ohne Termin (Terminumfrage läuft)
+const NO_DATE_TEXT = { de: "Termin offen", en: "Date open" } as const;
 
 function locale(lang: string): string {
   return lang === "de" ? "de-DE" : "en-US";
 }
 
 export function formatEventDate(
-  iso: string,
+  iso: string | null,
   timeTbd: boolean | undefined,
   lang: string,
   dateStyle: "medium" | "short" = "medium",
 ): string {
+  if (!iso) return lang === "de" ? NO_DATE_TEXT.de : NO_DATE_TEXT.en;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   if (timeTbd) {

@@ -190,7 +190,17 @@
     "filterEmpty": "No events match these filters.",
     "registrations": "Registrations",
     "copyRegistrationLink": "Copy registration link",
-    "linkCopied": "Link copied"
+    "linkCopied": "Link copied",
+    "fieldStartTime": "Start time",
+    "fieldEndTime": "End time",
+    "fieldDateHint": "All optional: leave the time empty if it is not fixed yet; leave the date empty if the date is still open (e.g. poll running). Without an end time the event lasts 2 hours.",
+    "dateError": {
+      "startDateMissing": "Please enter a start date first.",
+      "startTimeMissing": "Please also enter a start time.",
+      "endBeforeStart": "The end is before the start."
+    },
+    "noDate": "Date open",
+    "duplicateNoDate": "The original has no date yet, so the copy has none either. Add the date later via “Edit”."
   },
   "eventRequests": {
     "navLink": "Event requests",

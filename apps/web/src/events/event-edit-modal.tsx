@@ -6,8 +6,8 @@ import { apiFetch } from "../api/client";
 import { RichTextEditor } from "../components/rich-text-editor";
 import { appendEmail } from "./email-list";
 import { EmailSuggest } from "./email-suggest";
-import { tbdDateInput, tbdIso } from "./event-date";
 import { EventDateFields } from "./event-date-fields";
+import { type DateInputs, fromDateInputs, toDateInputs } from "./event-date-input";
 import {
   EVENT_TYPES,
   EVENT_VISIBILITIES,
@@ -29,8 +29,8 @@ interface Props {
     description?: string;
     eventType?: EventType;
     visibility?: EventVisibility;
-    startAt?: string;
-    endAt?: string;
+    startAt?: string | null;
+    endAt?: string | null;
     timeTbd?: boolean;
     location?: string | null;
     locationDetails?: string | null;
@@ -75,12 +75,8 @@ export function EventEditModal({
   const [description, setDescription] = useState(event.description);
   const [eventType, setEventType] = useState<EventType>(event.eventType);
   const [visibility, setVisibility] = useState<EventVisibility>(event.visibility);
-  const [timeTbd, setTimeTbd] = useState(event.timeTbd === true);
-  const [startAt, setStartAt] = useState(
-    event.timeTbd ? tbdDateInput(event.startAt) : toLocalInput(event.startAt),
-  );
-  const [endAt, setEndAt] = useState(
-    event.timeTbd ? tbdDateInput(event.endAt) : toLocalInput(event.endAt),
+  const [dates, setDates] = useState<DateInputs>(() =>
+    toDateInputs(event.startAt, event.endAt, event.timeTbd),
   );
   const [location, setLocation] = useState(event.location ?? "");
   const [locationDetails, setLocationDetails] = useState(event.locationDetails ?? "");
@@ -113,14 +109,14 @@ export function EventEditModal({
       .split(/[\s,;]+/)
       .map((s) => s.trim().toLowerCase())
       .filter((s) => s.includes("@"));
+    const dateCheck = fromDateInputs(dates);
+    if (!dateCheck.ok) return;
     onSubmit({
       title: title.trim(),
       description: description,
       eventType,
       visibility,
-      startAt: timeTbd ? tbdIso(startAt, "start") : toIso(startAt),
-      endAt: timeTbd ? tbdIso(endAt, "end") : toIso(endAt),
-      timeTbd,
+      ...dateCheck.value,
       location: location.trim() === "" ? null : location.trim(),
       locationDetails: locationDetails.trim() === "" ? null : locationDetails.trim(),
       capacity: capNum,
@@ -249,15 +245,7 @@ export function EventEditModal({
             </div>
           </div>
 
-          <EventDateFields
-            idPrefix="ee"
-            timeTbd={timeTbd}
-            startAt={startAt}
-            endAt={endAt}
-            onTimeTbdChange={setTimeTbd}
-            onStartChange={setStartAt}
-            onEndChange={setEndAt}
-          />
+          <EventDateFields idPrefix="ee" value={dates} onChange={setDates} />
 
           <div className="field-row">
             <div className="field">

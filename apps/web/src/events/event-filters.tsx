@@ -33,23 +33,27 @@ export function useEventFilters(events: EventDto[]): EventFilters {
   const search = params.get("q") ?? "";
 
   const months = useMemo(
-    () => Array.from(new Set(events.map((e) => monthKey(e.startAt)))).sort(),
+    () =>
+      Array.from(new Set(events.flatMap((e) => (e.startAt ? [monthKey(e.startAt)] : [])))).sort(),
     [events],
   );
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
-    return events
-      .filter((e) => !type || e.eventType === type)
-      .filter((e) => !month || monthKey(e.startAt) === month)
-      .filter((e) => !status || e.status === status)
-      .filter(
-        (e) =>
-          !needle ||
-          e.title.toLowerCase().includes(needle) ||
-          (e.location ?? "").toLowerCase().includes(needle),
-      )
-      .sort((a, b) => a.startAt.localeCompare(b.startAt));
+    return (
+      events
+        .filter((e) => !type || e.eventType === type)
+        .filter((e) => !month || (e.startAt !== null && monthKey(e.startAt) === month))
+        .filter((e) => !status || e.status === status)
+        .filter(
+          (e) =>
+            !needle ||
+            e.title.toLowerCase().includes(needle) ||
+            (e.location ?? "").toLowerCase().includes(needle),
+        )
+        // Runde 7: Events ohne Termin („Termin offen“) stehen oben
+        .sort((a, b) => (a.startAt ?? "").localeCompare(b.startAt ?? ""))
+    );
   }, [events, type, month, status, search]);
 
   return {

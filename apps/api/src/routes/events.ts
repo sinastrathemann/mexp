@@ -54,26 +54,56 @@ const eventVisibilitySchema = z.enum(EVENT_VISIBILITIES);
 const eventStatusSchema = z.enum(EVENT_STATUSES);
 const isoDateSchema = z.string().datetime({ offset: true });
 
-const createEventSchema = z.object({
-  title: z.string().min(1).max(200),
-  // Rich-Text-HTML aus dem Editor — Markup braucht mehr Platz als reiner Text
-  description: z.string().max(20000).default(""),
-  eventType: eventTypeSchema,
-  visibility: eventVisibilitySchema.default("internal"),
-  startAt: isoDateSchema,
-  endAt: isoDateSchema,
-  // Uhrzeit steht noch nicht fest: nur das Datum zählt, Kalender als Ganztagstermin
-  timeTbd: z.boolean().default(false),
-  location: z.string().max(500).nullable().default(null),
-  locationDetails: z.string().max(5000).nullable().default(null),
-  capacity: z.number().int().positive().nullable().default(null),
-  registrationDeadline: isoDateSchema.nullable().optional(),
-  audienceScope: z.enum(["all", "roles", "emails", "teams", "departments"]).default("all"),
-  audienceRoles: z.array(z.string().max(64)).max(20).default([]),
-  audienceEmails: z.array(z.string().email()).max(200).default([]),
-  audienceTeams: z.array(z.string().max(200)).max(100).default([]),
-  audienceDepartments: z.array(z.string().max(200)).max(100).default([]),
-});
+// Runde 7: Beginn und Ende nur gemeinsam setzen oder gemeinsam leeren.
+function datePairOk(v: {
+  startAt?: string | null | undefined;
+  endAt?: string | null | undefined;
+}): boolean {
+  if (v.startAt === undefined && v.endAt === undefined) return true;
+  return (v.startAt ?? null) === null ? (v.endAt ?? null) === null : (v.endAt ?? null) !== null;
+}
+const datePairMessage = {
+  message: "Beginn und Ende gehören zusammen (beide angeben oder beide leer lassen).",
+  path: ["endAt"],
+};
+
+// Runde 7: Ohne Termin bleibt ein Event Entwurf (oder wird abgesagt).
+const STATUSES_WITHOUT_DATE = new Set(["draft", "cancelled"]);
+const dateRequired = {
+  error: {
+    code: "DATE_REQUIRED",
+    message: "Bitte zuerst einen Termin eintragen. Ohne Termin bleibt das Event ein Entwurf.",
+  },
+};
+function hasDate(evt: object): boolean {
+  const startAt = (evt as { startAt?: unknown }).startAt;
+  return typeof startAt === "string" && startAt !== "";
+}
+const toIsoOrNull = (v: string | null) => (v === null ? null : new Date(v).toISOString());
+
+const createEventSchema = z
+  .object({
+    title: z.string().min(1).max(200),
+    // Rich-Text-HTML aus dem Editor — Markup braucht mehr Platz als reiner Text
+    description: z.string().max(20000).default(""),
+    eventType: eventTypeSchema,
+    visibility: eventVisibilitySchema.default("internal"),
+    // Runde 7: null = Termin noch offen (nur im Datei-Modus; Event bleibt Entwurf)
+    startAt: isoDateSchema.nullable(),
+    endAt: isoDateSchema.nullable(),
+    // Uhrzeit steht noch nicht fest: nur das Datum zählt, Kalender als Ganztagstermin
+    timeTbd: z.boolean().default(false),
+    location: z.string().max(500).nullable().default(null),
+    locationDetails: z.string().max(5000).nullable().default(null),
+    capacity: z.number().int().positive().nullable().default(null),
+    registrationDeadline: isoDateSchema.nullable().optional(),
+    audienceScope: z.enum(["all", "roles", "emails", "teams", "departments"]).default("all"),
+    audienceRoles: z.array(z.string().max(64)).max(20).default([]),
+    audienceEmails: z.array(z.string().email()).max(200).default([]),
+    audienceTeams: z.array(z.string().max(200)).max(100).default([]),
+    audienceDepartments: z.array(z.string().max(200)).max(100).default([]),
+  })
+  .refine(datePairOk, datePairMessage);
 
 const updateEventSchema = z
   .object({
@@ -81,8 +111,8 @@ const updateEventSchema = z
     description: z.string().max(20000).optional(),
     eventType: eventTypeSchema.optional(),
     visibility: eventVisibilitySchema.optional(),
-    startAt: isoDateSchema.optional(),
-    endAt: isoDateSchema.optional(),
+    startAt: isoDateSchema.nullable().optional(),
+    endAt: isoDateSchema.nullable().optional(),
     timeTbd: z.boolean().optional(),
     location: z.string().max(500).nullable().optional(),
     locationDetails: z.string().max(5000).nullable().optional(),
@@ -94,7 +124,8 @@ const updateEventSchema = z
     audienceTeams: z.array(z.string().max(200)).max(100).optional(),
     audienceDepartments: z.array(z.string().max(200)).max(100).optional(),
   })
-  .refine((v) => Object.keys(v).length > 0, { message: "Mindestens ein Feld muss gesetzt sein" });
+  .refine((v) => Object.keys(v).length > 0, { message: "Mindestens ein Feld muss gesetzt sein" })
+  .refine(datePairOk, datePairMessage);
 
 const transitionSchema = z.object({ status: eventStatusSchema });
 
@@ -202,8 +233,8 @@ export interface DevEventCreateInput {
   description: string;
   eventType: string;
   visibility: string;
-  startAt: string;
-  endAt: string;
+  startAt: string | null;
+  endAt: string | null;
   timeTbd?: boolean;
   location: string | null;
   locationDetails?: string | null;
@@ -219,7 +250,11 @@ export interface DevEventCreateInput {
 
 // Exportiert für Wiederverwendung durch blueprints.ts (Blueprint → Event im Dev-Mode).
 export function createDevEvent(input: DevEventCreateInput): DevEventRecord {
-  if (new Date(input.endAt).getTime() <= new Date(input.startAt).getTime()) {
+  if (
+    input.startAt !== null &&
+    input.endAt !== null &&
+    new Date(input.endAt).getTime() <= new Date(input.startAt).getTime()
+  ) {
     throw new InvalidEventDatesError();
   }
   const now = new Date().toISOString();
@@ -464,9 +499,9 @@ eventRoutes.post(
         description: input.description,
         eventType: input.eventType,
         visibility: input.visibility,
-        startAt: new Date(input.startAt).toISOString(),
-        endAt: new Date(input.endAt).toISOString(),
-        timeTbd: input.timeTbd,
+        startAt: toIsoOrNull(input.startAt),
+        endAt: toIsoOrNull(input.endAt),
+        timeTbd: input.startAt === null ? false : input.timeTbd,
         location: input.location,
         locationDetails: input.locationDetails,
         capacity: input.capacity,
@@ -483,6 +518,8 @@ eventRoutes.post(
       return c.json({ event }, 201);
     }
 
+    // Postgres-Modus: Termin bleibt Pflicht (Spalten NOT NULL)
+    if (input.startAt === null || input.endAt === null) return c.json(dateRequired, 400);
     const event = await createEvent(
       {
         title: input.title,
@@ -524,6 +561,10 @@ eventRoutes.post(
         const evt = findDevBaseEvent(id);
         if (!evt) {
           results.push({ id, ok: false, error: "NOT_FOUND" });
+          continue;
+        }
+        if (!STATUSES_WITHOUT_DATE.has(status) && !hasDate(applyOverride(evt))) {
+          results.push({ id, ok: false, error: "DATE_REQUIRED" });
           continue;
         }
         const current = devEventOverrideStore.get(id) ?? {};
@@ -706,12 +747,21 @@ eventRoutes.patch(
       // Dev-Mode: in den Override-Store schreiben
       const current = devEventOverrideStore.get(id) ?? {};
       const next: Record<string, unknown> = { ...current };
+      // Runde 7: Termin entfernen nur bei Entwürfen
+      const baseForDate = findDevBaseEvent(id);
+      if (
+        input.startAt === null &&
+        baseForDate &&
+        !STATUSES_WITHOUT_DATE.has(String(applyOverride(baseForDate).status))
+      ) {
+        return c.json(dateRequired, 400);
+      }
       if (input.title !== undefined) next.title = input.title;
       if (input.description !== undefined) next.description = input.description;
       if (input.eventType !== undefined) next.eventType = input.eventType;
       if (input.visibility !== undefined) next.visibility = input.visibility;
-      if (input.startAt !== undefined) next.startAt = new Date(input.startAt).toISOString();
-      if (input.endAt !== undefined) next.endAt = new Date(input.endAt).toISOString();
+      if (input.startAt !== undefined) next.startAt = toIsoOrNull(input.startAt);
+      if (input.endAt !== undefined) next.endAt = toIsoOrNull(input.endAt);
       if (input.timeTbd !== undefined) next.timeTbd = input.timeTbd;
       if (input.location !== undefined) next.location = input.location;
       if (input.locationDetails !== undefined) next.locationDetails = input.locationDetails;
@@ -743,6 +793,7 @@ eventRoutes.patch(
     if (input.description !== undefined) patch.description = input.description;
     if (input.eventType !== undefined) patch.eventType = input.eventType;
     if (input.visibility !== undefined) patch.visibility = input.visibility;
+    if (input.startAt === null || input.endAt === null) return c.json(dateRequired, 400);
     if (input.startAt !== undefined) patch.startAt = new Date(input.startAt);
     if (input.endAt !== undefined) patch.endAt = new Date(input.endAt);
     if (input.location !== undefined) patch.location = input.location;
@@ -779,12 +830,13 @@ eventRoutes.post(
       }
       // Quell-Event + Overrides mergen (kein Deleted-Flag/ID/CreatedAt übernehmen)
       const merged = applyOverride(source) as Record<string, unknown>;
+      // Quelle ohne Termin (Runde 7) → Kopie ohne Termin, sofern kein neues Datum kommt
       const startAt = overrides.startAt
         ? new Date(overrides.startAt).toISOString()
-        : (merged.startAt as string);
+        : ((merged.startAt as string | null | undefined) ?? null);
       const endAt = overrides.endAt
         ? new Date(overrides.endAt).toISOString()
-        : (merged.endAt as string);
+        : ((merged.endAt as string | null | undefined) ?? null);
       const title = overrides.title ?? `${merged.title as string} (Kopie)`;
       const event = createDevEvent({
         title,
@@ -836,6 +888,8 @@ eventRoutes.get("/:id/calendar.ics", async (c) => {
   }
 
   if (!evt) return c.text("Event nicht gefunden", 404);
+  // Runde 7: ohne Termin keine Kalenderdatei
+  if (!hasDate(evt)) return c.text("Für dieses Event steht noch kein Termin fest", 404);
 
   const ics = buildIcs({
     id: String(evt.id),
@@ -1031,6 +1085,9 @@ eventRoutes.patch(
       }
       if (!canTransition(currentStatus, status)) {
         throw new InvalidEventStatusTransitionError(currentStatus, status);
+      }
+      if (!STATUSES_WITHOUT_DATE.has(status) && !hasDate(applyOverride(base))) {
+        return c.json(dateRequired, 400);
       }
       const current = devEventOverrideStore.get(id) ?? {};
       devEventOverrideStore.set(id, {

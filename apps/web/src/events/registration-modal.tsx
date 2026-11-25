@@ -226,7 +226,7 @@ function EventInfo({ event }: { event: EventDto }) {
   const isLong =
     plain.length > DESCRIPTION_PREVIEW_CHARS ||
     plain.split("\n").length > DESCRIPTION_PREVIEW_LINES;
-  const sameDay = event.startAt.slice(0, 10) === event.endAt.slice(0, 10);
+  const sameDay = (event.startAt ?? "").slice(0, 10) === (event.endAt ?? "").slice(0, 10);
 
   return (
     <div

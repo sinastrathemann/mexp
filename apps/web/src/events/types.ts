@@ -32,8 +32,9 @@ export interface EventDto {
   eventType: EventType;
   status: EventStatus;
   visibility: EventVisibility;
-  startAt: string;
-  endAt: string;
+  // Runde 7: null = Termin offen (nur Entwürfe, nur Team)
+  startAt: string | null;
+  endAt: string | null;
   // Uhrzeit steht noch nicht fest: nur das Datum anzeigen
   timeTbd?: boolean;
   // Nur in GET /events/:id befüllt

@@ -190,7 +190,17 @@
     "filterEmpty": "Keine Events für diese Filter.",
     "registrations": "Anmeldungen",
     "copyRegistrationLink": "Anmeldelink kopieren",
-    "linkCopied": "Link kopiert"
+    "linkCopied": "Link kopiert",
+    "fieldStartTime": "Uhrzeit Beginn",
+    "fieldEndTime": "Uhrzeit Ende",
+    "fieldDateHint": "Alles optional: Uhrzeit leer lassen, wenn sie noch nicht feststeht; Datum leer lassen, wenn der Termin noch offen ist (z. B. Terminumfrage läuft). Ohne Endzeit dauert das Event 2 Stunden.",
+    "dateError": {
+      "startDateMissing": "Bitte zuerst ein Startdatum eintragen.",
+      "startTimeMissing": "Bitte auch eine Uhrzeit für den Beginn eintragen.",
+      "endBeforeStart": "Das Ende liegt vor dem Beginn."
+    },
+    "noDate": "Termin offen",
+    "duplicateNoDate": "Das Original hat noch keinen Termin – die Kopie auch nicht. Den Termin trägst du später unter „Bearbeiten“ ein."
   },
   "eventRequests": {
     "navLink": "Eventanfragen",
